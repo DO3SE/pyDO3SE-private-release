@@ -1,0 +1,17 @@
+{
+    "COMMENT": "Bi hourly overrides",
+    "Location": {
+        "start_day": 137
+    },
+    "Met": {
+        "dd_calc_method": "CALC_FROM_INPUT",
+        "sparse_data": true,
+        "inputs": {
+            "dd_method": "calculated",
+            "CO2_method": "input",
+            "RH_fillna": 1,
+            "Ts_C_fillna": 0
+        }
+    },
+    "VERSION": 12
+}

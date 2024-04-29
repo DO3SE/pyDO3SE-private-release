@@ -1,0 +1,19 @@
+{
+    "COMMENT": "otc",
+    "Location": {
+        "z_O3": 0,
+        "z_u": 0,
+        "izr": 50,
+        "OTC": true,
+        "h_u": 0,
+        "h_O3": 0
+    },
+    "Land_Cover": {
+        "parameters": [
+            {
+                "height": 29.0
+            }
+        ]
+    },
+    "VERSION": 12
+}

@@ -1,0 +1,5 @@
+{
+    "Location.lat": "lat",
+    "Location.lon": "lon",
+    "Land_Cover.parameters.0.phenology.key_dates.sowing": "winter_wheat_sowing"
+}
