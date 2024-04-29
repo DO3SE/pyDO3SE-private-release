@@ -1,0 +1,18 @@
+{
+    "COMMENT": "zero_",
+    "Location": {
+        "z_O3": 50.0,
+        "z_u": 50.0,
+        "izr": 50,
+        "h_u": 1.0,
+        "h_O3": 1.0
+    },
+    "Land_Cover": {
+        "parameters": [
+            {
+                "height": 1.0
+            }
+        ]
+    },
+    "VERSION": 12
+}

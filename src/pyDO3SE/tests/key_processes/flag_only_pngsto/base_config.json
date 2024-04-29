@@ -1,0 +1,111 @@
+{
+    "COMMENT": "Base",
+    "Location": {
+        "elev": 10,
+        "albedo": 0.16,
+        "lat": 55.8,
+        "lon": 3.2,
+        "h_O3": 1.0,
+        "h_u": 1.0,
+        "z_O3": 2,
+        "Rsoil": 200,
+        "z_u": 2
+    },
+    "output": {},
+    "Met": {
+        "thermal_time_method": "SKIP",
+        "inputs": {
+            "co2_method": "constant",
+            "co2_constant": 391.0,
+            "hd_method": "skip",
+            "h_method": "constant",
+            "h_constant": 1,
+            "Rn_method": "input",
+            "RH_method": "input",
+            "PAR_method": "calculated",
+            "VPD_method": "calculated",
+            "P_method": "constant",
+            "P_constant": 101
+        }
+    },
+    "VERSION": 12,
+    "resistance": {
+        "rsur_calc_method": "single_layer",
+        "rext_calc_method": "const"
+    },
+    "soil_moisture": {
+        "source": "disabled"
+    },
+    "Land_Cover": {
+        "height_method": "input",
+        "LAI_method": "constant",
+        "LAI": 1,
+        "SAI_method": "constant",
+        "SAI": 1,
+        "flai": [
+            [
+                1.0
+            ]
+        ],
+        "layer_height_frac": [
+            1.0
+        ],
+        "parameters": [
+            {
+                "PRESET": "WHEAT_SPRING",
+                "Lm": 0.07,
+                "Y": 6.0,
+                "cosA": 0.5,
+                "phenology": {
+                    "key_dates": {
+                        "sowing": 71
+                    },
+                    "key_dates_td": {},
+                    "key_lengths_td": {
+                        "sowing_to_end": 1600
+                    },
+                    "key_lengths_leaf_td": {},
+                    "SAI_method": "LAI_BROWN_GREEN",
+                    "PRESET": "WHEAT_SPRING",
+                    "day_fphen_plf": {},
+                    "leaf_f_phen_method": "tt day PLF",
+                    "f_phen_method": "tt day PLF"
+                },
+                "gsto": {
+                    "method": "photosynthesis",
+                    "Lm": 0.02,
+                    "fmin": 0.13,
+                    "Tleaf_method": "ambient",
+                    "f_SW_method": "disabled",
+                    "f_VPD_method": "linear",
+                    "VPD_max": 0.93,
+                    "VPD_min": 3.4,
+                    "VPD_crit": 8.0
+                },
+                "pn_gsto": {
+                    "D_0_method": "f_VPD",
+                    "g_sto_0": 20000.0,
+                    "m": 8.12,
+                    "V_cmax_25": 120.0,
+                    "J_max_25": 180.0,
+                    "p_crit": 24,
+                    "p_sens": 0,
+                    "t_b": 0,
+                    "t_o": 20,
+                    "t_m": 30,
+                    "K_z": 24,
+                    "F_0": 37,
+                    "R_d_coeff": 0.015,
+                    "gamma_1": 0.06,
+                    "gamma_2": 0.0045,
+                    "gamma_3": 0.08,
+                    "senescence_method": "ewert"
+                }
+            }
+        ],
+        "phenology_options": {
+            "plant_emerge_method": "constant",
+            "phenology_method": "season_fraction"
+        }
+    }
+}
