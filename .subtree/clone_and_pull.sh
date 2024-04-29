@@ -10,10 +10,10 @@ git remote remove thermal_time
 git remote remove do3se_phenology
 git remote remove do3se_met
 
-git remote add -f pyDO3SE git+ssh://git@github.com/SEI-DO3SE/pyDO3SE@RELEASE
-git remote add -f thermal_time git+ssh://git@github.com/SEI-DO3SE/thermal_time@RELEASE
-git remote add -f do3se_phenology git+ssh://git@github.com/SEI-DO3SE/do3se_phenology@RELEASE
-git remote add -f do3se_met git+ssh://git@github.com/SEI-DO3SE/do3se_met@RELEASE
+git remote add -f pyDO3SE git@github.com/SEI-DO3SE/pyDO3SE
+git remote add -f thermal_time git@github.com/SEI-DO3SE/thermal_time
+git remote add -f do3se_phenology git@github.com/SEI-DO3SE/do3se_phenology
+git remote add -f do3se_met git@github.com/SEI-DO3SE/do3se_met
 
 # TODO: Might need to use release branch
 # TODO: Fix if statement
