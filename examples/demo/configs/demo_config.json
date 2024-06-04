@@ -15,7 +15,9 @@
         "elev": 20.0,
         "albedo": 0.2,
         "z_O3": 50.0,
-        "z_u": 1.0,
+        "z_u": 10.0,
+        "h_u": 2.0,
+        "h_O3": 2.0,
         "Rsoil": 200
     },
     "soil_moisture": {
@@ -95,7 +97,7 @@
                     "key_lengths_td": {
                         "sowing_to_end": 1978
                     },
-                    "SAI_method": "wheat",
+                    "SAI_method": "LAI",
                     "PRESET": "WHEAT_SPRING",
                     "day_fphen_plf": {}
                 }
