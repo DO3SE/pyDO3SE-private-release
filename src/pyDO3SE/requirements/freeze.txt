@@ -50,7 +50,7 @@ ptyprocess==0.7.0
 pure-eval==0.2.2
 py-cpuinfo==9.0.0
 pycodestyle==2.11.1
--e git+ssh://git@github.com/SEI-DO3SE/pyDO3SE.git@db2a792345d3ed8cf5ebb7845e105a6d1834601d#egg=pyDO3SE4
+-e git+ssh://git@github.com/SEI-DO3SE/pyDO3SE.git@4a828777de2f5c4ac3952a5834d44525499eaeee#egg=pyDO3SE4
 pydocstyle==6.3.0
 pyflakes==3.2.0
 Pygments==2.18.0
