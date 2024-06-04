@@ -1,0 +1,125 @@
+import pytest
+from dataclasses import asdict
+from data_helpers.time_data import get_row_index
+from pyDO3SE.External_State.External_State_Config import InputMethod
+from pyDO3SE.External_State.external_state_loader import FileTypes, load_external_state
+from pyDO3SE.Config.Config_Shape import Config_Location, Config_Shape
+from pyDO3SE.External_State.External_State_Shape import External_State_Shape
+from proflow.Objects.Process import Process
+from proflow.ProcessRunnerCls import ProcessRunner
+from .es_init_processes import calc_thermal_time_processes, external_state_init_processes, init_params
+
+
+def test_es_init_processes(snapshot):
+    config = Config_Shape()
+    config.Location.elev = 20
+    processes = external_state_init_processes(0, 10 * 24, config.Met)
+    assert isinstance(processes[0], Process)
+    # assert len(processes) == 81
+    snapshot.assert_match(processes)
+    # assert len(flatten_list(processes)) == 81
+
+
+def test_es_init_params(snapshot):
+    config = Config_Shape()
+    config.Location.elev = 20
+    process_runner = ProcessRunner(config_in=config)
+    row_count = 10
+    init_processes = init_params(row_count)
+    initial_state = External_State_Shape(
+        dd=[i for i in range(row_count)],
+        hr=[i for i in range(row_count)],
+        Ts_C=[i for i in range(row_count)],
+        O3=[i for i in range(row_count)],
+        P=[i for i in range(row_count)],
+        precip=[i for i in range(row_count)],
+        u=[i for i in range(row_count)],
+        PAR=[i for i in range(row_count)],
+        VPD=[i for i in range(row_count)],
+        Hd=[i for i in range(row_count)]
+    )
+    final_state = process_runner.run_processes(init_processes, initial_state)
+    # snapshot.assert_match(asdict(final_state))
+    assert len(final_state.sinB) == row_count
+    assert len(final_state.RH) == row_count
+
+
+def test_throws_error_if_missing_input():
+    process_runner = ProcessRunner()
+    config_in = Config_Shape()
+    config_in.Location.elev = 20
+    config_in.Met.h_method = 'input'
+    process_runner.config = config_in
+    row_count = 10
+    init_processes = init_params(row_count)
+    with pytest.raises(ValueError) as e:
+        process_runner.run_processes(init_processes, External_State_Shape())
+    assert 'Must supply' in str(e.value)
+
+
+def test_es_init_processes_run(snapshot):
+    EXT_DATA_COLS = [
+        # TODO: This should be based on the config
+        'PAR',
+        'VPD',
+        'Ts_C',
+        'u',
+        'P',
+        'O3',
+        'dd',
+        'hr',
+        'precip',
+    ]
+    start_day = 0
+    end_day = 10
+
+    row_indexes = [get_row_index(dd, hr) for dd in range(start_day, end_day) for hr in range(24)]
+    # TODO: Replace below loader with static initial state
+    data_location = 'examples/spanish_wheat/inputs/spanish_wheat_data.csv'
+    external_state_data = next(load_external_state(
+        data_location,
+        file_type=FileTypes.CSV,
+        row_indexes=row_indexes,
+    ))
+    assert len(external_state_data.O3) == len(row_indexes)
+    assert len(external_state_data.O3) == len(row_indexes)
+
+    config = Config_Shape(Location=Config_Location(lat=50, lon=1.3, elev=20, albedo=1))
+    config.Met.inputs.Rn_method = InputMethod.CALCULATED
+    assert config.Met
+
+    process_runner = ProcessRunner()
+    process_runner.config = config
+    process_runner.external_state = external_state_data
+    external_state = process_runner.run_processes(
+        external_state_init_processes(start_day * 24, end_day * 24, config.Met),
+        external_state_data)
+    assert len(external_state.eact) == (end_day - start_day) * 24
+    assert len(external_state.sinB) == (end_day - start_day) * 24
+
+    snapshot.assert_match(asdict(external_state))
+
+
+def test_calc_thermal_time_processes():
+    config = Config_Shape()
+    process_runner = ProcessRunner(config_in=config)
+    processes = calc_thermal_time_processes(config.Met)
+    row_count = 24 * 5
+    initial_state = External_State_Shape(
+        dd=[i for i in range(row_count)],
+        hr=[i for i in range(row_count)],
+        Ts_C=[i for i in range(row_count)],
+        O3=[i for i in range(row_count)],
+        P=[i for i in range(row_count)],
+        precip=[i for i in range(row_count)],
+        u=[i for i in range(row_count)],
+        PAR=[i for i in range(row_count)],
+        VPD=[i for i in range(row_count)],
+        Hd=[i for i in range(row_count)]
+    )
+
+    final_state = process_runner.run_processes(processes, initial_state)
+    assert len(final_state.td) == row_count
+    assert final_state.td[0] == 0.0
+    assert final_state.td[-1] == 286.0
+    assert final_state.td[2 * 24] == 95.0

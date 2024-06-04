@@ -1,0 +1,13 @@
+{
+    "Land_Cover": {
+        "parameters": [
+            {
+                "phenology": {
+                    "key_dates": {
+                        "sowing": 319
+                    }
+                }
+            }
+        ]
+    }
+}

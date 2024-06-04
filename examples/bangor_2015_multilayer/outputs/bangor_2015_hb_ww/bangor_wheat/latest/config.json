@@ -1,0 +1,26 @@
+{
+    "COMMENT": "Bangor Wheat Demo",
+    "Land_Cover": {
+        "nL": 4,
+        "layer_height_frac": [
+            0.25,
+            0.25,
+            0.25,
+            0.25
+        ],
+        "fLAI": [
+            [
+                0.25
+            ],
+            [
+                0.25
+            ],
+            [
+                0.25
+            ],
+            [
+                0.25
+            ]
+        ]
+    }
+}
