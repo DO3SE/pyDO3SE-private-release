@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="thermal_time",
-    version="0.0.15",
+    version="0.0.16",
     author="SEI-York",
     author_email="sam.bland@york.ac.uk",
     description="Thermal time module",
