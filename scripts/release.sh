@@ -13,6 +13,7 @@ git branch -d RELEASE
 git checkout --orphan RELEASE
 git commit -m "RELEASE"
 git push --force --set-upstream origin RELEASE
+git push --tags
 git checkout master
 
 if [ -z "$(git status --porcelain)" ]; then
