@@ -9,14 +9,11 @@ THERMAL_TIME_REMOTE="git@github.com:SEI-DO3SE/thermal_time"
 DO3SE_PHENOLOGY_REMOTE="git@github.com:SEI-DO3SE/do3se_phenology"
 DO3SE_MET_REMOTE="git@github.com:SEI-DO3SE/do3se_met"
 
-echo $1
-echo $2
 
-
-BRANCH=$2
 # TODO: Might need to use release branch
 # TODO: Fix if statement
 if [[ "$1" == "clone" ]]; then
+  BRANCH=$2
   echo "Cloning"
   git subtree add --prefix $PYDO3SE_LOCAL_PATH $PYDO3SE_REMOTE $BRANCH --squash
   git subtree add --prefix $THERMAL_TIME_LOCAL_PATH $THERMAL_TIME_REMOTE $BRANCH --squash
@@ -24,6 +21,7 @@ if [[ "$1" == "clone" ]]; then
   git subtree add --prefix $DO3SE_MET_LOCAL_PATH $DO3SE_MET_REMOTE $BRANCH --squash
 fi
 if [[ "$1" == "pull" ]]; then
+  BRANCH=$2
   echo "Pulling"
   # Update subtree
   git subtree pull --prefix $PYDO3SE_LOCAL_PATH $PYDO3SE_REMOTE $BRANCH --squash
@@ -36,6 +34,7 @@ if [[ "$1" == "tag" ]]; then
   echo "Tagging"
   echo "Not implemented yet"
 fi
+
 
 # TODO: Update version info
 # Should store the open version somewhere
