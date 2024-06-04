@@ -1,0 +1,737 @@
+{
+    "canopy": {
+        "Es_blocked": false,
+        "LAI_total": 0.008118564181451062,
+        "Lm_LAI": 0.02,
+        "PM": {
+            "Eat_acc": 0.0,
+            "Eat_hr": 0.0,
+            "Ei_acc": 0.0,
+            "Ei_hr": 0.0,
+            "Es_acc": 0.0,
+            "Es_hr": 0.0,
+            "Et_acc": 0.0,
+            "Et_hr": 0.0,
+            "PEt_acc": 0.0,
+            "PEt_hr": 0.0,
+            "PEt_rsto": null,
+            "Sn_diff": 0.0,
+            "effective_irrig": 0.0,
+            "evapotranspiration": 0.0,
+            "intercepted_evaporated": 0.0,
+            "percolated": 0.0,
+            "percolated_acc": 0.0,
+            "precip_acc_dd": 0.12000000000000004,
+            "precip_acc_prev_day": 0.12000000000000004,
+            "rain_input": 0.0,
+            "run_off": 0.0,
+            "run_off_acc": 0.0
+        },
+        "SAI_total": 0.008118564181451062,
+        "SMD": {
+            "ASW": 0.0,
+            "SMD": 0.06607020548895037,
+            "SWP": -4.0000000000000036,
+            "Sn": 0.12482448627762405
+        },
+        "Vd": 0.004215644874398394,
+        "canopy_height": 0.10861056083758731,
+        "d": 0.07602739258631111,
+        "met": {
+            "PARshade": null,
+            "PARsun": null,
+            "micro_O3": null,
+            "micro_O3_nmol_m3": null,
+            "micro_u": 0.4014052877726603
+        },
+        "rmodel_H2O": {
+            "Ra": null,
+            "Ra_c": null,
+            "Rb": null,
+            "Rext": [
+                null,
+                null,
+                null,
+                null,
+                null
+            ],
+            "Rgs": null,
+            "Rinc": [
+                null,
+                null,
+                null,
+                null,
+                null
+            ],
+            "Rsto": [
+                null,
+                null,
+                null,
+                null,
+                null
+            ],
+            "Rsur": [
+                null,
+                null,
+                null,
+                null,
+                null
+            ],
+            "Rtotal": [
+                null,
+                null,
+                null,
+                null,
+                null
+            ],
+            "nL": 6
+        },
+        "rmodel_O3": {
+            "Ra": 119.41581249135787,
+            "Ra_c": 137.3028370175195,
+            "Rb": 40.53547949138684,
+            "Rext": [
+                2500.0
+            ],
+            "Rgs": 200,
+            "Rinc": [
+                0.08240561918330663
+            ],
+            "Rsto": [
+                1965.484180249281
+            ],
+            "Rsur": [
+                199.55347381177074
+            ],
+            "Rtotal": [
+                99.90879484288668
+            ],
+            "nL": 1
+        },
+        "z0": 0.010861056083758732
+    },
+    "canopy_component": [
+        {
+            "D_0": 2.21010101010101,
+            "LAI": 0.008118564181451062,
+            "LC_dist": 1.0,
+            "R_dc": 0.005647815847534667,
+            "SAI": 0,
+            "c_harv": 0.005768877745607787,
+            "c_leaf": 0.0001537132003296869,
+            "c_resv": 1.4021801522475322e-05,
+            "c_root": 0.0005849518072860557,
+            "c_stem": 0.0008381660309893392,
+            "canopy_an_gross": 0.005647815847534667,
+            "canopy_anet": 0.0,
+            "canopy_gsto": 0.16935324882506916,
+            "dvi": 1.8653445640616693,
+            "emergence_rate": 0.0,
+            "flag_has_emerged": true,
+            "g_bv_H2O": 1972211.9561548147,
+            "growing_populations": [
+                false
+            ],
+            "leaf_pop_distribution": [
+                [
+                    0.008118564181451062
+                ]
+            ],
+            "npp": 0,
+            "npp_acc": 0,
+            "phenology": {
+                "V_acc": 0,
+                "V_tot": 0,
+                "Vf": 1,
+                "phenology_stage": "4_HARVEST"
+            },
+            "photoperiod_factor": 1,
+            "phyllochron": 82.37721258036147,
+            "plant_height": 0.10861056083758731,
+            "rpe": 1.0,
+            "t_eff": 13.78916666666666,
+            "t_eff_acc": null,
+            "t_l_estimate": null,
+            "t_lem": null,
+            "t_lep": null,
+            "t_lma": null,
+            "t_lse": null,
+            "td": 2186.4704166666656,
+            "td_dd": 2181.7120833333324,
+            "td_dd_leaf_pops": [
+                1411.7120833333324
+            ],
+            "td_v": 2186.4704166666656,
+            "total_emerged_leaf_populations": 1
+        }
+    ],
+    "canopy_component_population": [
+        [
+            {
+                "AOT_0": 19.544713369690964,
+                "AOT_40": 1.2457573112486728,
+                "A_c": 0.0,
+                "A_j": 0.0,
+                "A_n": 0.0,
+                "A_n_limit_factor": [
+                    "NA"
+                ],
+                "A_p": 0.0,
+                "J_max": 97.84085413883508,
+                "J_max_25": 180.0,
+                "LAI": 0.008118564181451062,
+                "O3up": 0.29997393799252725,
+                "O3up_acc": 4625.110233648156,
+                "O3up_acc_day": 14.45006491536945,
+                "O3up_acc_day_prev": 14.077135122856903,
+                "OT_0": 0,
+                "OT_40": 0,
+                "POD_0": 14.178527026740037,
+                "POD_Y": 3.6464014831015414,
+                "R_d": 0.005647815847534667,
+                "V_cmax": 46.377788989162624,
+                "V_cmax_25": 120.0,
+                "bulk_gsto_per_layer": [
+                    0.16935324882506916
+                ],
+                "c_i": 0.0,
+                "fLAI_layer": [
+                    1.0
+                ],
+                "fO3_d": 0.9992300123751893,
+                "fO3_h": 1,
+                "fO3_l": 0.6299911813081476,
+                "f_LA": 0,
+                "f_LS": 0,
+                "f_VPD": 1.0,
+                "g_sv_per_layer": [
+                    20000.0
+                ],
+                "leaf_rmodel_O3": {
+                    "Rb": [
+                        43.58007920363895
+                    ],
+                    "Rext": [
+                        2500
+                    ],
+                    "Rsto": [
+                        1965.484180249281
+                    ]
+                },
+                "mean_gsto_per_layer": [
+                    20.86
+                ],
+                "phenology": {
+                    "phenology_stage": "4_FULLY_SENESED"
+                },
+                "rO3": 0.9992300123751893,
+                "t_lep_O3": 429.6539856521566,
+                "t_lse_O3": 582.3460143478434
+            }
+        ]
+    ],
+    "canopy_layer_component": [
+        [
+            {
+                "FO3_eff": 0.0,
+                "LAI": 0.008118564181451062,
+                "LAIsunfrac": 0.0,
+                "SAI": 0.008118564181451062,
+                "bulk_gsto": 0.16935324882506916,
+                "fLAI_layer": [
+                    1.0
+                ],
+                "gsto_params": {
+                    "f_O3": 1.0,
+                    "f_SW": 0.01,
+                    "f_VPD": 1.0,
+                    "f_light": 1.0,
+                    "f_phen": 0.03854316188197903,
+                    "f_temp": 1.0,
+                    "leaf_f_light": 1.0,
+                    "leaf_f_phen": 0.06407800662879015
+                },
+                "mean_gsto": 20.86
+            }
+        ]
+    ],
+    "canopy_layer_component_pop": [
+        [
+            [
+                {
+                    "Tleaf_C_estimate": 14.433942129623869
+                },
+                {
+                    "Tleaf_C_estimate": 0
+                },
+                {
+                    "Tleaf_C_estimate": 0
+                }
+            ]
+        ],
+        [
+            [
+                {
+                    "Tleaf_C_estimate": 0
+                },
+                {
+                    "Tleaf_C_estimate": 0
+                },
+                {
+                    "Tleaf_C_estimate": 0
+                }
+            ]
+        ],
+        [
+            [
+                {
+                    "Tleaf_C_estimate": 0
+                },
+                {
+                    "Tleaf_C_estimate": 0
+                },
+                {
+                    "Tleaf_C_estimate": 0
+                }
+            ]
+        ],
+        [
+            [
+                {
+                    "Tleaf_C_estimate": 0
+                },
+                {
+                    "Tleaf_C_estimate": 0
+                },
+                {
+                    "Tleaf_C_estimate": 0
+                }
+            ]
+        ],
+        [
+            [
+                {
+                    "Tleaf_C_estimate": 0
+                },
+                {
+                    "Tleaf_C_estimate": 0
+                },
+                {
+                    "Tleaf_C_estimate": 0
+                }
+            ]
+        ],
+        [
+            [
+                {
+                    "Tleaf_C_estimate": 0
+                },
+                {
+                    "Tleaf_C_estimate": 0
+                },
+                {
+                    "Tleaf_C_estimate": 0
+                }
+            ]
+        ]
+    ],
+    "canopy_layers": [
+        {
+            "layer_depth": 0.10861056083758731,
+            "layer_height": 0.10861056083758731,
+            "micro_met": {
+                "PARshade": 0,
+                "PARsun": 0,
+                "micro_O3": 14.490888739501912,
+                "micro_O3_nmol_m3": 612.9447393915157,
+                "micro_u": 0.4014052877726603
+            }
+        }
+    ],
+    "external_met": {
+        "photoperiod": 16.097306086959733,
+        "t_acc": 448.6200000000001
+    },
+    "met": {
+        "L": null,
+        "O3_i": 33.85591681651591,
+        "u_i": 3.0812326960479113,
+        "ustar": 0.14980368386950482,
+        "ustar_ref": 0.33587827462530295
+    },
+    "prev_hour": {
+        "canopy": {
+            "Es_blocked": false,
+            "LAI_total": 0.008118564181451062,
+            "Lm_LAI": 0.02,
+            "PM": {
+                "Eat_acc": 0.0,
+                "Eat_hr": 0.0,
+                "Ei_acc": 0.0,
+                "Ei_hr": 0.0,
+                "Es_acc": 0.0,
+                "Es_hr": 0.0,
+                "Et_acc": 0.0,
+                "Et_hr": 0.0,
+                "PEt_acc": 0.0,
+                "PEt_hr": 0.0,
+                "PEt_rsto": null,
+                "Sn_diff": 0.0,
+                "effective_irrig": 0.0,
+                "evapotranspiration": 0.0,
+                "intercepted_evaporated": 0.0,
+                "percolated": 0.0,
+                "percolated_acc": 0.0,
+                "precip_acc_dd": 0.12000000000000004,
+                "precip_acc_prev_day": 0.12000000000000004,
+                "rain_input": 0.0,
+                "run_off": 0.0,
+                "run_off_acc": 0.0
+            },
+            "SAI_total": 0.008118564181451062,
+            "SMD": {
+                "ASW": 0.0,
+                "SMD": 0.06607020548895037,
+                "SWP": -4.0000000000000036,
+                "Sn": 0.12482448627762405
+            },
+            "Vd": 0.004215644874398394,
+            "canopy_height": 0.10861056083758731,
+            "d": 0.07602739258631111,
+            "met": {
+                "PARshade": null,
+                "PARsun": null,
+                "micro_O3": null,
+                "micro_O3_nmol_m3": null,
+                "micro_u": 0.4014052877726603
+            },
+            "rmodel_H2O": {
+                "Ra": null,
+                "Ra_c": null,
+                "Rb": null,
+                "Rext": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                ],
+                "Rgs": null,
+                "Rinc": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                ],
+                "Rsto": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                ],
+                "Rsur": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                ],
+                "Rtotal": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                ],
+                "nL": 6
+            },
+            "rmodel_O3": {
+                "Ra": 119.41581249135787,
+                "Ra_c": 137.3028370175195,
+                "Rb": 40.53547949138684,
+                "Rext": [
+                    2500.0
+                ],
+                "Rgs": 200,
+                "Rinc": [
+                    0.08240561918330663
+                ],
+                "Rsto": [
+                    1965.484180249281
+                ],
+                "Rsur": [
+                    199.55347381177074
+                ],
+                "Rtotal": [
+                    99.90879484288668
+                ],
+                "nL": 1
+            },
+            "z0": 0.010861056083758732
+        },
+        "canopy_component": [
+            {
+                "D_0": 2.21010101010101,
+                "LAI": 0.008118564181451062,
+                "LC_dist": 1.0,
+                "R_dc": 0.005647815847534667,
+                "SAI": 0,
+                "c_harv": 0.005768877745607787,
+                "c_leaf": 0.0001537132003296869,
+                "c_resv": 1.4021801522475322e-05,
+                "c_root": 0.0005849518072860557,
+                "c_stem": 0.0008381660309893392,
+                "canopy_an_gross": 0.005647815847534667,
+                "canopy_anet": 0.0,
+                "canopy_gsto": 0.16935324882506916,
+                "dvi": 1.8653445640616693,
+                "emergence_rate": 0.0,
+                "flag_has_emerged": true,
+                "g_bv_H2O": 1972211.9561548147,
+                "growing_populations": [
+                    false
+                ],
+                "leaf_pop_distribution": [
+                    [
+                        0.008118564181451062
+                    ]
+                ],
+                "npp": 0,
+                "npp_acc": 0,
+                "phenology": {
+                    "V_acc": 0,
+                    "V_tot": 0,
+                    "Vf": 1,
+                    "phenology_stage": "4_HARVEST"
+                },
+                "photoperiod_factor": 1,
+                "phyllochron": 82.37721258036147,
+                "plant_height": 0.10861056083758731,
+                "rpe": 1.0,
+                "t_eff": 13.78916666666666,
+                "t_eff_acc": null,
+                "t_l_estimate": null,
+                "t_lem": null,
+                "t_lep": null,
+                "t_lma": null,
+                "t_lse": null,
+                "td": 2186.4704166666656,
+                "td_dd": 2181.7120833333324,
+                "td_dd_leaf_pops": [
+                    1411.7120833333324
+                ],
+                "td_v": 2186.4704166666656,
+                "total_emerged_leaf_populations": 1
+            }
+        ],
+        "canopy_component_population": [
+            [
+                {
+                    "AOT_0": 19.544713369690964,
+                    "AOT_40": 1.2457573112486728,
+                    "A_c": 0.0,
+                    "A_j": 0.0,
+                    "A_n": 0.0,
+                    "A_n_limit_factor": [
+                        "NA"
+                    ],
+                    "A_p": 0.0,
+                    "J_max": 97.84085413883508,
+                    "J_max_25": 180.0,
+                    "LAI": 0.008118564181451062,
+                    "O3up": 0.29997393799252725,
+                    "O3up_acc": 4625.110233648156,
+                    "O3up_acc_day": 14.45006491536945,
+                    "O3up_acc_day_prev": 14.077135122856903,
+                    "OT_0": 0,
+                    "OT_40": 0,
+                    "POD_0": 14.178527026740037,
+                    "POD_Y": 3.6464014831015414,
+                    "R_d": 0.005647815847534667,
+                    "V_cmax": 46.377788989162624,
+                    "V_cmax_25": 120.0,
+                    "bulk_gsto_per_layer": [
+                        0.16935324882506916
+                    ],
+                    "c_i": 0.0,
+                    "fLAI_layer": [
+                        1.0
+                    ],
+                    "fO3_d": 0.9992300123751893,
+                    "fO3_h": 1,
+                    "fO3_l": 0.6299911813081476,
+                    "f_LA": 0,
+                    "f_LS": 0,
+                    "f_VPD": 1.0,
+                    "g_sv_per_layer": [
+                        20000.0
+                    ],
+                    "leaf_rmodel_O3": {
+                        "Rb": [
+                            43.58007920363895
+                        ],
+                        "Rext": [
+                            2500
+                        ],
+                        "Rsto": [
+                            1965.484180249281
+                        ]
+                    },
+                    "mean_gsto_per_layer": [
+                        20.86
+                    ],
+                    "phenology": {
+                        "phenology_stage": "4_FULLY_SENESED"
+                    },
+                    "rO3": 0.9992300123751893,
+                    "t_lep_O3": 429.6539856521566,
+                    "t_lse_O3": 582.3460143478434
+                }
+            ]
+        ],
+        "canopy_layer_component": [
+            [
+                {
+                    "FO3_eff": 0.0,
+                    "LAI": 0.008118564181451062,
+                    "LAIsunfrac": 0.0,
+                    "SAI": 0.008118564181451062,
+                    "bulk_gsto": 0.16935324882506916,
+                    "fLAI_layer": [
+                        1.0
+                    ],
+                    "gsto_params": {
+                        "f_O3": 1.0,
+                        "f_SW": 0.01,
+                        "f_VPD": 1.0,
+                        "f_light": 1.0,
+                        "f_phen": 0.03854316188197903,
+                        "f_temp": 1.0,
+                        "leaf_f_light": 1.0,
+                        "leaf_f_phen": 0.06407800662879015
+                    },
+                    "mean_gsto": 20.86
+                }
+            ]
+        ],
+        "canopy_layer_component_pop": [
+            [
+                [
+                    {
+                        "Tleaf_C_estimate": 0
+                    },
+                    {
+                        "Tleaf_C_estimate": 0
+                    },
+                    {
+                        "Tleaf_C_estimate": 0
+                    }
+                ]
+            ],
+            [
+                [
+                    {
+                        "Tleaf_C_estimate": 0
+                    },
+                    {
+                        "Tleaf_C_estimate": 0
+                    },
+                    {
+                        "Tleaf_C_estimate": 0
+                    }
+                ]
+            ],
+            [
+                [
+                    {
+                        "Tleaf_C_estimate": 0
+                    },
+                    {
+                        "Tleaf_C_estimate": 0
+                    },
+                    {
+                        "Tleaf_C_estimate": 0
+                    }
+                ]
+            ],
+            [
+                [
+                    {
+                        "Tleaf_C_estimate": 0
+                    },
+                    {
+                        "Tleaf_C_estimate": 0
+                    },
+                    {
+                        "Tleaf_C_estimate": 0
+                    }
+                ]
+            ],
+            [
+                [
+                    {
+                        "Tleaf_C_estimate": 0
+                    },
+                    {
+                        "Tleaf_C_estimate": 0
+                    },
+                    {
+                        "Tleaf_C_estimate": 0
+                    }
+                ]
+            ],
+            [
+                [
+                    {
+                        "Tleaf_C_estimate": 0
+                    },
+                    {
+                        "Tleaf_C_estimate": 0
+                    },
+                    {
+                        "Tleaf_C_estimate": 0
+                    }
+                ]
+            ]
+        ],
+        "canopy_layers": [
+            {
+                "layer_depth": 0.10861056083758731,
+                "layer_height": 0.10861056083758731,
+                "micro_met": {
+                    "PARshade": 0,
+                    "PARsun": 0,
+                    "micro_O3": 14.490888739501912,
+                    "micro_O3_nmol_m3": 612.9447393915157,
+                    "micro_u": 0.4014052877726603
+                }
+            }
+        ],
+        "external_met": {
+            "photoperiod": 16.097306086959733,
+            "t_acc": 448.6200000000001
+        },
+        "met": {
+            "L": null,
+            "O3_i": 33.85591681651591,
+            "u_i": 3.0812326960479113,
+            "ustar": 0.14980368386950482,
+            "ustar_ref": 0.33587827462530295
+        },
+        "prev_hour": null,
+        "temporal": {
+            "dd": 223,
+            "hr": 23,
+            "row_index": 3671,
+            "td": null
+        }
+    },
+    "temporal": {
+        "dd": 223,
+        "hr": 23,
+        "row_index": 3671,
+        "td": null
+    }
+}

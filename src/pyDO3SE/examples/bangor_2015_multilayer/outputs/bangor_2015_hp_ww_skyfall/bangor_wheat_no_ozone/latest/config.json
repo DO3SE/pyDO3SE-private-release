@@ -1,0 +1,35 @@
+{
+    "COMMENT": "Bangor Wheat Demo multi layer with ozone damage turned off",
+    "VERSION": 10,
+    "Land_Cover": {
+        "nL": 4,
+        "nP": 3,
+        "layer_height_frac": [
+            0.25,
+            0.25,
+            0.25,
+            0.25
+        ],
+        "fLAI": [
+            [
+                0.25
+            ],
+            [
+                0.25
+            ],
+            [
+                0.25
+            ],
+            [
+                0.25
+            ]
+        ],
+        "parameters": [
+            {
+                "pn_gsto": {
+                    "use_O3_damage": false
+                }
+            }
+        ]
+    }
+}

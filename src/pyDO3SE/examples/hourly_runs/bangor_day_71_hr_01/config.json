@@ -1,0 +1,136 @@
+{
+    "COMMENT": "Bangor Wheat Demo",
+    "Met": {
+        "td_base_temperature": 0,
+        "inputs": {
+            "co2_method": "constant",
+            "co2_constant": 391.0,
+            "hd_method": "skip",
+            "PPFD_method": "input",
+            "PAR_method": "calculated",
+            "RH_method": "calculated",
+            "SWC_method": "input"
+        }
+    },
+    "VERSION": 10,
+    "Location": {
+        "lat": 53,
+        "lon": 4,
+        "elev": 5.0,
+        "albedo": 0.2,
+        "z_O3": 10,
+        "z_u": 10.0,
+        "Rsoil": 200,
+        "start_day": 71
+    },
+    "soil_moisture": {
+        "soil_texture": "loam",
+        "soil": {
+            "b": null,
+            "fc": null,
+            "swp_ae": null,
+            "ksat": null
+        },
+        "root": 0.4,
+        "pwp": -4.0,
+        "asw_fc": null,
+        "source": "external input SWC",
+        "initial_swc": null
+    },
+    "carbon_allocation": {
+        "use_carbon_allocation": true,
+        "a_root": 18.5,
+        "a_stem": 16.0,
+        "a_leaf": 18.0,
+        "b_root": -20.0,
+        "b_stem": -15.0,
+        "b_leaf": -18.5,
+        "gamma": 27.3,
+        "delta": -0.0507,
+        "theta": 0.4,
+        "k": 1.4,
+        "lambdav": 0.4
+    },
+    "Land_Cover": {
+        "height_method": "carbon",
+        "LAI_method": "carbon",
+        "SAI_method": "estimate total",
+        "dvi_method": "JULES",
+        "SAI": 4.28571414947509,
+        "flai": [
+            [
+                1.0
+            ]
+        ],
+        "parameters": [
+            {
+                "name": "Bangor Wheat",
+                "Lm": 0.02,
+                "Y": 6.0,
+                "cosA": 0.5,
+                "gsto": {
+                    "method": "photosynthesis",
+                    "fmin": 0.01,
+                    "Tleaf_method": "ambient",
+                    "f_SW_method": "fSWP linear",
+                    "SWP_min": -1.25,
+                    "SWP_max": -0.05,
+                    "fSWP_exp_curve": "temperate",
+                    "fSWP_exp_a": 0.355,
+                    "fSWP_exp_b": -0.706,
+                    "f_VPD_method": "linear",
+                    "VPD_min": 3.2,
+                    "VPD_max": 1.2,
+                    "VPD_crit": 8.0
+                },
+                "pn_gsto": {
+                    "D_0_method": "f_VPD",
+                    "g_sto_0": 20000.0,
+                    "m": 8.12,
+                    "V_cmax_25": 90.0,
+                    "J_max_25": 200.0,
+                    "p_crit": 24,
+                    "p_sens": 0,
+                    "t_b": 0,
+                    "t_o": 20,
+                    "t_m": 30,
+                    "K_z": 24,
+                    "F_0": 37,
+                    "leaf_phenology_method": "disabled",
+                    "R_d_coeff": 0.015
+                },
+                "phenology": {
+                    "key_dates": {
+                        "emergence": 118,
+                        "sowing": 71,
+                        "EGS": 210,
+                        "Astart": 153,
+                        "Aend": 208
+                    },
+                    "key_dates_td": {
+                        "emergence": 0
+                    },
+                    "key_lengths_leaf_td": {
+                        "tl": 2200,
+                        "tl_em": 1000,
+                        "tl_ma": 1200,
+                        "tl_se": 400,
+                        "tl_ep": 800
+                    },
+                    "key_lengths_td": {
+                        "sowing_to_end": 2200
+                    },
+                    "PRESET": "WHEAT_SPRING",
+                    "day_fphen_plf": {},
+                    "leaf_f_phen_method": "tt day PLF",
+                    "f_phen_method": "tt day PLF",
+                    "SAI_method": "LAI"
+                }
+            }
+        ],
+        "phenology_options": {
+            "plant_emerge_method": "constant",
+            "phenology_method": "season_fraction"
+        }
+    }
+}

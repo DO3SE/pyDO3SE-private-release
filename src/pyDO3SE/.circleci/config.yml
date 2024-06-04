@@ -1,0 +1,132 @@
+version: 2.1 # Use version 2.1 to enable orb usage.
+
+orbs:
+  win: circleci/windows@2.4.1 # The Windows orb give you everything you need to start using the Windows executor.
+
+jobs:
+  test:
+    docker:
+      - image: python:3.8
+    resource_class: medium
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: pip install -r requirements/common.txt && pip install -r requirements/test.txt && pip install vendor/proflow-0.3.5-py3-none-any.whl
+      - run:
+          name: test
+          command: pytest
+          environment:
+            TQUICK: true
+  build-exe:
+    executor:
+      name: win/default # executor type
+      size: "medium" # resource class
+    steps:
+      - checkout
+      - run:
+          name: Install python
+          command: choco install python --version=3.8.10
+      - run:
+          name: Install wheel
+          command: C:\python38\python.exe -m pip install wheel>=0.36.2
+      - run:
+          name: Install dependencies
+          command: C:\python38\python.exe -m pip install -r requirements/common.txt
+      - run:
+          name: Install pyinstaller
+          command: C:\python38\python.exe -m pip install pyinstaller
+      - run:
+          name: complie .exe using pyinstaller
+          command: C:\python38\python.exe -m PyInstaller --onefile -n pyDO3SE.exe --clean pyDO3SE/__main__.py
+      - persist_to_workspace:
+          root: dist
+          paths:
+            - pyDO3SE.exe
+  build-docs:
+    docker:
+      - image: python:3.8
+    resource_class: medium
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: pip install -r requirements/common.txt && pip install -r requirements/docs.txt
+      - run:
+          name: Install Pandoc with pyPandoc
+          command: python -c "from pypandoc.pandoc_download import download_pandoc; download_pandoc(version='2.5')"
+      - run:
+          name: Build docs
+          command: cd docs/ && make production
+      - attach_workspace:
+          at: dist
+      - run:
+          name: copy .exe file
+          command: cp dist/pyDO3SE.exe docs/_build/html/pyDO3SE.exe
+      - persist_to_workspace:
+          root: docs/_build
+          paths:
+            - html
+  deploy-docs:
+    docker:
+      - image: node:8.10.0
+    resource_class: medium
+    steps:
+      - checkout
+      - attach_workspace:
+          at: docs/_build
+      - run:
+          name: Disable jekyll builds
+          command: touch docs/_build/html/.nojekyll
+      - run:
+          name: Install and configure dependencies
+          command: |
+            npm install -g --silent gh-pages@2.0.1
+            git config user.email "sam.bland@sei.org"
+            git config user.name "ci-build"
+      - run:
+          name: Add index.php
+          command:  echo '<?php include_once("index.html"); ?>' > docs/_build/html/index.php
+      - run:
+          name: Add blank composer.json
+          command:  echo '{}' > docs/_build/html/composer.json
+      - run:
+          name: Deploy docs to gh-pages branch
+          command: gh-pages --dotfiles --message "[skip ci] Updates" --dist docs/_build/html --branch gh-pages-${CIRCLE_BRANCH}
+workflows:
+  version: 2
+  build:
+    jobs:
+      - test:
+          filters:
+            branches:
+              only:
+                - RELEASE
+                - master
+      - build-exe:
+          filters:
+            branches:
+              only:
+                - RELEASE
+                - master
+                - docs
+      - build-docs:
+          requires:
+            # - test
+            - build-exe
+          filters:
+            branches:
+              only:
+                - RELEASE
+                - master
+                - docs
+      - deploy-docs:
+          requires:
+            # - test
+            - build-docs
+          filters:
+            branches:
+              only:
+                - RELEASE
+                - master
+                - docs

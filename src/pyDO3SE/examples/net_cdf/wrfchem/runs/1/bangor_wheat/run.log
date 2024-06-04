@@ -1,0 +1,84 @@
+
+=========== 22/11/2021 12:49:04 =========
+22/11/2021 12:49:04	== Running config bangor_wheat.json ==
+22/11/2021 12:49:04	=== Initializing for: bangor_wheat.json ===
+22/11/2021 12:49:04	===== Setting up config =====
+22/11/2021 12:49:04	===== Setting up initial state =====
+22/11/2021 12:49:04	======= Copying State for each grid ===========
+22/11/2021 12:49:04	===== Completed setting up initial state =====
+22/11/2021 12:49:04	=== Initialization complete: bangor_wheat.json ===
+22/11/2021 12:49:04	== Running Model: Total File: 2 ===
+22/11/2021 12:49:04	==== Running file: cropped_wrfchem_demo_out_01_10_00.nc (1/2) =======
+22/11/2021 12:49:04	==== Running file: cropped_wrfchem_demo_out_01_10_01.nc (2/2) =======
+
+=========== 22/11/2021 12:49:21 =========
+22/11/2021 12:49:21	== Running config bangor_wheat.json ==
+22/11/2021 12:49:21	=== Initializing for: bangor_wheat.json ===
+22/11/2021 12:49:21	===== Setting up config =====
+22/11/2021 12:49:22	===== Setting up initial state =====
+22/11/2021 12:49:22	======= Copying State for each grid ===========
+22/11/2021 12:49:22	===== Completed setting up initial state =====
+22/11/2021 12:49:22	=== Initialization complete: bangor_wheat.json ===
+22/11/2021 12:49:22	== Running Model: Total File: 2 ===
+22/11/2021 12:49:22	==== Running file: cropped_wrfchem_demo_out_01_10_00.nc (1/2) =======
+22/11/2021 12:49:22	==== Running file: cropped_wrfchem_demo_out_01_10_01.nc (2/2) =======
+
+=========== 22/11/2021 12:50:14 =========
+22/11/2021 12:50:14	== Running config bangor_wheat.json ==
+22/11/2021 12:50:14	=== Initializing for: bangor_wheat.json ===
+22/11/2021 12:50:14	===== Setting up config =====
+22/11/2021 12:50:15	===== Setting up initial state =====
+22/11/2021 12:50:15	======= Copying State for each grid ===========
+22/11/2021 12:50:15	===== Completed setting up initial state =====
+22/11/2021 12:50:15	=== Initialization complete: bangor_wheat.json ===
+22/11/2021 12:50:15	== Running Model: Total File: 2 ===
+22/11/2021 12:50:15	==== Running file: cropped_wrfchem_demo_out_01_10_00.nc (1/2) =======
+22/11/2021 12:50:26	==== Running file: cropped_wrfchem_demo_out_01_10_01.nc (2/2) =======
+
+=========== 22/11/2021 12:51:13 =========
+
+=========== 22/11/2021 12:52:59 =========
+
+=========== 22/11/2021 12:53:07 =========
+22/11/2021 12:53:07	== Running config bangor_wheat.json ==
+22/11/2021 12:53:07	=== Initializing for: bangor_wheat.json ===
+22/11/2021 12:53:07	===== Setting up config =====
+22/11/2021 12:53:07	===== Setting up initial state =====
+22/11/2021 12:53:07	======= Copying State for each grid ===========
+22/11/2021 12:53:07	===== Completed setting up initial state =====
+22/11/2021 12:53:07	=== Initialization complete: bangor_wheat.json ===
+22/11/2021 12:53:07	== Running Model: Total File: 2 ===
+22/11/2021 12:53:07	==== Running file: cropped_wrfchem_demo_out_01_10_00.nc (1/2) =======
+22/11/2021 12:53:07	==== Running file: cropped_wrfchem_demo_out_01_10_01.nc (2/2) =======
+
+=========== 22/11/2021 12:53:13 =========
+22/11/2021 12:53:13	== Running config bangor_wheat.json ==
+22/11/2021 12:53:13	=== Initializing for: bangor_wheat.json ===
+22/11/2021 12:53:13	===== Setting up config =====
+22/11/2021 12:53:13	===== Setting up initial state =====
+22/11/2021 12:53:13	======= Copying State for each grid ===========
+22/11/2021 12:53:13	===== Completed setting up initial state =====
+22/11/2021 12:53:13	=== Initialization complete: bangor_wheat.json ===
+22/11/2021 12:53:13	== Running Model: Total File: 2 ===
+22/11/2021 12:53:13	==== Running file: cropped_wrfchem_demo_out_01_10_00.nc (1/2) =======
+22/11/2021 12:53:13	==== Running file: cropped_wrfchem_demo_out_01_10_01.nc (2/2) =======
+
+=========== 22/11/2021 12:53:57 =========
+
+=========== 22/11/2021 12:55:09 =========
+22/11/2021 12:55:09	== Running config bangor_wheat.json ==
+22/11/2021 12:55:09	=== Initializing for: bangor_wheat.json ===
+22/11/2021 12:55:09	===== Setting up config =====
+22/11/2021 12:55:09	===== Setting up initial state =====
+22/11/2021 12:55:09	======= Copying State for each grid ===========
+22/11/2021 12:55:09	===== Completed setting up initial state =====
+22/11/2021 12:55:09	=== Initialization complete: bangor_wheat.json ===
+22/11/2021 12:55:09	== Running Model: Total File: 2 ===
+22/11/2021 12:55:09	==== Running file: cropped_wrfchem_demo_out_01_10_00.nc (1/2) =======
+22/11/2021 12:55:09	Running coord (0, 0)
+22/11/2021 12:55:09	Running coord (2, 0)
+22/11/2021 12:55:09	Running coord (2, 1)
+22/11/2021 12:55:09	==== Running file: cropped_wrfchem_demo_out_01_10_01.nc (2/2) =======
+22/11/2021 12:55:09	Running coord (0, 0)
+22/11/2021 12:55:09	Running coord (2, 0)
+22/11/2021 12:55:09	Running coord (2, 1)

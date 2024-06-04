@@ -1,0 +1,122 @@
+{
+    "COMMENT": "Multiplicative Demo",
+    "VERSION": 10,
+    "Met": {
+        "td_base_temperature": 0,
+        "inputs": {
+            "co2_method": "constant",
+            "co2_constant": 391.0,
+            "hd_method": "skip",
+            "LAI_method": "input"
+        }
+    },
+    "Location": {
+        "lat": 40.43,
+        "lon": -3.7,
+        "elev": 20.0,
+        "albedo": 0.2,
+        "z_O3": 50.0,
+        "z_u": 10.0,
+        "Rsoil": 200
+    },
+    "soil_moisture": {
+        "soil_texture": "loam",
+        "soil": {
+            "b": null,
+            "fc": null,
+            "swp_ae": null,
+            "ksat": null
+        },
+        "root": 0.75,
+        "pwp": -4.0,
+        "asw_fc": null,
+        "source": "P-M",
+        "initial_swc": null
+    },
+    "Land_Cover": {
+        "height_method": "constant",
+        "LAI_method": "constant",
+        "sai_method": "estimate total",
+        "LAI": 3,
+        "flai": [
+            [
+                1.0
+            ]
+        ],
+        "parameters": [
+            {
+                "name": "Spanish Wheat",
+                "height": 1.0,
+                "Lm": 0.02,
+                "Y": 6.0,
+                "cosA": 0.5,
+                "gsto": {
+                    "method": "multiplicative",
+                    "fmin": 0.01,
+                    "Tleaf_method": "ambient",
+                    "f_SW_method": "fSWP linear",
+                    "SWP_min": -1.25,
+                    "SWP_max": -0.05,
+                    "fSWP_exp_curve": "temperate",
+                    "fSWP_exp_a": 0.355,
+                    "fSWP_exp_b": -0.706,
+                    "f_VPD_method": "linear",
+                    "VPD_min": 3.2,
+                    "VPD_max": 1.2,
+                    "VPD_crit": 8.0
+                },
+                "multip_gsto": {
+                    "gmax": 450.0,
+                    "gmorph": 1.0,
+                    "f_phen_lima": null,
+                    "f_phen_limb": null,
+                    "f_light_method": "enabled",
+                    "f_lightfac": 0.01,
+                    "f_temp_method": "default",
+                    "T_min": 12,
+                    "T_opt": 26,
+                    "T_max": 40,
+                    "f_O3_method": "wheat"
+                },
+                "phenology": {
+                    "key_dates": {
+                        "sowing": 100,
+                        "emergence": 118,
+                        "EGS": 210,
+                        "Astart": 153,
+                        "Aend": 208
+                    },
+                    "key_dates_td": {},
+                    "key_lengths_leaf_td": {},
+                    "key_lengths_td": {},
+                    "LAI_a": 3.0,
+                    "LAI_b": 3.0,
+                    "LAI_c": 3.0,
+                    "LAI_d": 3.0,
+                    "LAI_1": 21,
+                    "LAI_2": 21,
+                    "SAI_method": "wheat",
+                    "PRESET": "WHEAT_SPRING",
+                    "day_fphen_plf": {
+                        "f_phen_a": 0.1,
+                        "f_phen_c": 1.0,
+                        "f_phen_e": 0.1,
+                        "f_phen_1": 0,
+                        "f_phen_4": 45,
+                        "leaf_f_phen_a": 0.8,
+                        "leaf_f_phen_b": 1.0,
+                        "leaf_f_phen_c": 0.2,
+                        "leaf_f_phen_1": 15,
+                        "leaf_f_phen_2": 40
+                    },
+                    "f_phen_method": "simple day PLF",
+                    "leaf_f_phen_method": "day PLF"
+                }
+            }
+        ],
+        "phenology_options": {
+            "plant_emerge_method": "fphen",
+            "phenology_method": "fphen_julian_days"
+        }
+    }
+}
