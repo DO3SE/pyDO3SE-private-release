@@ -1,0 +1,28 @@
+_build/
+_build_*
+# Office Docs
+*.tmp
+
+# Word temporary
+~$*.doc*
+~$*.htm*
+~$*.mht*
+
+# Word Auto Backup File
+Backup of *.doc*
+
+# Excel temporary
+~$*.xls*
+
+# Excel Backup File
+*.xlk
+
+# PowerPoint temporary
+~$*.ppt*
+
+# Visio autosave temporary files
+*.~vsd*
+
+
+.docx#
+~$*s
