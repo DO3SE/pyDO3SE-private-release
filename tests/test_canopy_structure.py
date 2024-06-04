@@ -74,13 +74,21 @@ def test_SAI_wheat():
 
 
 def test_calc_distribution_of_LAI_between_lcs():
+    nL = 2
+    nLC = 3
     lai_values = [[1, 2, 3], [4, 5, 6]]
-    LC_dist = calc_distribution_of_LAI_between_lcs(lai_values, 2, 3)
+    assert np.array(lai_values).shape == (nL, nLC)
+    LC_dist = calc_distribution_of_LAI_between_lcs(lai_values, nL, nLC)
     assert LC_dist == [5 / 21, 7 / 21, 9 / 21]
+    assert len(LC_dist) == nLC
 
+    nL = 1
+    nLC = 1
     lai_values = [[3.16]]
-    LC_dist = calc_distribution_of_LAI_between_lcs(lai_values, 1, 1)
+    LC_dist = calc_distribution_of_LAI_between_lcs(lai_values, nL, nLC)
     assert LC_dist == [1.0]
+    assert len(LC_dist) == nLC
+
 
 
 def test_LAI_method_estimate_total():
