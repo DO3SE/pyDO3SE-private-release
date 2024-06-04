@@ -14,7 +14,7 @@ git checkout --orphan RELEASE
 git commit -m "RELEASE"
 git push --force --set-upstream origin RELEASE
 git push --tags
-git checkout master
+git checkout main
 
 if [ -z "$(git status --porcelain)" ]; then
   echo "Working directory clean"
