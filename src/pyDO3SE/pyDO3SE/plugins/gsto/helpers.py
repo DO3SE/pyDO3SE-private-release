@@ -573,6 +573,11 @@ def f_PAW(
 
     with a linear relationship based on available soil water (ASW).
 
+
+    (Bueker et al 2012)
+    2.5.2 Plant available water method (PAW)
+    In this approach fSW is assumed to be related to PAW (where PAW=FC-PAWmin)...
+
     Parameters
     ----------
     ASW_FC : float
@@ -585,7 +590,14 @@ def f_PAW(
     Returns
     -------
     f_PAW: float
-        [description]
+        soil water effect on stomatal conductance
+
+
+    References
+    ----------
+    Bueker et al (2012)
+
+
     """
     f_PAW_val = fmin + (1 - fmin) * ((100 * (ASW / ASW_FC)) - ASW_min) / (ASW_max - ASW_min)
     f_PAW_out = min(1.0, max(fmin, f_PAW_val))

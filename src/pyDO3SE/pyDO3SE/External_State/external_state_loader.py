@@ -1,5 +1,6 @@
 import csv
 import os
+import numpy as np
 from copy import deepcopy
 import warnings
 import re
@@ -132,7 +133,8 @@ def process_csv_data(
                        #    header=0
                        )
     data_filtered = data.drop(ignore_fields, axis=1)
-    data_out = data_filtered.to_dict('list')
+    data_remove_nans = data_filtered.replace({np.nan: None})
+    data_out = data_remove_nans.to_dict('list')
     return data_out
 
 

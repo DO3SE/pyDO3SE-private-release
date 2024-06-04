@@ -381,7 +381,7 @@ class Canopy_Layer_Component_State:
 
     #:   Multiplicative stomatal conductance parameters
     #: TODO: Move these to canopy component and population
-    gsto_params: Multip_Gsto_params = Multip_Gsto_params()
+    gsto_params: Multip_Gsto_params = field(default_factory= lambda: Multip_Gsto_params())
 
     FO3_eff: float = 0.0           #: (Accumulated) effective ozone dose [nmol O3 m-2 PLA]
 
@@ -390,8 +390,8 @@ class Canopy_Layer_Component_State:
     bulk_gsto: float = None        #: layer total stomatal conductance [mmol O3 m-2 PLA s-1]
 
     #: Fraction of each population that makes up the layer
-    fLAI_layer: List[float] = field(default_factory=lambda: field(default_factory=lambda: np.zeros(
-        settings.global_settings.MAX_NUM_OF_LEAF_POPULATIONS)))
+    fLAI_layer: List[float] = field(default_factory=lambda: np.zeros(
+        settings.global_settings.MAX_NUM_OF_LEAF_POPULATIONS))
 
 
 @dataclass(frozen=False)

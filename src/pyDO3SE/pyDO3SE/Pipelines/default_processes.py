@@ -912,8 +912,8 @@ def distribute_lai_per_layer_processes(
                 I(config.Land_Cover.nLC, as_='nLC'),
             ],
             state_inputs=lambda state: [
-                I([[state.canopy_layer_component[jL][jLC].LAI for jLC in range(nLC)]
-                   for jL in range(nL)], as_='LAI_values')
+                I([[state.canopy_layer_component[jL][jLC].LAI for jL in range(nL)]
+                for jLC in range(nLC)], as_='LAI_values')
             ],
             state_outputs=lambda result, iLC=iLC: [
                 (result[iLC], f'canopy_component.{iLC}.LC_dist')
