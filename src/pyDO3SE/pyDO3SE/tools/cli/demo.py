@@ -5,20 +5,21 @@ import click
 from datetime import datetime
 from pyDO3SE import version
 from pyDO3SE import main
+from pyDO3SE.Output.OutputConfig import OutputOptions, output_results_only_options
 
 
 @click.command()
 @click.option('--verbose', default=False, help='Run full logging output')
 @click.option('--runid', default='0', help='Set a run id for output naming')
 @click.option('--runnotes', default='', help='Add a note to the run')
-def run(verbose=False, runid=0, runnotes='Demo run'):
+@click.option('--example-dir', default="./examples/demo", help='The path to the example directory', type=click.Path(exists=True))
+def run(verbose=False, runid=0, runnotes='Demo run', example_dir=None):
     """Run pyDO3SE in demo mode with example inputs and config."""
     click.echo("Running pyDO3SE in demo mode")
 
-    demo_config = "./examples/demo/configs/demo_config.json"
-    demo_data = "./examples/demo/inputs/demo_data.csv"
-    demo_output_dir = f"./examples/demo/outputs/{runid or version}"
-    log_level = 1 if verbose else 0
+    demo_config = f"{example_dir}/configs/demo_config.json"
+    demo_data = f"{example_dir}/inputs/demo_data.csv"
+    demo_output_dir = f"{example_dir}/outputs/{runid or version}"
 
     # Create output dir
     os.makedirs(demo_output_dir, exist_ok=True)
@@ -26,19 +27,20 @@ def run(verbose=False, runid=0, runnotes='Demo run'):
     # Copy config to this directory
     copyfile(demo_config, f'{demo_output_dir}/config.json')
 
-    output_fields_to_graph = ['gsto_l', 'A_n']
+    output_fields_to_graph = ",".join(['gsto_l', 'A_n'])
 
-    final_state, output_logs, config_processed, initial_state, external_state = main.main(
-        demo_config,
-        demo_data,
-        demo_output_dir,
-        output_fields=output_fields_to_graph,
+    main.single(
+        config_file=demo_config,
+        data_file=demo_data,
+        output_directory=demo_output_dir,
+        verbose=verbose,
         runid=runid,
+        plot_fields=output_fields_to_graph,
         runnotes=runnotes,
-        log_level=log_level,
-        start_day=1,
-        end_day=365,
-        debug=True,
+        output_options=OutputOptions(
+            save_model_processes=True,
+            save_model_processes_detailed=True,
+        ),
     )
 
     click.echo("Complete!")
