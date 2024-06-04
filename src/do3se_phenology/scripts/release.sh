@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-MAIN_BRANCH="master"
+MAIN_BRANCH="main"
 
 [ -z "$1" ] && echo "make sure to input [patch|minor|major]" && exit 1;
 source venv/bin/activate

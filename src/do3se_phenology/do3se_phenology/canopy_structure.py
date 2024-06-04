@@ -330,7 +330,7 @@ def calc_distribution_of_LAI_between_lcs(
     Parameters
     ----------
     LAI_values : List[List[float]]
-        LAI per layer per component, shape (nL, nLC)
+        LAI per layer per component, shape (nLC, nL)
     nL : int
         Number of layers
     nLC : int
@@ -344,14 +344,15 @@ def calc_distribution_of_LAI_between_lcs(
     """
     LAI_values_np = np.array(LAI_values)
     LAI_total = np.sum(LAI_values_np)
-    assert len(LAI_values) == nL, "LAI_values length not equal to nL"
-    assert len(LAI_values[0]) == nLC, "LAI_values[0] length not equal to nLC"
+    assert len(LAI_values) == nLC, f"LAI_values[0] length not equal to nLC got {len(LAI_values)}"
+    assert len(LAI_values[0]) == nL, f"LAI_values length not equal to nL, got {len(LAI_values[0])}"
     if LAI_total <= 0.0:
-        LC_dist = [1.0 / (nL * nLC) for i in range(nLC)]
+        LC_dist = [nL / (nL * nLC) for i in range(nLC)]
     else:
         # fraction of component total LAI over total LAI
-        LAI_total_component = np.sum(LAI_values_np, 0)
+        LAI_total_component = np.sum(LAI_values_np, 1)
         LC_dist = [lai / LAI_total for lai in LAI_total_component]
+    assert len(LC_dist) == nLC, f"LC_dist length not equal to nLC, got {len(LC_dist)}"
     return LC_dist
 
 
