@@ -10,7 +10,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyDO3SE4",
-    version="4.39.17",
+    version="4.39.20",
     author="SEI-York",
     author_email="sam.bland@york.ac.uk",
     description="DO3SE model python API",
