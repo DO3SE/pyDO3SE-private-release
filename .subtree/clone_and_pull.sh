@@ -17,12 +17,14 @@ BRANCH=$2
 # TODO: Might need to use release branch
 # TODO: Fix if statement
 if [[ "$1" == "clone" ]]; then
+  echo "Cloning"
   git subtree add --prefix $PYDO3SE_LOCAL_PATH $PYDO3SE_REMOTE $BRANCH --squash
   git subtree add --prefix $THERMAL_TIME_LOCAL_PATH $THERMAL_TIME_REMOTE $BRANCH --squash
   git subtree add --prefix $DO3SE_PHENOLOGY_LOCAL_PATH $DO3SE_PHENOLOGY_REMOTE $BRANCH --squash
   git subtree add --prefix $DO3SE_MET_LOCAL_PATH $DO3SE_MET_REMOTE $BRANCH --squash
 fi
 if [[ "$1" == "pull" ]]; then
+  echo "Pulling"
   # Update subtree
   git subtree pull --prefix $PYDO3SE_LOCAL_PATH $PYDO3SE_REMOTE $BRANCH --squash
   git subtree pull --prefix $THERMAL_TIME_LOCAL_PATH $THERMAL_TIME_REMOTE $BRANCH --squash
