@@ -1,0 +1,47 @@
+h1 {
+  font-size: 250%;
+  color: grey;
+}
+h2 {
+  font-size: 200%;
+  color: rgb(112, 182, 134);
+}
+h3 {
+  font-size: 150%;
+  color: rgb(63, 186, 102);
+}
+
+h4 {
+  /* font-size: 150%; */
+  color: rgb(63, 180, 186);
+}
+
+h5 {
+  /* font-size: 150%; */
+  color: rgb(19, 90, 42);
+}
+
+.section {
+  padding-left: 0.5rem;
+  border-left: 1px solid grey;
+  border-top: 1px solid grey;
+}
+
+.section .section {
+  border-left: 2px solid rgb(112, 182, 134);
+  border-top: 2px solid rgb(112, 182, 134);
+}
+
+.section .section .section {
+  border-left: 3px solid rgb(63, 186, 102);
+  border-top: 3px solid rgb(63, 186, 102);
+}
+
+.section .section .section .section {
+  border-left: 3px solid rgb(63, 180, 186);
+  border-top: None;
+}
+
+.section .section .section .section .section {
+  border-left: 1px solid rgb(19, 90, 42);
+}

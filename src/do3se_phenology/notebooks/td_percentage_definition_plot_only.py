@@ -1,0 +1,110 @@
+# %%
+from do3se_phenology.config import PhenologyMethods, PhenologyKeyLengths, PhenologyKeyDates, SpeciesConfig, ModelConfig
+from do3se_phenology.plots import plot_phenology_from_config
+from notebook_utils.widgets import *
+
+@interact_plus_reset(
+    PIV=widgets.FloatSlider(min=0, max=1, value= 0.0556, step=0.01),
+    v_T_max=widgets.FloatSlider(min=0, max=1, value= 23.8459, step=0.01),
+    v_T_min=widgets.FloatSlider(min=0, max=1, value= 3.8413, step=0.01),
+    f_phen_min=widgets.FloatSlider(min=0, max=1, value= 0, step=0.01),
+    leaf_f_phen_a=widgets.FloatSlider(min=0, max=1, value= 0.3, step=0.01),
+    leaf_f_phen_b=widgets.FloatSlider(min=0, max=1, value= 0.7, step=0.01),
+    f_Astart=widgets.FloatSlider(min=0, max=1, value= 0.56, step=0.01),
+    f_mid_anthesis=widgets.FloatSlider(min=0, max=1, value= 0.62, step=0.01),
+    f_fphen_1_ets=widgets.FloatSlider(min=0, max=1, value= 0.08, step=0.01),
+    f_fphen_3_ets=widgets.FloatSlider(min=0, max=1, value= 0.05, step=0.01),
+    f_fphen_4_ets=widgets.FloatSlider(min=0, max=1, value= 0.22, step=0.01),
+    f_fphen_5_ets=widgets.FloatSlider(min=0, max=1, value= 0.36, step=0.01),
+    f_t_lem=widgets.FloatSlider(min=0, max=1, value= 0.14, step=0.01),
+    f_t_lma=widgets.FloatSlider(min=0, max=1, value= 0.46, step=0.01),
+    f_t_lep=widgets.FloatSlider(min=0, max=1, value= 0.31, step=0.01),
+    f_t_lse=widgets.FloatSlider(min=0, max=1, value= 0.15, step=0.01),
+    f_t_lse_mature=widgets.FloatSlider(min=0, max=1, value= 0.33, step=0.01),
+    f_fphen_a=widgets.FloatSlider(min=0, max=1, value= 0.05, step=0.01),
+    f_fphen_b=widgets.FloatSlider(min=0, max=1, value= 0.2, step=0.01),
+    f_fphen_c=widgets.FloatSlider(min=0, max=1, value= 0.62, step=0.01),
+    # f_fphen_d=widgets.FloatSlider(min=0, max=1, value= 1.0, step=0.01),
+    f_tt_emr=widgets.FloatSlider(min=0, max=1, value= 0.05, step=0.01),
+    f_tt_veg=widgets.FloatSlider(min=0, max=1, value= 0.38, step=0.01),
+    f_tt_rep=widgets.FloatSlider(min=0, max=1, value= 0.57, step=0.01),
+    f_leaf_f_fphen=widgets.FloatSlider(min=0, max=1, value= 0.44, step=0.01),
+)
+
+def get_plot(
+    PIV,
+    v_T_max,
+    v_T_min,
+    f_phen_min,
+    leaf_f_phen_a,
+    leaf_f_phen_b,
+    f_Astart,
+    f_mid_anthesis,
+    f_fphen_1_ets,
+    f_fphen_3_ets,
+    f_fphen_4_ets,
+    f_fphen_5_ets,
+    f_t_lem,
+    f_t_lma,
+    f_t_lep,
+    f_t_lse,
+    f_t_lse_mature,
+    f_fphen_a,
+    f_fphen_b,
+    f_fphen_c,
+    # f_fphen_d,
+    f_tt_emr,
+    f_tt_veg,
+    f_tt_rep,
+    f_leaf_f_fphen,
+):
+    species_config = SpeciesConfig(
+        key_dates= PhenologyKeyDates(
+        sowing=0,
+        ),
+        key_lengths_td= PhenologyKeyLengths(
+            sowing_to_end= 1082,
+        ),
+        SAI_method= "LAI_BROWN_GREEN",
+        PRESET= "WHEAT_SPRING",
+        day_fphen_plf= {},
+        leaf_f_phen_method= "tt day PLF",
+        f_phen_method= "tt day PLF",
+        PIV=PIV,
+        v_T_max=v_T_max,
+        v_T_min=v_T_min,
+        f_phen_min=f_phen_min,
+        leaf_f_phen_a=leaf_f_phen_a,
+        leaf_f_phen_b=leaf_f_phen_b,
+        f_Astart=f_Astart,
+        f_mid_anthesis=f_mid_anthesis,
+        f_fphen_1_ets=f_fphen_1_ets,
+        f_fphen_3_ets=f_fphen_3_ets,
+        f_fphen_4_ets=f_fphen_4_ets,
+        f_fphen_5_ets=f_fphen_5_ets,
+        f_t_lem=f_t_lem,
+        f_t_lma=f_t_lma,
+        f_t_lep=f_t_lep,
+        f_t_lse=f_t_lse,
+        f_t_lse_mature=f_t_lse_mature,
+        f_fphen_a=f_fphen_a,
+        f_fphen_b=f_fphen_b,
+        f_fphen_c=f_fphen_c,
+        f_fphen_d=1.0,
+        f_tt_emr=f_tt_emr,
+        f_tt_veg=f_tt_veg,
+        f_tt_rep=f_tt_rep,
+        f_leaf_f_fphen=f_leaf_f_fphen,
+    )
+
+    model_config = ModelConfig(
+        phenology_method=PhenologyMethods.SEASON_FRACTION,
+    )
+
+    nP = 1
+    plot_phenology_from_config(
+        species_config,
+        model_config,
+        nP=nP,
+        logger=lambda *args, **kwargs: None,
+    )
