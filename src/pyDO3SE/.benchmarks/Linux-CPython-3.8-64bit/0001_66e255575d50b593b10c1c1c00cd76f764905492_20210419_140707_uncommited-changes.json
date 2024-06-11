@@ -1,0 +1,186 @@
+{
+    "machine_info": {
+        "node": "UOY20X364",
+        "processor": "x86_64",
+        "machine": "x86_64",
+        "python_compiler": "GCC 9.3.0",
+        "python_implementation": "CPython",
+        "python_implementation_version": "3.8.5",
+        "python_version": "3.8.5",
+        "python_build": [
+            "default",
+            "Jul 28 2020 12:59:40"
+        ],
+        "release": "4.19.128-microsoft-standard",
+        "system": "Linux",
+        "cpu": {
+            "vendor_id": "unknown",
+            "hardware": "unknown",
+            "brand": "unknown"
+        }
+    },
+    "commit_info": {
+        "id": "66e255575d50b593b10c1c1c00cd76f764905492",
+        "time": "2021-04-19T14:13:03+01:00",
+        "author_time": "2021-04-19T14:13:03+01:00",
+        "dirty": true,
+        "project": "pyDO3SE",
+        "branch": "implement-alt-vpd"
+    },
+    "benchmarks": [
+        {
+            "group": null,
+            "name": "test_demo_run_short_multi_benchmark[demodata.csv-b.json]",
+            "fullname": "tests/test_short_profile_tests.py::test_demo_run_short_multi_benchmark[demodata.csv-b.json]",
+            "params": {
+                "input_file": "demodata.csv",
+                "config_file": "b.json"
+            },
+            "param": "demodata.csv-b.json",
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.4363493999999264,
+                "max": 0.9822945000005348,
+                "mean": 0.6523603400000866,
+                "stddev": 0.29402159713020937,
+                "rounds": 5,
+                "median": 0.4384448999999222,
+                "iqr": 0.5326659000004383,
+                "q1": 0.43776487499985706,
+                "q3": 0.9704307750002954,
+                "iqr_outliers": 0,
+                "stddev_outliers": 2,
+                "outliers": "2;0",
+                "ld15iqr": 0.4363493999999264,
+                "hd15iqr": 0.9822945000005348,
+                "ops": 1.5328951481015343,
+                "total": 3.261801700000433,
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test_demo_run_short_multi_benchmark[demodata.csv-c.json]",
+            "fullname": "tests/test_short_profile_tests.py::test_demo_run_short_multi_benchmark[demodata.csv-c.json]",
+            "params": {
+                "input_file": "demodata.csv",
+                "config_file": "c.json"
+            },
+            "param": "demodata.csv-c.json",
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.4211238999996567,
+                "max": 1.1053065999994942,
+                "mean": 0.7004922999998598,
+                "stddev": 0.34195443242226814,
+                "rounds": 5,
+                "median": 0.467943099999502,
+                "iqr": 0.603185399999802,
+                "q1": 0.45474407500023517,
+                "q3": 1.0579294750000372,
+                "iqr_outliers": 0,
+                "stddev_outliers": 1,
+                "outliers": "1;0",
+                "ld15iqr": 0.4211238999996567,
+                "hd15iqr": 1.1053065999994942,
+                "ops": 1.4275674407844314,
+                "total": 3.502461499999299,
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test_demo_run_short_multi_benchmark[demodata.csv-d.json]",
+            "fullname": "tests/test_short_profile_tests.py::test_demo_run_short_multi_benchmark[demodata.csv-d.json]",
+            "params": {
+                "input_file": "demodata.csv",
+                "config_file": "d.json"
+            },
+            "param": "demodata.csv-d.json",
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.4236938000003647,
+                "max": 0.9944657000005463,
+                "mean": 0.6914565200002472,
+                "stddev": 0.2658428086355986,
+                "rounds": 5,
+                "median": 0.5528853999994681,
+                "iqr": 0.46898730000020805,
+                "q1": 0.500115425000331,
+                "q3": 0.9691027250005391,
+                "iqr_outliers": 0,
+                "stddev_outliers": 3,
+                "outliers": "3;0",
+                "ld15iqr": 0.4236938000003647,
+                "hd15iqr": 0.9944657000005463,
+                "ops": 1.44622253326882,
+                "total": 3.4572826000012356,
+                "iterations": 1
+            }
+        },
+        {
+            "group": null,
+            "name": "test_demo_run_short_multi_benchmark[demodata.csv-a.json]",
+            "fullname": "tests/test_short_profile_tests.py::test_demo_run_short_multi_benchmark[demodata.csv-a.json]",
+            "params": {
+                "input_file": "demodata.csv",
+                "config_file": "a.json"
+            },
+            "param": "demodata.csv-a.json",
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.4703177000001233,
+                "max": 1.2235952000000907,
+                "mean": 0.7391194600000744,
+                "stddev": 0.35758478609618005,
+                "rounds": 5,
+                "median": 0.5036771000004592,
+                "iqr": 0.597558149999486,
+                "q1": 0.47471277500017095,
+                "q3": 1.072270924999657,
+                "iqr_outliers": 0,
+                "stddev_outliers": 1,
+                "outliers": "1;0",
+                "ld15iqr": 0.4703177000001233,
+                "hd15iqr": 1.2235952000000907,
+                "ops": 1.3529612655576668,
+                "total": 3.6955973000003723,
+                "iterations": 1
+            }
+        }
+    ],
+    "datetime": "2021-04-19T14:11:26.591034",
+    "version": "3.2.3"
+}

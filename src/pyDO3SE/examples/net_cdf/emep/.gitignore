@@ -1,0 +1,10 @@
+# Limit the number of state files we store in git
+
+**/state*/**/*_[3-9]*
+**/state*/**/*_[0-9][0-9]_*
+
+**/state*/**/*_[0-9]_[3-9][0-9]*
+**/state*/**/*_[0-9]_[0-9][0-9]*
+
+# Ignore NetCDF files as too large for git
+*.nc

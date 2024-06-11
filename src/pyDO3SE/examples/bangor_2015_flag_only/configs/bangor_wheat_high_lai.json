@@ -1,0 +1,7 @@
+{
+    "COMMENT": "Bangor Wheat High LAI run",
+    "VERSION": 12,
+    "Land_Cover": {
+        "LAI": 10
+    }
+}

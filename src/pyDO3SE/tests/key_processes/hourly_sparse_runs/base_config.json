@@ -1,0 +1,127 @@
+{
+    "COMMENT": "Base",
+    "Location": {
+        "elev": 10,
+        "albedo": 0.16,
+        "lat": 55.8,
+        "lon": 3.2,
+        "h_O3": 1.0,
+        "h_u": 1.0,
+        "z_O3": 2,
+        "Rsoil": 200,
+        "z_u": 2,
+        "multi_season": true,
+        "multi_season_day": 364
+    },
+    "output": {},
+    "Met": {
+        "thermal_time_method": "SKIP",
+        "inputs": {
+            "year_method": "input",
+            "mm_method": "input",
+            "dom_method": "input",
+            "dd_method": "calculated",
+            "hr_method": "calculated",
+            "O3_method": "input",
+            "CO2_method": "input",
+            "CO2_fillna": 360,
+            "Hd_method": "input",
+            "PAR_method": "input",
+            "PAR_fillna": 0,
+            "P_fillna": 100,
+            "RH_method": "input",
+            "VPD_method": "calculated",
+            "SWC_method": "input",
+            "P_method": "input",
+            "fphen_method": "constant",
+            "fphen_constant": 1,
+            "leaffphen_method": "constant",
+            "leaffphen_constant": 1,
+            "td_method": "skip",
+            "LAI_method": "input",
+            "LAI_fillna": 0,
+            "h_method": "input",
+            "h_fillna": 0,
+            "u_fillna": 0,
+            "O3_fillna": 0,
+            "SWC_fillna": 1,
+            "ustar_ref_method": "input",
+            "ustar_ref_fillna": 1,
+            "precip_method": "skip"
+        }
+    },
+    "VERSION": 12,
+    "resistance": {
+        "rsur_calc_method": "single_layer",
+        "rext_calc_method": "const"
+    },
+    "soil_moisture": {
+        "soil_texture": "loam",
+        "root": 1,
+        "PWP": -1.3,
+        "asw_fc": null,
+        "source": "external input SWC",
+        "initial_swc": null
+    },
+    "Land_Cover": {
+        "height_method": "input",
+        "LAI_method": "input hourly",
+        "SAI_method": "estimate total",
+        "flai": [
+            [
+                1.0
+            ]
+        ],
+        "layer_height_frac": [
+            1.0
+        ],
+        "parameters": [
+            {
+                "PRESET": "WHEAT_SPRING",
+                "Lm": 0.07,
+                "Y": 6.0,
+                "cosA": 0.5,
+                "gsto": {
+                    "method": "multiplicative",
+                    "Lm": 0.02,
+                    "day_fphen_plf": {},
+                    "leaf_f_phen_method": "input",
+                    "f_phen_method": "input",
+                    "SAI_method": "LAI_max",
+                    "fmin": 0.13,
+                    "Tleaf_method": "ambient",
+                    "f_SW_method": "fSWP linear",
+                    "SWP_min": -1.3,
+                    "SWP_max": -0.55,
+                    "fSWP_exp_curve": "temperate",
+                    "fSWP_exp_a": 0.355,
+                    "fSWP_exp_b": -0.706,
+                    "f_VPD_method": "linear",
+                    "VPD_max": 0.93,
+                    "VPD_min": 3.4,
+                    "VPD_crit": 8.0
+                },
+                "multip_gsto": {
+                    "gmax": 134,
+                    "gmorph": 1.0,
+                    "f_phen_lima": null,
+                    "f_phen_limb": null,
+                    "f_light_method": "enabled",
+                    "f_lightfac": 0.006,
+                    "f_temp_method": "default",
+                    "T_min": 6,
+                    "T_opt": 20,
+                    "T_max": 34,
+                    "f_O3_method": "disabled"
+                },
+                "pn_gsto": {
+                    "senescence_method": "anet"
+                }
+            }
+        ],
+        "phenology_options": {
+            "plant_emerge_method": "fphen",
+            "phenology_method": "disabled"
+        }
+    }
+}

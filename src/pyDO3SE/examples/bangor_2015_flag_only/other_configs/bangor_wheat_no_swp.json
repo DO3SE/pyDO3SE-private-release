@@ -1,0 +1,27 @@
+{
+    "COMMENT": "Bangor Wheat Demo no SWP",
+    "Met": {
+        "inputs": {
+            "SWC_method": "skip"
+        }
+    },
+    "VERSION": 12,
+    "soil_moisture": {
+        "source": "disabled"
+    },
+    "Land_Cover": {
+        "SAI": 4.28571414947509,
+        "flai": [
+            [
+                1.0
+            ]
+        ],
+        "parameters": [
+            {
+                "gsto": {
+                    "f_SW_method": "disabled"
+                }
+            }
+        ]
+    }
+}
