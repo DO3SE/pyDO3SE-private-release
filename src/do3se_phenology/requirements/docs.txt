@@ -1,0 +1,5 @@
+sphinx
+pypandoc
+rst2pdf
+pandocfilters
+sphinx-rtd-theme
