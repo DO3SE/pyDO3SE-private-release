@@ -1,0 +1,132 @@
+{
+    "COMMENT": "Photosynthesis Belgium",
+    "Met": {
+        "inputs": {
+            "co2_method": "constant",
+            "co2_constant": 391.0,
+            "PPFD_method": "input",
+            "PAR_method": "calculated",
+            "Tleaf_C_method": "input"
+        }
+    },
+    "Location": {
+        "lat": 50.5,
+        "lon": 4.47,
+        "elev": 320,
+        "albedo": 0.2,
+        "z_O3": 1.0,
+        "z_u": 1.0,
+        "Rsoil": 200
+    },
+    "soil_moisture": {
+        "soil_texture": "loam",
+        "soil": {
+            "b": null,
+            "fc": null,
+            "swp_ae": null,
+            "ksat": null
+        },
+        "root": 0.75,
+        "pwp": -4.0,
+        "asw_fc": null,
+        "source": "P-M",
+        "initial_swc": null
+    },
+    "Land_Cover": {
+        "height_method": "constant",
+        "LAI_method": "constant",
+        "SAI_method": "constant",
+        "LAI": 3,
+        "SAI": 4,
+        "flai": [
+            [
+                1.0
+            ]
+        ],
+        "parameters": [
+            {
+                "name": "Spanish Wheat",
+                "height": 1.0,
+                "Lm": 0.02,
+                "Y": 6.0,
+                "cosA": 0.5,
+                "gsto": {
+                    "Tleaf_method": "input",
+                    "method": "photosynthesis",
+                    "fmin": 0.01,
+                    "f_SW_method": "disabled",
+                    "SWP_min": -1.25,
+                    "SWP_max": -0.05,
+                    "fSWP_exp_curve": "temperate",
+                    "fSWP_exp_a": 0.355,
+                    "fSWP_exp_b": -0.706,
+                    "f_VPD_method": "danielsson",
+                    "VPD_min": 3.2,
+                    "VPD_max": 1.2,
+                    "VPD_crit": 8.0
+                },
+                "multip_gsto": {},
+                "pn_gsto": {
+                    "senescence_method": "ewert",
+                    "D_0_method": "constant",
+                    "D_0": 2.7,
+                    "g_sto_0": 20000.0,
+                    "m": 8.12,
+                    "V_cmax_25": 90,
+                    "J_max_25": 180,
+                    "p_crit": 24,
+                    "p_sens": 0,
+                    "t_b": 0,
+                    "t_o": 20,
+                    "t_m": 30,
+                    "K_z": 24,
+                    "F_0": 37,
+                    "phenology_method": "disabled",
+                    "use_O3_damage": false,
+                    "leaf_f_phen_Anet_influence": null,
+                    "R_d_coeff": 0.015
+                },
+                "phenology": {
+                    "key_dates": {
+                        "sowing": 71,
+                        "harvest": 223
+                    },
+                    "key_dates_td": {},
+                    "key_lengths_leaf_td": {},
+                    "key_lengths_td": {},
+                    "day_fphen_plf": {},
+                    "f_phen_method": "tt day PLF",
+                    "leaf_f_phen_method": "tt day PLF",
+                    "f_phen_min": 0,
+                    "leaf_f_phen_a": 0.3,
+                    "leaf_f_phen_b": 0.7,
+                    "f_Astart": 0.46,
+                    "f_mid_anthesis": 0.54,
+                    "f_fphen_1_ets": 0.08,
+                    "f_fphen_3_ets": 0.05,
+                    "f_fphen_4_ets": 0.22,
+                    "f_fphen_5_ets": 0.30,
+                    "f_t_lem": 0.46,
+                    "f_t_lma": 0.54,
+                    "f_t_lep": 0.36,
+                    "f_t_lse": 0.18,
+                    "f_t_lse_mature": 0.33,
+                    "f_fphen_a": 0.05,
+                    "f_fphen_b": 0.2,
+                    "f_fphen_c": 0.54,
+                    "f_fphen_d": 1,
+                    "f_tt_emr": 0.05,
+                    "f_tt_veg": 0.38,
+                    "f_tt_rep": 0.57,
+                    "f_leaf_f_fphen": 0.46
+                }
+            }
+        ],
+        "phenology_options": {
+            "plant_emerge_method": "constant",
+            "phenology_method": "season_fraction",
+            "zero_day": "sowing"
+        }
+    },
+    "VERSION": 10
+}

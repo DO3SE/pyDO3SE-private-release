@@ -1,0 +1,15 @@
+{
+  "Location": {
+    "lat": 53,
+    "lon": 4,
+    "elev": 5.0,
+    "albedo": 0.2,
+    "z_O3": 1.5,
+    "z_u": 1.0,
+    "h_O3": 1.0,
+    "h_u": 1.0,
+    "OTC": false,
+    "Rsoil": 200,
+    "start_day": 71
+  }
+}

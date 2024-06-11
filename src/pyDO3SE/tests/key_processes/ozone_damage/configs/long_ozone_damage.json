@@ -1,0 +1,18 @@
+{
+    "COMMENT": "TODO: Setup default carbon alloc config",
+    "Land_Cover": {
+        "parameters": [
+            {
+                "pn_gsto": {
+                    "gamma_1": 20,
+                    "gamma_2": 1,
+                    "gamma_3": 0.0004,
+                    "gamma_4_senes": 5,
+                    "gamma_5_harvest": 0.3,
+                    "cL3": 14600
+                }
+            }
+        ]
+    },
+    "VERSION": 12
+}

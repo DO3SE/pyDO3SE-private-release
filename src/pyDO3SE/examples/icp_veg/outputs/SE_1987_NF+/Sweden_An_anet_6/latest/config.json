@@ -1,0 +1,112 @@
+{
+    "COMMENT": "Photosynthesis SE95_NF_ABC",
+    "Met": {
+        "inputs": {
+            "co2_method": "constant",
+            "co2_constant": 391.0,
+            "PAR_method": "calculated",
+            "PPFD_method": "input",
+            "Tleaf_C_method": "input",
+            "leaf_fphen_method": "input"
+        }
+    },
+    "Location": {
+        "lat": 60.12,
+        "lon": 18.6,
+        "elev": 320,
+        "albedo": 0.2,
+        "z_O3": 1.0,
+        "z_u": 1.0,
+        "Rsoil": 200
+    },
+    "soil_moisture": {
+        "soil_texture": "loam",
+        "soil": {
+            "b": null,
+            "fc": null,
+            "swp_ae": null,
+            "ksat": null
+        },
+        "root": 0.75,
+        "pwp": -4.0,
+        "asw_fc": null,
+        "source": "P-M",
+        "initial_swc": null
+    },
+    "Land_Cover": {
+        "height_method": "constant",
+        "LAI_method": "constant",
+        "SAI_method": "constant",
+        "LAI": 3,
+        "SAI": 4,
+        "flai": [
+            [
+                1.0
+            ]
+        ],
+        "parameters": [
+            {
+                "name": "Spanish Wheat",
+                "height": 1.0,
+                "Lm": 0.02,
+                "Y": 6.0,
+                "cosA": 0.5,
+                "multip_gsto": {
+                    "f_O3_method": "wheat"
+                },
+                "gsto": {
+                    "Tleaf_method": "input",
+                    "method": "photosynthesis",
+                    "fmin": 0.01,
+                    "f_SW_method": "disabled",
+                    "SWP_min": -1.25,
+                    "SWP_max": -0.05,
+                    "fSWP_exp_curve": "temperate",
+                    "fSWP_exp_a": 0.355,
+                    "fSWP_exp_b": -0.706,
+                    "f_VPD_method": "leuning",
+                    "VPD_min": 3.2,
+                    "VPD_max": 1.2,
+                    "VPD_crit": 8.0
+                },
+                "pn_gsto": {
+                    "senescence_method": "anet",
+                    "D_0_method": "constant",
+                    "D_0": 0.75,
+                    "g_sto_0": 10000.0,
+                    "m": 8.12,
+                    "V_cmax_25": 120,
+                    "J_max_25": 180,
+                    "p_crit": 24,
+                    "p_sens": 0,
+                    "t_b": 0,
+                    "t_o": 20,
+                    "t_m": 30,
+                    "K_z": 24,
+                    "F_0": 37,
+                    "leaf_f_phen_Anet_influence": null,
+                    "R_d_coeff": 0.015,
+                    "gamma_1": 0.06,
+                    "gamma_2": 0.0045,
+                    "gamma_3": 0.08
+                },
+                "phenology": {
+                    "key_dates": {},
+                    "key_dates_td": {},
+                    "key_lengths_leaf_td": {},
+                    "key_lengths_td": {},
+                    "SAI_method": "LAI",
+                    "PRESET": "WHEAT_SPRING",
+                    "day_fphen_plf": {},
+                    "leaf_f_phen_method": "input"
+                }
+            }
+        ],
+        "phenology_options": {
+            "plant_emerge_method": "fphen",
+            "phenology_method": "leaf_fphen_data",
+            "zero_day": "Astart"
+        }
+    },
+    "VERSION": 10
+}
