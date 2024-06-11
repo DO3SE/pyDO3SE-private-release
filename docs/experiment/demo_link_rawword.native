@@ -1,0 +1,6 @@
+Pandoc (Meta {unMeta = fromList []})
+[Para [Link ("",[],[]) [Str "HELLO",Space,Str "WORLD"] ("#linktome",""),SoftBreak,Link ("",[],[]) [Str "Link",Space,Str "to",Space,Str "B"] ("#linktoother","")]
+,Para [Str "Link",Space,Str "Target"]
+,Para [Span ("linktome",[],[]) [Str "Link",Space,Str "Target"]]
+,Div ("linktoother",[],[])
+ [Plain [Str "Link",Space,Str "Target",Space,Str "B"]]]
