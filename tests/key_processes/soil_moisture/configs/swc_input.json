@@ -1,0 +1,26 @@
+{
+    "COMMENT": "legacy",
+    "Met": {
+        "inputs": {
+            "SWC_method": "input"
+        }
+    },
+    "soil_moisture": {
+        "soil_texture": "loam",
+        "root": 1,
+        "PWP": -1.3,
+        "asw_fc": null,
+        "source": "external input SWC",
+        "initial_swc": null
+    },
+    "Land_Cover": {
+        "parameters": [
+            {
+                "gsto": {
+                    "SWP_max": -0.01
+                }
+            }
+        ]
+    },
+    "VERSION": 12
+}

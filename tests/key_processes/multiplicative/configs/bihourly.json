@@ -1,0 +1,64 @@
+{
+    "COMMENT": "Bi hourly overrides",
+    "Location": {
+        "start_day": 137,
+        "multi_season": true,
+        "multi_season_day": 364
+    },
+    "Met": {
+        "dd_calc_method": "CALC_FROM_INPUT",
+        "sparse_data": true,
+        "inputs": {
+            "dd_method": "calculated",
+            "CO2_method": "input",
+            "RH_fillna": 1,
+            "Ts_C_fillna": 0,
+            "CO2_fillna": 360,
+            "dom_method": "input",
+            "h_fillna": 0,
+            "h_method": "input",
+            "Hd_method": "input",
+            "hr_method": "calculated",
+            "LAI_fillna": 0,
+            "LAI_method": "input",
+            "mm_method": "input",
+            "O3_fillna": 0,
+            "O3_method": "input",
+            "P_fillna": 100,
+            "P_method": "input",
+            "PAR_fillna": 0,
+            "PAR_method": "input",
+            "precip_method": "skip",
+            "RH_method": "input",
+            "SWC_fillna": 1,
+            "SWC_method": "input",
+            "td_method": "skip",
+            "u_fillna": 0,
+            "ustar_ref_fillna": 1,
+            "ustar_ref_method": "input",
+            "VPD_method": "calculated",
+            "year_method": "input"
+        },
+        "thermal_time_method": "SKIP"
+    },
+    "Land_Cover": {
+        "phenology_options": {
+            "dvi_method": "disabled",
+            "flag_leaf_emerge_method": "constant",
+            "flag_leaf_only": false,
+            "LAI_method": "estimate total",
+            "latitude": 54,
+            "phenology_method": "day plf",
+            "phenology_method_flag_leaf": "same as canopy",
+            "plant_emerge_method": "fphen",
+            "sgs_key_day": "sowing_day",
+            "sgs_time_type": "julian_day",
+            "sowing_day_method": "LATITUDE_FOREST",
+            "time_type": "julian_day",
+            "use_photoperiod_factor": false,
+            "use_vernalisation": false,
+            "zero_day": "sowing"
+        }
+    },
+    "VERSION": 12
+}
