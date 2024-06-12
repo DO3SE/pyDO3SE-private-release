@@ -736,6 +736,8 @@ def calc_resistance_model(
         - "multi_layer" -
     Ts_C: float
         Air Temperature [Degrees]
+    Hd: float
+        Sensible heat flux [W/m^2] only needed for Ra heat flux calc
     P: float
         Air Pressure [kPa] only needed for Ra heat flux calc
     snow_depth: float
