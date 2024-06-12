@@ -3257,7 +3257,7 @@ def calc_fst_leaf_acc_hour_process(iLC: int, iP: int) -> Process:
     def fst_acc(
         O3up, O3up_acc, has_emerged, leaf_emerg_to_leaf_fst_acc, td
     ):
-        can_accumulate_fst = has_emerged and (leaf_emerg_to_leaf_fst_acc is None  or td < leaf_emerg_to_leaf_fst_acc)
+        can_accumulate_fst = has_emerged and (leaf_emerg_to_leaf_fst_acc is None or td > leaf_emerg_to_leaf_fst_acc)
         return 0 if not can_accumulate_fst else  O3up + O3up_acc
 
     return Process(

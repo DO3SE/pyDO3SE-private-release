@@ -87,6 +87,7 @@ class InputMethod(Enum):
     INPUT = "input"
     OFFSET = "offset"
     MULTIPLY = "multiply"
+    LIMIT = "limit"
     CALCULATED = "calculated"
     SKIP = "skip"
 
