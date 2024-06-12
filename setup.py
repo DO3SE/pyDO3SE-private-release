@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="do3se_met",
-    version="0.3.4",
+    version="0.3.5",
     author="SEI-York",
     author_email="sam.bland@york.ac.uk",
     description="DO3SE model python API",
