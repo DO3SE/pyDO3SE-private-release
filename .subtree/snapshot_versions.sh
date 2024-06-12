@@ -22,6 +22,7 @@ PREVIOUS_THERMAL_TIME_VERSION=`cat SUB_VERSIONS.txt | grep "thermal_time" | cut 
 PREVIOUS_DO3SE_PHENOLOGY_VERSION=`cat SUB_VERSIONS.txt | grep "do3se_phenology" | cut -d " " -f 3`
 PREVIOUS_DO3SE_MET_VERSION=`cat SUB_VERSIONS.txt | grep "do3se_met" | cut -d " " -f 3`
 
+echo "Checking Versions"
 if [[ "$PREVIOUS_PYDO3SE_VERSION" == "$PYDO3SE_VERSION" ]]; then
   if [[ "$PREVIOUS_THERMAL_TIME_VERSION" != "$THERMAL_TIME_VERSION" ]]; then
     echo "thermal_time version has changed. Please update the version of pyDO3SE before continuing"
@@ -41,14 +42,15 @@ fi
 # ask the user to update the version of pyDO3SE before continuing
 
 
+echo "Bumping version"
+bumpversion --new-version="$PYDO3SE_VERSION" patch --allow-dirty
+
 
 # Store version in file named SUB_VERSIONS.txt
 echo "pyDO3SE version: $PYDO3SE_VERSION" > SUB_VERSIONS.txt
 echo "thermal_time version: $THERMAL_TIME_VERSION" >> SUB_VERSIONS.txt
 echo "do3se_phenology version: $DO3SE_PHENOLOGY_VERSION" >> SUB_VERSIONS.txt
 echo "do3se_met version: $DO3SE_MET_VERSION" >> SUB_VERSIONS.txt
-
-bumpversion --new-version="$PYDO3SE_VERSION" patch
 
 # Commit the changes
 git add SUB_VERSIONS.txt
