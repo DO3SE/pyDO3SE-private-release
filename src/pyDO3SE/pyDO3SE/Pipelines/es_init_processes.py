@@ -319,7 +319,7 @@ def set_constants(
     if f'{k}_method' in config_ext_keys:
         method = getattr(input_config, f'{k}_method', None)
         fillna = getattr(input_config, f'{k}_fillna', None)
-        value = getattr(input_config, f'{k}_constant', None)
+        valueConstant = getattr(input_config, f'{k}_constant', None)
         if method == InputMethod.SKIP:
             if input_vals is None:
                 return None
@@ -335,25 +335,33 @@ def set_constants(
                 output_vals = [fillna if v is None or isnan(v) else v for v in output_vals]
             return output_vals
         if method == InputMethod.CONSTANT:
-            if value is None:
+            if valueConstant is None:
                 raise ValueError(f'Must supply {k}_constant for InputMethod.CONSTANT')
-            return np.full((row_count,), value).tolist()
+            return np.full((row_count,), valueConstant).tolist()
         if method == InputMethod.OFFSET:
-            if value is None:
+            if valueConstant is None:
                 raise ValueError(f'Must supply {k}_constant for InputMethod.OFFSET')
             if input_vals is None or input_vals[0] is None:
                 raise ValueError(f'Must supply {k} input for InputMethod.OFFSET')
             if len(input_vals):
                 output_vals = pad_or_slice(input_vals, start_row, end_row, fillna, k)
-            return (np.array(output_vals) + value).tolist()
+            return (np.array(output_vals) + valueConstant).tolist()
         if method == InputMethod.MULTIPLY:
-            if value is None:
+            if valueConstant is None:
                 raise ValueError(f'Must supply {k}_constant for InputMethod.MULTIPLY')
             if input_vals is None or input_vals[0] is None:
                 raise ValueError(f'Must supply {k} input for InputMethod.MULTIPLY')
             if len(input_vals):
                 output_vals = pad_or_slice(input_vals, start_row, end_row, fillna, k)
-            return (np.array(output_vals) * value).tolist()
+            return (np.array(output_vals) * valueConstant).tolist()
+        if method == InputMethod.LIMIT:
+            if valueConstant is None:
+                raise ValueError(f'Must supply {k}_constant for InputMethod.LIMIT')
+            if input_vals is None or input_vals[0] is None:
+                raise ValueError(f'Must supply {k} input for InputMethod.LIMIT')
+            if len(input_vals):
+                output_vals = pad_or_slice(input_vals, start_row, end_row, fillna, k)
+            return (np.clip(output_vals, 0, valueConstant)).tolist()
         if method == InputMethod.CALCULATED:
             if k == "hr" or k == "dd" or k == "row_index":
                 # hr, dd and row_index are calculated in previous process
@@ -399,15 +407,7 @@ Either set {k}_required to False or set {k}_fillna with a value to replace missi
                     warnings.warn(f"""Input {k} has missing values which may cause errors in the model \
 .set {k}_fillna with a value to replace missing values.""")
             return
-        if method == InputMethod.CONSTANT:
-            if input_vals is None or input_vals[0] is None:
-                raise ValueError(f'Must supply {k} constant')
-            return
-        if method == InputMethod.OFFSET:
-            if input_vals is None or input_vals[0] is None:
-                raise ValueError(f'Must supply {k} constant')
-            return
-        if method == InputMethod.MULTIPLY:
+        if method in [InputMethod.CONSTANT,InputMethod.OFFSET, InputMethod.MULTIPLY, InputMethod.LIMIT]:
             if input_vals is None or input_vals[0] is None:
                 raise ValueError(f'Must supply {k} constant')
             return
