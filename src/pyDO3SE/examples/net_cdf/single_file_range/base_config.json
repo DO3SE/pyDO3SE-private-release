@@ -90,8 +90,9 @@
         "Rsoil": 200,
         "zero_year": 2017,
         "hr_offset": 3,
-        "crop_to_day_start": true,
-        "crop_to_day_end": true
+        "crop_to_day_start": false,
+        "crop_to_day_end": false,
+        "run_first_hour_on_init": true
     },
     "Land_Cover": {
         "nL": 1,

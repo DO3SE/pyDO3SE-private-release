@@ -220,41 +220,55 @@ def convert_units(config_met: Config_Met):
 def calc_O3_params_list(config_met: Config_Met) -> List[Process]:
     """Run O3 calculations on config and external state."""
     return [
-        switch(
-            gate=config_met.inputs.O3_method,
-            comment="Get O3 Concentration",
-            options={
-                InputMethod.INPUT: Process(
-                    func=skip,
-                    comment="Skip if input",
-                ),
-                InputMethod.CONSTANT: Process(
-                    func=lambda O3, row_count: np.full((row_count,), O3).tolist(),
-                    comment="Set O3 as constant",
-                    config_inputs=lambda config: [
-                        I(config.Met.inputs.O3_constant, as_='O3'),
-                    ],
-                    state_inputs=lambda state: [
-                        I(len(getattr(state, "row_index")), as_='row_count'),
-                    ],
-                    state_outputs=lambda result:[
-                        (result, 'O3'),
-                    ]
-                ),
-                InputMethod.OFFSET: Process(
-                    func=lambda O3_list, O3_const: [max(0.0, O3 + O3_const) for O3 in O3_list],
-                    comment="Set as O3 with constant offset",
-                    config_inputs=lambda config: [
-                        I(config.Met.inputs.O3_constant, as_='O3_const'),
-                    ],
-                    state_inputs=lambda state: [
-                        I(state.O3, as_='O3_list'),
-                    ],
-                    state_outputs=lambda result:[
-                        (result, 'O3'),
-                    ]
-                ),
-            }),
+        # This now handled in set_constants
+        # switch(
+        #     gate=config_met.inputs.O3_method,
+        #     comment="Get O3 Concentration",
+        #     options={
+        #         InputMethod.INPUT: Process(
+        #             func=skip,
+        #             comment="Skip if input",
+        #         ),
+        #         InputMethod.CONSTANT: Process(
+        #             func=lambda O3, row_count: np.full((row_count,), O3).tolist(),
+        #             comment="Set O3 as constant",
+        #             config_inputs=lambda config: [
+        #                 I(config.Met.inputs.O3_constant, as_='O3'),
+        #             ],
+        #             state_inputs=lambda state: [
+        #                 I(len(getattr(state, "row_index")), as_='row_count'),
+        #             ],
+        #             state_outputs=lambda result:[
+        #                 (result, 'O3'),
+        #             ]
+        #         ),
+        #         InputMethod.LIMIT: Process(
+        #             func=lambda O3, row_count: np.full((row_count,), O3).tolist(),
+        #             comment="Set O3 as constant",
+        #             config_inputs=lambda config: [
+        #                 I(config.Met.inputs.O3_constant, as_='O3'),
+        #             ],
+        #             state_inputs=lambda state: [
+        #                 I(len(getattr(state, "row_index")), as_='row_count'),
+        #             ],
+        #             state_outputs=lambda result:[
+        #                 (result, 'O3'),
+        #             ]
+        #         ),
+        #         InputMethod.OFFSET: Process(
+        #             func=lambda O3_list, O3_const: [max(0.0, O3 + O3_const) for O3 in O3_list],
+        #             comment="Set as O3 with constant offset",
+        #             config_inputs=lambda config: [
+        #                 I(config.Met.inputs.O3_constant, as_='O3_const'),
+        #             ],
+        #             state_inputs=lambda state: [
+        #                 I(state.O3, as_='O3_list'),
+        #             ],
+        #             state_outputs=lambda result:[
+        #                 (result, 'O3'),
+        #             ]
+        #         ),
+        #     }),
         Process(
             func=lambda Ts_C_list, P_list, O3_ppb_list: [O3_helpers.O3_ppb_to_nmol(
                 Ts_C, P, O3_ppb) for Ts_C, P, O3_ppb in zip(Ts_C_list, P_list, O3_ppb_list)],

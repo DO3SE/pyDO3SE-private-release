@@ -66,7 +66,8 @@ from pyDO3SE.constants import model_constants
 from pyDO3SE.plugins.gsto import photosynthesis_helpers as pn_helpers
 from pyDO3SE.plugins.gsto import helpers as gsto_helpers
 from pyDO3SE.plugins.gsto.multiplicative import multiplicative
-from pyDO3SE.plugins.gsto.ewert.ewert import ewert_leaf_pop
+from pyDO3SE.plugins.gsto.ewert.ewert import ewert_leaf_pop, ewert_leaf_pop_cubic
+from pyDO3SE.plugins.gsto.ewert.enums import EwertLoopMethods
 from pyDO3SE.plugins.gsto.ewert.ewert_helpers import calc_all_ozone_damage_factors, calc_mean_gsto
 from pyDO3SE.plugins.leaf_temperature.de_boeck import get_leaf_temp_de_boeck
 from pyDO3SE.plugins.nitrogen.v_cmax import multilayer_vcmax25
@@ -2562,10 +2563,13 @@ def ozone_damage_processes(
     ]
 
 
-def ewert_leaf_process(iLC: int, iP: int, nL: int) -> Process:
+def ewert_leaf_process(iLC: int, iP: int, nL: int, ewert_loop_method: EwertLoopMethods) -> Process:
     """Ewert Photosynthesis model."""
+    ewert_leaf_fn = ewert_leaf_pop if ewert_loop_method is EwertLoopMethods.ITERATIVE \
+        else ewert_leaf_pop_cubic if ewert_loop_method is EwertLoopMethods.CUBIC else None
+
     return Process(
-        func=ewert_leaf_pop,
+        func=ewert_leaf_fn,
         comment="Ewert Photosynthesis model",
         config_inputs=lambda config, iLC=iLC: [
             I(config.Land_Cover.nL, as_="nL"),
@@ -2620,6 +2624,7 @@ def ewert_leaf_process(iLC: int, iP: int, nL: int) -> Process:
             # (result.f_VPD, f'canopy_component_population.{iLC}.{iP}.gsto_params.f_VPD'),
             (result.v_cmax, f'canopy_component_population.{iLC}.{iP}.V_cmax'),
             (result.j_max, f'canopy_component_population.{iLC}.{iP}.J_max'),
+            (result.loop_iterations, 'debug.ewert_loop_iterations'),
         ]
     )
 
@@ -4186,7 +4191,8 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
             I(row_index, as_='row_index') if 'row_index' in fields else None,
             I(lget(e_state.dd, row_index), as_='dd_e') if 'dd_e' in fields else None,
             I(lget(e_state.hr, row_index), as_='hr') if 'hr' in fields else None,
-            I(e_state.Ts_C[row_index], as_='ts_c') if 'ts_c' in fields else None,
+            I(lget(e_state.Ts_C, row_index), as_='ts_c') if 'ts_c' in fields else None,
+            I(lget(e_state.RH, row_index), as_='rh') if 'rh' in fields else None,
             I(lget(e_state.PAR, row_index), as_='par') if 'par' in fields else None,
             I(lget(e_state.P, row_index), as_='p') if 'p' in fields else None,
             I(lget(e_state.u, row_index), as_='uh_zr') if 'uh_zr' in fields else None,
@@ -4528,6 +4534,11 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
                [iP].phenology.phenology_stage, as_=f'leaf_phenology_stage_{iP}') if 'leaf_phenology_stage' in fields else None
              for iP in range(nP)] if 'leaf_phenology_stage' in fields else [],
         ])))) if log_multilayer else [],
+        # Debug outputs
+        log_values(lambda state: flatten_list(list(filter(lambda f: f, [
+            __SPACER__("Debug >") if include_spacers else None,
+            I(state.debug.ewert_loop_iterations, as_='ewert_loop_iterations'),
+        ])))) if "_debug" in fields else [],
     ]
 
 
@@ -4576,6 +4587,7 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
     sparse_data = config.Met.sparse_data
     output_fields = config.output.fields
     log_multilayer = config.output.log_multilayer
+    ewert_loop_method = [config.Land_Cover.parameters[iLC].pn_gsto.ewert_loop_method for iLC in range(nLC)]
 
     return [
         tag_process(f"===== Start of Hourly Processes (Hour: {hr}) ====="),
@@ -4660,7 +4672,7 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
         # = PHOTOSYNTHESIS
         [[
             calc_D_0_process(iLC),
-            [ewert_leaf_process(iLC, iP, nL)for iP in range(nP)],
+            [ewert_leaf_process(iLC, iP, nL, ewert_loop_method[iLC])for iP in range(nP)],
             [convert_gsto_CO2umol_to_O3mmol_process(iLC, iP, nL) for iP in range(nP)],
             calc_layer_mean_gsto_process(iLC, nP, nL),
             [scale_layer_mean_gsto_to_layer_bulk_gsto_process(iL, iLC) for iL in range(nL)],

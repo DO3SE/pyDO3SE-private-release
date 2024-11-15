@@ -131,16 +131,16 @@ def output_process_list(
 
 
 @click.option('--input-data-file', type=click.Path(exists=True), default=None, help='Input data csv file')
-@click.option('--base_config_file', default=None, help='The base config file path', type=click.Path(exists=True))
+@click.option('--base-config-file', default=None, help='The base config file path', type=click.Path(exists=True))
 @click.option('--plot-dd', default=False, help='Plot day data')
 @click.argument(
-    'output_directory',
+    'output-directory',
     # type=click.Path(),
     # prompt='Enter output directory',
     # help='The location to save outputs',
 )
 @click.argument(
-    'config_file',
+    'config-file',
     type=click.Path(exists=True),
     # prompt='Enter config location(.json)',
     # help='The location of the config file. Should be a json file',
@@ -174,3 +174,54 @@ def plot_phenology(
         day_count=day_count,
         plot_dd=plot_dd,
     )
+
+
+
+
+@click.option('--input-data-file', type=click.Path(exists=True), default=None, help='Input data csv file')
+@click.option('--base-config-file', default=None, help='The base config file path', type=click.Path(exists=True))
+@click.argument(
+    'output-directory',
+    # type=click.Path(),
+    # prompt='Enter output directory',
+    # help='The location to save outputs',
+)
+@click.argument(
+    'config-file',
+    type=click.Path(exists=True),
+    # prompt='Enter config location(.json)',
+    # help='The location of the config file. Should be a json file',
+)
+@click.command()
+def process_config(
+    config_file: Path,
+    output_directory: Path,
+    input_data_file: Path = None,
+    base_config_file: Path = None,
+):
+    """Process the config by combining the config and base config.
+
+    There are also some setup processes applied to the config such as setting up
+    the phenology parameters.
+
+    Note this does not include parameters defined by the external state.
+
+    """
+
+    from pyDO3SE.setup_model import setup_config, get_config_overrides
+    from pyDO3SE.Output.process_outputs import dump_config_to_file_json
+    config_in=config_loader(config_file, base_config_file, 'json')
+
+    external_state_in = None # TODO: Implement external state if provided
+    input_file_id = None # TODO: Implement input file id if provided
+    per_input_config_overrides = {} # TODO: Implement per input config overrides if provided
+
+    # config_overrides: Dict[str, any] = get_config_overrides(
+    #     input_file_id, per_input_config_overrides)
+    config_overrides = {}
+    config = setup_config(
+        config_in,
+        external_state_in,
+        config_overrides,
+    )
+    dump_config_to_file_json(config, f'{output_directory}/processed_config.json')

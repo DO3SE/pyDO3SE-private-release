@@ -39,6 +39,7 @@ from pyDO3SE.util.error_handling import Do3seRunError
 from pyDO3SE.setup_model import (
     get_input_files_list,
     setup_external_state_simple,
+    run_first_hour_on_state,
 )
 from pyDO3SE.Grid_Model.setup_grid_model import (
     GridProjectPaths,
@@ -83,6 +84,7 @@ def run_cell(
     end_day: int,
     output_fields: List[str] = [],
     use_daily_loop: bool = False,
+    init_first_hour: bool = False,
     # output_state_dir: str = None,
     row_count: int = None,
     cell_count: int = None,
@@ -107,6 +109,8 @@ def run_cell(
         _description_, by default []
     use_daily_loop: bool
         If true then only preprocess a day worth of processes and run in a loop from start day to end day
+    init_first_hour: bool, optional
+        If true then run first hour on state, by default False
     output_state_dir : str, optional
         _description_, by default None
     row_count: int
@@ -130,7 +134,7 @@ def run_cell(
         prev_hour_state_loaded, cell_processes] = cell_model
 
     logger(
-        f'Preping coord ({xi}, {yi} ({i+1}/{cell_count}) for date: {start_date})\nExtracting Cell Model', verbose=True)
+        f'Preping coord ({xi}, {yi} ({i+1}/{cell_count}) for date: {start_date})')
 
     logger('Model Extracted. Ready to run cell.')
     assert row_count <= len(
@@ -140,11 +144,19 @@ def run_cell(
     config_cell.Location.start_day = start_day
     config_cell.Location.end_day = end_day
 
+    if (init_first_hour):
+        prev_hour_state_loaded = run_first_hour_on_state(
+            prev_hour_state_loaded,
+            config_cell,
+            external_state_data_cell,
+            debug=debug,
+        )
+
     # Run DO3SE model
     # TODO: Check if we should still use daily loop setup here or mapped runner
     model_runner = run_model_daily if use_daily_loop else run_model
     logger(
-        f'Running coord ({xi}, {yi} for date: {start_date})\nExtracting Cell Model', verbose=True)
+        f'Running coord ({xi}, {yi}) for date: {start_date}\nUsing daily loop: {use_daily_loop}')
     try:
         final_state, output_logs = model_runner(
             initial_state=prev_hour_state_loaded,
@@ -152,7 +164,7 @@ def run_cell(
             external_state=external_state_data_cell,
             model_processes=cell_processes,
             start_index=0,
-            DEBUG_MODE=debug,
+            logger=logger,
         )
     except Exception as e:
         logger(f"Failed to run file at {xi}_{yi}")
@@ -160,7 +172,7 @@ def run_cell(
         logger(f"Dumping state to tmp/prev_hour_state_loaded.json")
         os.makedirs('tmp', exist_ok=True)
         dump_state_to_file(prev_hour_state_loaded, 'tmp/prev_hour_state_loaded.json')
-        raise Do3seRunError(f"Failed to run file at {xi}_{yi}", e)
+        raise Do3seRunError(f"Failed to run file at {xi}_{yi}", e) from e
 
     # Save state at each iteration
     # state_file_out_path = f"{output_state_dir}/{xi}_{yi}.state"
@@ -390,7 +402,7 @@ def setup_external_state_iter(
     e_state_init_processes = (wrap_log(
         f"Generating e_state processes for config {i}",
         external_state_init_processes,
-        coord,
+        f'Coord {coord}',
         logger=logger
     )(config_met=config.Met)
         for i, (config, coord) in enumerate(zip(cell_configs, grid_coords)))
@@ -417,7 +429,6 @@ def setup_external_state_iter(
         raise AttributeError(
             f"e_state_overrides_dataset must be an xarray.Dataset with lat_data, lon_data and x, y dimensions. Dataset has following keys: {list(e_state_overrides_dataset.keys())}") from e
 
-
     return ExternalStateIterable(
         start_day,
         end_day,
@@ -440,6 +451,7 @@ def main_partial(
     grid_coords: List[Tuple[int, int]],
     external_states: ExternalStateIterable,
     output_fields: Optional[List[str]] = None,
+    init_first_hour: bool = False,
     use_daily_loop: bool = False,
     parallel: bool = False,
     logger: Callable[[str], None] = Logger(),
@@ -469,6 +481,8 @@ def main_partial(
         External state data for this run (already loaded and processed)
     output_fields : Optional[List[str]], optional
         A list of fields to output. Overrides config
+    init_first_hour: bool, optional
+        If true then run first hour on state, by default False
     use_daily_loop: bool
         If true then only preprocess a day worth of processes and run in a loop from start day to end day
     parallel: bool
@@ -512,7 +526,7 @@ def main_partial(
 
     run_count = len(grid_coords)
     logger(
-        f"== Running Main = Starting runs\nTotal cells: {len(grid_coords)}\nParallel: {parallel}")
+        f"== Running Main = Starting runs\nTotal cells: {len(grid_coords)}\nParallel: {parallel}\n Debug mode: {debug}")
     run_cells = run_in_parallel if parallel else run_in_sequence
 
     start_time = datetime.now()
@@ -526,7 +540,7 @@ def main_partial(
             end_day=external_states.end_day,
             output_fields=output_fields,
             use_daily_loop=use_daily_loop,
-            # output_state_dir=output_data.output_state_dir,
+            init_first_hour=init_first_hour,
             row_count=external_states.row_count,
             cell_count=len(grid_coords),
             logger=logger,
@@ -876,15 +890,9 @@ def main_grid_seq_per_config(
         end_input_index,
         logger,
     )
-    total_files = len(input_files)
-    # if start_input_index is None:
-    #     start_input_index = 0
-    # if end_input_index is None:
-    #     end_input_index = len(input_files) - 1
-    # input_files = input_files[start_input_index:end_input_index + 1]
-    # total_files = len(input_files)
-    # logger(
-    #     f"== Running Model: Total File: {total_files}. Start index: {start_input_index}. End index: {end_input_index} ===")
+    total_files = len(input_files) if input_files[0] != "*" else "*"
+    logger(
+        f"== Running Model: Total Files: {total_files}. Start index: {start_input_index}. End index: {end_input_index} ===")
 
     external_state_options = EStateOptions(
         file_type=FileTypes.NETCDF,
@@ -896,7 +904,8 @@ def main_grid_seq_per_config(
     )
     duration = None
 
-    full_outputs: List[List[Tuple[Coords, ModelGridCellOutput, Model_State_Shape, OutputFields]]] = [] if return_outputs else None
+    full_outputs: List[List[Tuple[Coords, ModelGridCellOutput,
+                                  Model_State_Shape, OutputFields]]] = [] if return_outputs else None
 
     try:
         start_time = datetime.now()
@@ -922,6 +931,7 @@ def main_grid_seq_per_config(
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 # Iterates over each config for each cell in the grid
+                logger(f"Setting up external state iter")
                 external_states = setup_external_state_iter(
                     cell_configs,
                     external_data_file_path=input_data_file,
@@ -932,8 +942,11 @@ def main_grid_seq_per_config(
                     overrides=overrides,
                 )
 
+                logger(f"Loading previous state")
                 prev_hour_states_loaded = (load_current_cell_state(previous_hour_state_path, x, y)
                                            for x, y in grid_coords)
+
+                logger(f"Running cells")
                 outputs_full_grid = main_partial(
                     cell_configs=cell_configs,
                     prev_hour_states_loaded=prev_hour_states_loaded,
@@ -942,11 +955,13 @@ def main_grid_seq_per_config(
                     output_fields=output_fields,
                     parallel=parallel,
                     use_daily_loop=use_daily_loop,
+                    init_first_hour=i == 0 and config.Location.run_first_hour_on_init,
                     logger=logger,
                     parallel_args=parallel_args,
                     overrides=overrides,
                     debug=debug,
                 )
+                logger(f"Running cells - Complete and saving interation output")
                 save_model_iteration_output(
                     outputs_full_grid=outputs_full_grid,
                     output_state_dir=state_out_path or previous_hour_state_path,
@@ -962,7 +977,7 @@ def main_grid_seq_per_config(
                     full_outputs.append(outputs_full_grid)
 
             logger(f"==== Running file complete: {f} ({i+1}/{total_files}) =======")
-            logger(f"==== Files saved in {run_paths.output_data_dir} =======")
+            logger(f"==== Files saved in {run_paths.config_run_dir} =======")
 
         end_time = datetime.now()
         duration = end_time - start_time if end_time else 0
@@ -971,7 +986,7 @@ def main_grid_seq_per_config(
         errors.append((f"Run Dir: {run_paths.config_run_dir} failed", e))
 
     if isinstance(logger, Logger) and logger.log_level >= 0:
-        with open(f'{run_paths.output_data_dir}/notes.log', 'w') as f:
+        with open(f'{run_paths.config_run_dir}/notes.log', 'w') as f:
             log_notes = generate_run_notes(
                 runnotes,
                 time_taken=duration,
@@ -1009,6 +1024,8 @@ def main_grid_run(
     regex_multi_file_filter: str = '',
     sample_size: int = 0,
     start_input_index: int = None,
+    e_state_overrides_field_map_path: str = None,
+    run_mask_path: str = None,
     overrides: Main_Overrides = Main_Overrides(),
     debug: bool = False,
 ):
@@ -1044,6 +1061,10 @@ def main_grid_run(
         If greater than 0 then only runs up to sample size number of cells
     start_input_index: int
         If set then start at this input index
+    e_state_overrides_field_map_path: bool = None
+        If provided then override the e_state_overrides_field_map_path
+    run_mask_path: bool = None
+        If true then override the run_mask_path
     overrides: Main_Overrides
         Overrides for main
     debug: bool, optional
@@ -1057,7 +1078,12 @@ def main_grid_run(
 
     for config_file_name in config_file_names:
         config_name = '.'.join(config_file_name.split('.')[:-1])
-        run_paths = get_grid_run_paths(project_paths, config_name)
+        run_paths = get_grid_run_paths(
+            project_paths,
+            config_name,
+            e_state_overrides_field_map_path=e_state_overrides_field_map_path,
+            run_mask_path=run_mask_path,
+        )
         loaded_run_files = load_grid_run_files(project_paths, run_paths)
         create_grid_run_path_directories(run_paths)
         grid_coords, *output_shape = get_grid_coords_from_file(

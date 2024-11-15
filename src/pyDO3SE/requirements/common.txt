@@ -6,8 +6,7 @@ click>=7.1.2
 deprecated>=1.2.12
 wheel>=0.36.2
 proFlow>=0.3.9
-data-helpers
+data-helpers>=0.1.29
 dill>=0.3.8
-git+ssh://git@github.com/SEI-DO3SE/thermal_time@RELEASE
-git+ssh://git@github.com/SEI-DO3SE/do3se_phenology@RELEASE
-git+ssh://git@github.com/SEI-DO3SE/do3se_met@RELEASE
+
+# Also install requirements from private.txt

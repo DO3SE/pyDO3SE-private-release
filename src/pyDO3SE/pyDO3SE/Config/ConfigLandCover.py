@@ -8,6 +8,7 @@ from do3se_phenology.config import ModelConfig as PhenologyModelConfig
 from do3se_phenology.config import SpeciesConfig as PhenologySpeciesConfig
 
 from pyDO3SE.constants.model_constants import DEFAULT_LAYERS, DEFAULT_LC
+from pyDO3SE.plugins.gsto.ewert.enums import EwertLoopMethods
 
 from .ConfigEnums import *
 
@@ -103,6 +104,12 @@ class Config_PnGsto:
 
     #: Method for defining f_LS and fO3d
     senescence_method: SenescenceFunctionMethods = SenescenceFunctionMethods.DISABLED
+
+    #: Ewert loop method
+    #:
+    #: "iterative"
+    #: "cubic"
+    ewert_loop_method: EwertLoopMethods = EwertLoopMethods.CUBIC
 
     #: V/J max method:
     #:   - "input":      V_cmax_25 and J_max_25 supplied as hourly inputs

@@ -350,9 +350,8 @@ def load_external_state_netcdf(
         try:
             data = xr.open_dataset(data_location, chunks=chunks, engine="netcdf4", **kwargs)
         except Exception as e:
-            print(e)
             raise ValueError(
-                f'Failed to load external data files in single file mode: {data_location}')
+                f'Failed to load external data files in single file mode: {data_location}') from e
 
     assert time_key in list(data.keys()) or time_key in list(
         data.dims) or time_key in list(data.coords), \

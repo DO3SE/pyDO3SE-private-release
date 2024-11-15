@@ -19,18 +19,211 @@ References
 - Feng, Y. et al. (2022) ‘Identifying and modelling key physiological traits that confer tolerance or sensitivity to ozone in winter wheat’, Environmental Pollution. Elsevier Ltd, 304(April), p. 119251. doi: 10.1016/j.envpol.2022.119251.
 
 """
+
 from typing import NamedTuple, List
 from math import sqrt
-
+import numpy as np
 from pyDO3SE.constants.physical_constants import R
 from pyDO3SE.util.error_handling import ConfigError
 from pyDO3SE.Config.ConfigEnums import FVPDMethods
 from do3se_met.conversion import deg_to_kel
 from do3se_met.helpers import saturated_vapour_pressure
 from pyDO3SE.plugins.gsto.helpers import temp_dep_inhibit, temp_dep
-from pyDO3SE.plugins.gsto.constants import \
-    A_j_a, A_j_b, Gamma_star_25, E_Gamma_star, E_K_C, K_C_25, K_O_25, E_K_O, E_R_d, R_d_20, \
-    H_a_jmax, H_d_jmax, S_V_jmax, H_a_vcmax, H_d_vcmax, S_V_vcmax, alpha, Teta, O_i
+from pyDO3SE.plugins.gsto.constants import (
+    A_j_a,
+    A_j_b,
+    Gamma_star_25,
+    E_Gamma_star,
+    E_K_C,
+    K_C_25,
+    K_O_25,
+    E_K_O,
+    H_a_jmax,
+    H_d_jmax,
+    S_V_jmax,
+    H_a_vcmax,
+    H_d_vcmax,
+    S_V_vcmax,
+    alpha,
+    Teta,
+    O_i,
+)
+from .types import (
+    CO2_Constant_Loop_Inputs,
+    ModelOptions,
+)
+
+
+def calc_A_n_product_limited(V_cmax: float, R_d: float) -> float:
+    """Calculate the product-limited photosynthesis rate
+
+    Parameters
+    ----------
+    V_cmax: float
+        Maximum carboxylation rate [umol/m^2/s]
+    R_d: float
+        Dark respiration rate [umol/m^2/s CO2]
+
+    Returns
+    -------
+    A_p
+        Product-limited Photosythesis Rate [umol/m^2/s]
+    """
+    return (0.5 * V_cmax) - R_d
+
+
+def calc_A_n_rubisco_limited(
+    O2: float,
+    P: float,
+    K_O: float,
+    V_cmax: float,
+    R_d: float,
+    G_0c: float,
+    G_1c: float,
+    g_bv: float,
+    c_a: float,
+    RH: float,
+    Gamma: float,
+    K_C: float,
+    negative_A_n: bool,
+):
+    """Calculate the rubisco-limited photosynthesis rate
+
+    Parameters
+    ----------
+    O2: float
+        Partial pressure of atmospheric O2 [Pa]
+    P: float
+        Surface Air Pressure [kPa]
+    K_O: float
+        Michaelis-Menten constant for O2 [mmol/mol]
+    V_cmax: float
+        Maximum carboxylation rate [umol/m^2/s]
+    R_d: float
+        Dark respiration rate [umol/m^2/s CO2]
+    G_0c: 0.00625
+        Model parameter [mol/m^2/s]
+    G_1c: 5.625
+        Model parameter [mol/m^2/s]
+    g_bv: float
+        Boundary Layer Conductance [mol/m^2/s]
+    c_a: float
+        Atmospheric CO2 concentration [ppm]
+    RH: float
+        Relative Humidity []
+    Gamma: float
+        CO2 compensation point [umol/mol CO2]
+    K_C: float
+        Michaelis constant CO2 [ppm]
+    C_s: float
+        CO2 concentration at leaf surface [ppm]
+    J: float
+        Rate of electron transport [umol/m^2/s]
+    negative_A_n: boolean
+        Boolean variable to select a negative A_n
+    Returns
+    -------
+    A_c
+        Rubisco-Limited Photosythesis Rate [umol/m^2/s]
+    """
+    # Converts Pressure from kPa (in DO3SE code) to Pa (in this code)
+    P = 1000 * P
+
+    # Define Factors for cubic Equations
+    alpha = g_bv * c_a
+    beta = (g_bv * G_1c * RH) - G_0c
+    gamma_c = (V_cmax * Gamma) + (K_C * (1 + (O2 / P) / K_O) * R_d)
+    zeta_c = V_cmax - R_d
+    eta_c = (alpha * zeta_c) - (g_bv * gamma_c)
+    xi_c = alpha + zeta_c + (K_C * (1 + (O2 / P) / K_O) * g_bv)
+
+    # Define Cubic Equation Coefficients
+    if negative_A_n == False:
+        a = beta - g_bv
+        b = (G_0c * alpha) - (beta * xi_c) + (g_bv * alpha) + (g_bv * zeta_c)
+        c = -(G_0c * alpha * xi_c) + (beta * eta_c) - (g_bv * alpha * zeta_c)
+        d = G_0c * alpha * eta_c
+    elif negative_A_n == True:
+        a = 0
+        b = G_0c + g_bv
+        c = (G_0c * xi_c) + (g_bv * zeta_c)
+        d = G_0c * eta_c
+
+    # Solve Cubic Equation
+    roots = np.roots([a, b, c, d])[np.isreal(np.roots([a, b, c, d]))]
+
+    roots = [np.real(x) for x in roots]
+    return roots
+
+
+def calc_A_n_rubp_limited(P, R_d, G_0c, G_1c, g_bv, c_a, RH, Gamma, J, negative_A_n):
+    """Calculate the RuBP-limited photosynthesis rate
+
+    Parameters
+    ----------
+    O2: float
+        Partial pressure of atmospheric O2 [Pa]
+    P: float
+        Surface Air Pressure [kPa]
+    K_O: float
+        Michaelis-Menten constant for O2 [mmol/mol]
+    V_cmax: float
+        Maximum carboxylation rate [umol/m^2/s]
+    R_d: float
+        Dark respiration rate [umol/m^2/s CO2]
+    G_0c: 0.00625
+        Model parameter [mol/m^2/s]
+    G_1c: 5.625
+        Model parameter [mol/m^2/s]
+    g_bv: float
+        Boundary Layer Conductance [mol/m^2/s]
+    c_a: float
+        Atmospheric CO2 concentration [ppm]
+    RH: float
+        Relative Humidity []
+    Gamma: float
+        CO2 compensation point [umol/mol CO2]
+    K_C: float
+        Michaelis constant CO2 [ppm]
+    C_s: float
+        CO2 concentration at leaf surface [ppm]
+    J: float
+        Rate of electron transport [umol/m^2/s]
+    negative_A_n: boolean
+        Boolean variable to select a negative A_n
+    Returns
+    -------
+    A_c
+        RuBP-Limited Photosythesis Rate [umol/m^2/s]
+    """
+    # Converts Pressure from kPa (in DO3SE code) to Pa (in this code)
+    P = 1000 * P
+
+    # Define Factors for cubic Equations
+    alpha = g_bv * c_a
+    beta = (g_bv * G_1c * RH) - G_0c
+    gamma_j = (J * Gamma) + (8 * Gamma * R_d)
+    zeta_j = J - (4 * R_d)
+    eta_j = (alpha * zeta_j) - (g_bv * gamma_j)
+    xi_j = (4 * alpha) + zeta_j + (8 * Gamma * g_bv)
+
+    # Define Cubic Equation Coefficients
+    if negative_A_n == False:
+        a = 4 * (beta - g_bv)
+        b = (4 * G_0c * alpha) - (beta * xi_j) + (4 * g_bv * alpha) + (g_bv * zeta_j)
+        c = -(G_0c * alpha * xi_j) + (beta * eta_j) - (g_bv * alpha * zeta_j)
+        d = G_0c * alpha * eta_j
+    elif negative_A_n == True:
+        a = 0
+        b = 4 * (G_0c + g_bv)
+        c = (G_0c * xi_j) + (g_bv * zeta_j)
+        d = G_0c * eta_j
+
+    # Solve Cubic Equation
+    roots = np.roots([a, b, c, d])[np.isreal(np.roots([a, b, c, d]))]
+
+    roots = [np.real(x) for x in roots]
+    return roots
 
 
 class Ewert_Input_Factors(NamedTuple):
@@ -52,11 +245,11 @@ class Ewert_Input_Factors(NamedTuple):
 
 
 def calc_input_factors(
-    Tleaf_C: float,       # < Leaf temperature [degrees C]
-    Q: float,             # < PPFD [umol/m^2/s] e.g. PARsun data converted to umol
-    V_cmax_25: float,     # < Maximum catalytic rate at 25 degrees [umol/m^2/s]
-    J_max_25: float,      # < Maximum rate of electron transport at 25 degrees [umol/m^2/s]
-    R_d_coeff: float,     # < Dark respiration coefficient
+    Tleaf_C: float,  # < Leaf temperature [degrees C]
+    Q: float,  # < PPFD [umol/m^2/s] e.g. PARsun data converted to umol
+    V_cmax_25: float,  # < Maximum catalytic rate at 25 degrees [umol/m^2/s]
+    J_max_25: float,  # < Maximum rate of electron transport at 25 degrees [umol/m^2/s]
+    R_d_coeff: float,  # < Dark respiration coefficient
 ) -> Ewert_Input_Factors:
     """Calculate input parameters to ewert pass.
 
@@ -117,11 +310,14 @@ def calc_input_factors(
     K_O = temp_dep(K_O_25, deg_to_kel(25), E_K_O, Tleaf_K, R)
 
     # [umol/m^2/s]
-    J_max = temp_dep_inhibit(J_max_25, deg_to_kel(25), H_a_jmax, H_d_jmax, S_V_jmax, Tleaf_K, R)
+    J_max = temp_dep_inhibit(
+        J_max_25, deg_to_kel(25), H_a_jmax, H_d_jmax, S_V_jmax, Tleaf_K, R
+    )
 
     # [umol/m^2/s]
-    V_cmax = temp_dep_inhibit(V_cmax_25, deg_to_kel(25), H_a_vcmax,
-                              H_d_vcmax, S_V_vcmax, Tleaf_K, R)
+    V_cmax = temp_dep_inhibit(
+        V_cmax_25, deg_to_kel(25), H_a_vcmax, H_d_vcmax, S_V_vcmax, Tleaf_K, R
+    )
 
     # [micro mol/(m^2*s)]
     # R_d = temp_dep(R_d_20, deg_to_kel(20), E_R_d, Tleaf_K, R)
@@ -131,14 +327,20 @@ def calc_input_factors(
     #  Electron transport rate
     # Equation 4 in Ewert Paper
     # [mol electron?]
-    J = (J_max + alpha * Q - sqrt((J_max + alpha * Q)**2 - 4 * alpha * Q * Teta * J_max)) / (2 * Teta)  # noqa: 501
+    J = (
+        J_max
+        + alpha * Q
+        - sqrt((J_max + alpha * Q) ** 2 - 4 * alpha * Q * Teta * J_max)
+    ) / (2 * Teta)  # noqa: 501
 
     # [Pa]
     e_sat_i = 1000 * saturated_vapour_pressure(Tleaf_C)
 
     # TODO: Handle V_cmax being 0
     # [mmol/mol]
-    Gamma = (Gamma_star + (K_C * R_d * (1 + (O_i / K_O)) / V_cmax)) / (1 - (R_d / V_cmax))
+    Gamma = (Gamma_star + (K_C * R_d * (1 + (O_i / K_O)) / V_cmax)) / (
+        1 - (R_d / V_cmax)
+    )
 
     return Ewert_Input_Factors(
         Tleaf_K=Tleaf_K,
@@ -155,9 +357,9 @@ def calc_input_factors(
 
 
 def calc_fO3_h(
-        O3up: float,
-        gamma_1: float = 0.060,
-        gamma_2: float = 0.0045,
+    O3up: float,
+    gamma_1: float = 0.060,
+    gamma_2: float = 0.0045,
 ) -> float:
     """Calculate f03 as per Ewert & Porter(2000) equation 10.
 
@@ -235,19 +437,6 @@ def calc_f_LA(t_lem: float, t_lma: float, td_dd: float) -> float:
     return f_LA
 
 
-class Damage_Factors(NamedTuple):
-    """Ozone damage factors."""
-
-    fO3_h: float
-    fO3_d: float
-    fO3_l: float
-    f_LA: float
-    f_LS: float
-    rO3: float
-    t_lep_limited: float
-    t_lse_limited: float
-
-
 def calc_fo3_l(
     O3up_acc: float,
     gamma_3: float,
@@ -282,6 +471,19 @@ def calc_fo3_l(
     """
     # eq 17 # note conversion to umol
     return min(1, max(0, 1 - (gamma_3 * ((O3up_acc / 1000) - cL3))))
+
+
+class Damage_Factors(NamedTuple):
+    """Ozone damage factors."""
+
+    fO3_h: float
+    fO3_d: float
+    fO3_l: float
+    f_LA: float
+    f_LS: float
+    rO3: float
+    t_lep_limited: float
+    t_lse_limited: float
 
 
 def calc_ozone_damage_factors(
@@ -724,8 +926,15 @@ def calc_CO2_assimilation_rate(
     - Ewert, F., Porter, J.R., 2000 - Eq8
 
     """
-    A_c = V_cmax * ((c_i_in - Gamma_star) /  # noqa: W504
-                    (c_i_in + (K_C * (1 + (O_i / K_O))))) * fO3_d * f_LS
+    A_c = (
+        V_cmax
+        * (
+            (c_i_in - Gamma_star)  # noqa: W504
+            / (c_i_in + (K_C * (1 + (O_i / K_O))))
+        )
+        * fO3_d
+        * f_LS
+    )
     A_j = J * ((c_i_in - Gamma_star) / ((A_j_a * c_i_in) + (A_j_b * Gamma_star)))
 
     A_p = 0.5 * V_cmax
@@ -733,7 +942,220 @@ def calc_CO2_assimilation_rate(
     A_n = min(A_c, A_j, A_p) - R_d
 
     A_n_limit_factor = sorted(
-        zip(['A_c', 'A_j', 'A_p'], [A_c, A_j, A_p]), key=lambda tup: tup[1])[0][0]
+        zip(["A_c", "A_j", "A_p"], [A_c, A_j, A_p]), key=lambda tup: tup[1]
+    )[0][0]
+
+    return CO2_assimilation_rate_factors(
+        A_c=A_c,
+        A_j=A_j,
+        A_p=A_p,
+        A_n=A_n,
+        A_n_limit_factor=A_n_limit_factor,
+    )
+
+
+def does_A_n_solve_requirements(A_n, constant_inputs, model_options, negative_A_n):
+    """Determines if a suitable solution to the cubic equation satisfies the requirements to be the A_n value
+
+    Parameters
+    ----------
+    root: float
+        Root of the cubic equation [umol/m^2/s CO2]
+    G_0c: 0.00625
+        Model parameter [mol/m^2/s]
+    G_1c: 5.625
+        Model parameter [mol/m^2/s]
+    RH: float
+        Relative Humidity []
+    C_s: float
+        CO2 Concentration at Leaf Surface [ppm]
+    negative_A_n: boolean
+        Boolean variable to select a negative A_n
+
+    Returns
+    -------
+    boolean
+        True if the root is a suitable A_n value, False if not
+
+    """
+    # These will need to be replaced with functions in the DO3SE model, but to work out the right value we need to satisfy both;
+    # g_sto > 0
+    # c_i > 0
+
+    # TODO: We are calculating these multiple times
+    f_VPD = (
+        calc_humidity_defecit_fVPD(
+            g_sto_in=constant_inputs.g_sto_0,
+            e_a=constant_inputs.e_a,
+            g_bl=constant_inputs.g_bl,
+            e_sat_i=constant_inputs.e_sat_i,
+            D_0=constant_inputs.D_0,
+            f_VPD_method=model_options.f_VPD_method,
+        )
+        if model_options.f_VPD_method in [FVPDMethods.LEUNING, FVPDMethods.DANIELSSON]
+        else constant_inputs.f_VPD
+    )
+
+    g_sto = calc_stomatal_conductance(
+        g_sto_0=constant_inputs.g_sto_0,
+        m=constant_inputs.m,
+        Gamma=constant_inputs.Gamma,
+        g_bl=constant_inputs.g_bl,
+        c_a=constant_inputs.c_a,
+        A_n=A_n,
+        f_SW=constant_inputs.f_SW,
+        f_VPD=f_VPD,
+    )
+    c_i = calc_CO2_supply(
+        A_n=A_n,
+        c_a=constant_inputs.c_a,
+        g_sto=g_sto,
+        g_bl=constant_inputs.g_bl,
+    )
+
+    # This first if statement is to avoid overly large roots
+    # Not a proper solution but a workaround
+    if abs(A_n) > 100:
+        return False
+    if negative_A_n:
+        if A_n >= 0:
+            return False
+    else:
+        if A_n < 0:
+            return False
+    if (g_sto > 0) and (c_i > 0):
+        return True
+    else:
+        return False
+
+
+def calc_CO2_assimilation_rate_alt(
+    c_i_in: float,
+    V_cmax: float,
+    Gamma_star: float,
+    K_C: float,
+    K_O: float,
+    fO3_d: float,
+    f_LS: float,
+    J: float,
+    R_d: float,
+    constant_inputs: CO2_Constant_Loop_Inputs,
+    model_options: ModelOptions,
+) -> CO2_assimilation_rate_factors:
+    """Calculate the assimilation rates.
+
+    Ewert & Porter(2000) Eq 8
+
+    Parameters
+    ----------
+    c_i_in: float
+        See ewert
+    V_cmax: float
+        Max catalytic rate of Rubisco      [micro mol/(m^2*s)]
+    Gamma_star: float
+        See ewert
+    K_C: float
+        Michaelis constant CO2             [micro mol/mol]
+    K_O: float
+        Michaelis constant O2              [mmol/mol]
+    fO3_d: float
+        Hourly accumulated ozone impact factor [dimensionless][0-1]
+        Cumulative ozone effect [dimensionless]
+    f_LS: float
+        factor effect of leaf senescence on A_c [Dimensionless][0-1]
+    J: float
+        Rate of electron transport         [micro mol/(m^2*s)]
+    R_d: float
+        day respiration rate [micro mol/(m^2*s)]
+
+    Returns
+    -------
+    A_c: float
+        eq 8 - Rubisco activity limited rate of photosynthesis
+    A_j: float
+        eq 3 - RuBP regeneration (electron transport) limited assimilation rate (A_q in paper)
+    A_p: float
+        eq ? - Triose phosphate utilisation limited assimilation rate
+    A_n: float
+        eq 1 - CO2 Assimilation Rate [umol m-2 s-1 CO2]
+    A_n_limit_factor: str
+        The factor that has limited CO2 assimilation (A_c/A_j/A_p)
+
+    References
+    ----------
+    - Ewert, F., Porter, J.R., 2000 - Eq8
+
+    """
+
+    g_bv = constant_inputs.g_bl
+
+    O2 = 20900
+    P = 101
+    G_0c = 0.006625
+    G_1c = 5.625
+
+    c_a = 391.0
+    RH = 0.5
+    Gamma = 57.8995211
+    negative_A_n = False
+    A_p = calc_A_n_product_limited(V_cmax, R_d)
+    A_c_roots = calc_A_n_rubisco_limited(
+        O2,
+        P,
+        K_O,
+        V_cmax,
+        R_d,
+        G_0c,
+        G_1c,
+        g_bv,
+        c_a,
+        RH,
+        Gamma,
+        K_C,
+        negative_A_n,
+    )
+    A_c_root = next(
+        (
+            root
+            for root in A_c_roots
+            if does_A_n_solve_requirements(
+                root, constant_inputs, model_options, negative_A_n
+            )
+        ),
+        np.nan,
+    )
+    A_c = ((A_c_root + R_d) * fO3_d * f_LS) - R_d
+    A_j_roots = calc_A_n_rubp_limited(
+        P,
+        R_d,
+        G_0c,
+        G_1c,
+        g_bv,
+        c_a,
+        RH,
+        Gamma,
+        J,
+        negative_A_n,
+    )
+    A_j = next(
+        (
+            root
+            for root in A_j_roots
+            if does_A_n_solve_requirements(
+                root, constant_inputs, model_options, negative_A_n
+            )
+        ),
+        np.nan,
+    )
+    if any(a is None for a in [A_c, A_j, A_p]):
+        raise ValueError(
+            f"One of the assimilation rates is None A_c={A_c}, A_j={A_j}, A_p={A_p}"
+        )
+    A_n = np.nanmin([A_p, A_c, A_j])
+
+    A_n_limit_factor = sorted(
+        zip(["A_c", "A_j", "A_p"], [A_c, A_j, A_p]), key=lambda tup: tup[1]
+    )[0][0]
 
     return CO2_assimilation_rate_factors(
         A_c=A_c,
@@ -790,15 +1212,16 @@ def calc_humidity_defecit_fVPD(
     e_sat_i_kPa = e_sat_i * 1e-3
     e_a_kPa = e_a * 1e-3
     # Surface humidity
-    h_s = (g_sto_in_mol * e_sat_i_kPa + g_bl_mol * e_a_kPa) / \
-        (e_sat_i_kPa * (g_sto_in_mol + g_bl_mol))  # Nikolov et al 1995
+    h_s = (g_sto_in_mol * e_sat_i_kPa + g_bl_mol * e_a_kPa) / (
+        e_sat_i_kPa * (g_sto_in_mol + g_bl_mol)
+    )  # Nikolov et al 1995
     # Convert relative humidity to humidity defecit
     d_s = e_sat_i_kPa - (e_sat_i_kPa * h_s)
 
     if f_VPD_method == FVPDMethods.LEUNING:
-        f_VPD = 1 / (1 + (d_s / D_0))   # Leuning 1995
+        f_VPD = 1 / (1 + (d_s / D_0))  # Leuning 1995
     elif f_VPD_method == FVPDMethods.DANIELSSON:
-        f_VPD = 1 / (1 + (d_s / D_0)**8)   # Leuning 1995
+        f_VPD = 1 / (1 + (d_s / D_0) ** 8)  # Leuning 1995
     else:
         raise ConfigError(f"Invalid f_VPD_method {f_VPD_method}")
 
@@ -863,7 +1286,7 @@ def calc_stomatal_conductance(
 
     # Equation 5 from Ewert paper and Leuning 1995
     g_eq_top = m * A_n * f_SW * f_VPD  # micro mol/(m^2*s)
-    g_eq_bottom = (c_s - Gamma)
+    g_eq_bottom = c_s - Gamma
 
     # Restricted to min g_sto_out of g_sto_0 to improve loop convergence
     g_sto_out_mol = g_sto_0_mol + max(0, (g_eq_top / g_eq_bottom))
@@ -935,4 +1358,7 @@ def calc_mean_gsto(
     List[float]
         mean_gsto per layer
     """
-    return [sum((g * L) for g, L in zip(leaf_gsto_list[iL], leaf_fLAI_list[iL])) for iL in range(nL)]
+    return [
+        sum((g * L) for g, L in zip(leaf_gsto_list[iL], leaf_fLAI_list[iL]))
+        for iL in range(nL)
+    ]
