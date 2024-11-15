@@ -19,7 +19,7 @@ class OutputData:
 
     def __init__(
         self,
-        output_shape: Tuple[int, int],
+        output_shape: Tuple[int, int, int],
         full_output_data: dict,
         output_fields: List[str],
         lat_data: np.ndarray,
@@ -37,7 +37,7 @@ class OutputData:
 # TODO: Work out how to document the below for autodoc
 # NOTE: Commented lines are not implemented
 #: Output Fields
-output_fields: Tuple[Field] = (
+output_fields: list[Field] = [
     # Inputs
     Field('row_index', int, 'Row Index', '', 'RowIndex'),
     #     Field('yr', int, 'Year', '', 'Year'),
@@ -295,7 +295,11 @@ output_fields: Tuple[Field] = (
           'boolean matrix of each leaf population where true if growing'),
     Field('leaf_pop_distribution', float, 'iP_distribution', '%',
           'LAI in each leaf population per layer (nL, nP)'),
-)
+
+      #     Debug fields
+    Field('ewert_loop_iterations', float, 'lbrn_dm', None, 'lbrn_dm'),
+
+]
 
 # TODO: Add per population fields
 per_population_fields = [
@@ -310,6 +314,7 @@ default_grid_output_fields = [
     'dd_e',
     "hr",
     "ts_c",
+    "rh",
     "par",
     "p",
     "uh_zr",
@@ -436,6 +441,7 @@ default_output_fields = [
     'dd_e',
     'hr',
     'ts_c',
+    'rh',
     'par',
     "p",
     "uh_zr",

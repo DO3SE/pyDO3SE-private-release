@@ -217,6 +217,8 @@ def grid_run_init(
 @click.option('--output-fields', default='pody', help='A comma seperated list of output fields to graph')
 @click.option('--multi-file-netcdf/--single-file-netcdf', help='True if each variable is in its own netcdf file')
 @click.option('--parallel/--no-parallel', default=False, help='Use parallelized paramga')
+@click.option('--e_state_overrides_field_map_path', default=None, help='use_per_config_e_state_overrides_field_map_path')
+@click.option('--run_mask_path', default=None, help='use_per_config_run_mask_path')
 @click.option('--max-processes', default=8, help='Maximum processes when running in parallel')
 @click.option('--cpu-sleep-time', default=0.01, help='Cpu sleep time when running in parallel')
 @click.argument(
@@ -238,6 +240,8 @@ def grid_run(
     max_processes: int = 8,
     cpu_sleep_time: float = 0.01,
     netcdf_regex_multi_file_filter=None,
+    e_state_overrides_field_map_path=None,
+    run_mask_path=None,
 ):
     """Run the DO3SE grid model.
 
@@ -258,6 +262,8 @@ def grid_run(
             project_paths,
             logger_main,
             sample_size=sample_size,
+            e_state_overrides_field_map_path=e_state_overrides_field_map_path,
+            run_mask_path=run_mask_path,
         )
     click.echo("Running grid model")
     parallel_args = setup_grid_model.ParallelArgs(
@@ -284,6 +290,8 @@ def grid_run(
             regex_multi_file_filter=netcdf_regex_multi_file_filter,
             start_input_index=start_input_index and int(start_input_index) or None,
             sample_size=sample_size,
+            e_state_overrides_field_map_path=e_state_overrides_field_map_path,
+            run_mask_path=run_mask_path,
         )
     except Exception as e:
         logger_main.log(f"Error running grid model: {e}")

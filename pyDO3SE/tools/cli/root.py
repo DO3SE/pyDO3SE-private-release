@@ -63,6 +63,7 @@ config.add_command(config_commands.generate)
 config.add_command(config_commands.migrate)
 config.add_command(config_commands.output_process_list)
 config.add_command(config_commands.plot_phenology)
+config.add_command(config_commands.process_config)
 
 analysis.add_command(analysis_commands.compare_outputs)
 analysis.add_command(analysis_commands.multi_run_final_value)

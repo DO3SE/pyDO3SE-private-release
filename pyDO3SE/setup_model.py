@@ -13,6 +13,7 @@ from typing import Callable, List, Tuple, Dict
 from datetime import datetime
 from enum import Enum
 from data_helpers.cls_parsing import rsetattr
+from data_helpers.list_helpers import flatten_list
 from proflow.ProcessRunnerCls import ProcessRunner
 from proflow.Objects.Process import Process
 
@@ -27,6 +28,7 @@ from pyDO3SE.External_State.external_state_loader import (
 from pyDO3SE.Model_State import Model_State_Shape
 from pyDO3SE.Pipelines.default_processes import (
     full_model_processes,
+    hourly_processes,
 )
 from pyDO3SE.Pipelines.validation_processes import setup_validation_processes
 from pyDO3SE.Pipelines.state_init_processes import state_init_processes
@@ -228,6 +230,22 @@ def setup_external_state(
     logger(f"External state setup with start_day: {start_day}, end_day: {end_day}")
 
     return external_state, start_day, end_day
+
+
+def run_first_hour_on_state(
+    state_in: Model_State_Shape,
+    config: Config_Shape,
+    external_state: External_State_Shape,
+    debug: bool = False,
+) -> Model_State_Shape:
+    process_runner = ProcessRunner(config, external_state, DEBUG_MODE=debug)
+    init_processes = flatten_list(hourly_processes(config, 0))
+    assert external_state is not None, "External state must be supplied to run first hour"
+    state = process_runner.run_processes(
+        init_processes,
+        state_in,
+    )
+    return state
 
 
 def setup_initial_state(

@@ -44,10 +44,16 @@ class Config_Location:
     zero_year: int = None
 
     #: Hour offset (for timezone correction)
+    #: Note this has some implications for the start and end day
+    #: Use the parameters below to handle this.
     hr_offset: float = 0
     #: Crop the data to whole days only
-    crop_to_day_start: bool = False #: Crop to day start
-    crop_to_day_end: bool = False #: Crop to day end
+    #: This is not a valid setting when data is split by month
+    crop_to_day_start: bool = False  #: Crop to day start
+    crop_to_day_end: bool = False  #: Crop to day end
+    #: Run the start of day processes even if not hour 0
+    #: only called if state.initialised is False and run_first_hour_on_init is True
+    run_first_hour_on_init: bool = False
 
     land_cover_type: LandCoverType = LandCoverType.CROP
 

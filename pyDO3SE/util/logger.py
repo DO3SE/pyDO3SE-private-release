@@ -122,7 +122,7 @@ def wrap_log(message, fn, id="MISSING ID", logger=print):
         _description_, by default "MISSING ID"
     """
     def _inner(*args, **kwargs):
-        logger(id, ':\t', message)
+        logger(f'{id}:\t{message}')
         try:
             return fn(*args, **kwargs)
         except Exception as e:

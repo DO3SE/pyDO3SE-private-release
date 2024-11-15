@@ -275,10 +275,12 @@ class Canopy_Component_State:
     flag_has_emerged: bool = False  #: Flag leaf
     emergence_rate: float = 0.0  #: leaf emergence rate
     total_emerged_leaf_populations: int = 0
-    growing_populations: List[bool] = field(default_factory=lambda: np.zeros(settings.global_settings.MAX_NUM_OF_LEAF_POPULATIONS))
+    growing_populations: List[bool] = field(default_factory=lambda: np.zeros(
+        settings.global_settings.MAX_NUM_OF_LEAF_POPULATIONS))
 
     #: Thermal time difference between leaf pop emergence and current td
-    td_dd_leaf_pops: List[float] = field(default_factory=lambda: np.zeros(settings.global_settings.MAX_NUM_OF_LEAF_POPULATIONS))
+    td_dd_leaf_pops: List[float] = field(default_factory=lambda: np.zeros(
+        settings.global_settings.MAX_NUM_OF_LEAF_POPULATIONS))
 
     #: Plant life stages in thermal time for the Ewert model
     #: Full life span of leaf in thermal time as estimated in phenology module [thermal time]
@@ -381,7 +383,7 @@ class Canopy_Layer_Component_State:
 
     #:   Multiplicative stomatal conductance parameters
     #: TODO: Move these to canopy component and population
-    gsto_params: Multip_Gsto_params = field(default_factory= lambda: Multip_Gsto_params())
+    gsto_params: Multip_Gsto_params = field(default_factory=lambda: Multip_Gsto_params())
 
     FO3_eff: float = 0.0           #: (Accumulated) effective ozone dose [nmol O3 m-2 PLA]
 
@@ -392,6 +394,13 @@ class Canopy_Layer_Component_State:
     #: Fraction of each population that makes up the layer
     fLAI_layer: List[float] = field(default_factory=lambda: np.zeros(
         settings.global_settings.MAX_NUM_OF_LEAF_POPULATIONS))
+
+
+@dataclass(frozen=False)
+class DebugState:
+    """Debug state for storing intermediate values for debugging."""
+
+    ewert_loop_iterations: int = 0  #: Max number of iterations in the Ewert loop for this hour
 
 
 @dataclass(frozen=False)
@@ -424,6 +433,7 @@ class Model_State_Shape:
         field(default_factory=lambda:
               fill_np_array_with_cls(settings.global_settings.MAX_NUM_OF_CANOPY_LAYERS, Canopy_Layer_State))
 
+
     #: Formally MC_t
     canopy_component: List[Canopy_Component_State] = \
         field(default_factory=lambda:
@@ -445,6 +455,8 @@ class Model_State_Shape:
         ))
 
     prev_hour: 'Model_State_Shape' = None  #: Stores the state from the previous hour
+
+    debug: DebugState = field(default_factory=lambda: DebugState())
 
     #: def init():
     #:     #: TODO: Validate input

@@ -12,14 +12,17 @@ Babel==2.15.0
 beautifulsoup4==4.12.3
 bleach==6.1.0
 bump2version==1.0.1
-certifi==2024.6.2
+certifi==2024.7.4
 cffi==1.16.0
 cfgv==3.4.0
+cftime==1.6.4
 charset-normalizer==3.3.2
 click==8.1.7
+cloudpickle==3.0.0
 comm==0.2.2
 contourpy==1.2.1
 cycler==0.12.1
+dask==2024.7.1
 data_helpers==0.1.29
 debugpy==1.8.1
 decorator==5.1.1
@@ -27,8 +30,8 @@ defusedxml==0.7.1
 Deprecated==1.2.14
 dill==0.3.8
 distlib==0.3.8
--e git+ssh://git@github.com/SEI-DO3SE/do3se_met.git@0df4c55864d83211f20989335d4eafe29067426f#egg=do3se_met
--e git+ssh://git@github.com/SEI-DO3SE/do3se_phenology.git@95cc5e11d1058c8e1377c4dcea8b6dc4a8f62efc#egg=do3se_phenology
+-e git+ssh://git@github.com/SEI-DO3SE/do3se_phenology.git@dc3e1af5d893689d7d16b8988cdb79c8851b0611#egg=do3se_phenology
+-e git+ssh://git@github.com/SEI-DO3SE/do3se_met.git@2394277376c38ea1b13bbb7c768c57286355517f#egg=do3se_met
 exceptiongroup==1.2.1
 executing==2.0.1
 fastdiff==0.3.0
@@ -38,11 +41,13 @@ flake8==7.0.0
 flake8-docstrings==1.7.0
 fonttools==4.51.0
 fqdn==1.5.1
+fsspec==2024.6.1
 h11==0.14.0
 httpcore==1.0.5
 httpx==0.27.0
 identify==2.5.36
 idna==3.7
+importlib_metadata==8.2.0
 iniconfig==2.0.0
 ipycanvas==0.13.2
 ipykernel==6.29.4
@@ -56,7 +61,6 @@ json5==0.9.25
 jsonpointer==2.4
 jsonschema==4.22.0
 jsonschema-specifications==2023.12.1
-jupyter==1.0.0
 jupyter-console==6.6.3
 jupyter-events==0.10.0
 jupyter-lsp==2.2.5
@@ -64,11 +68,12 @@ jupyter_client==8.6.2
 jupyter_core==5.7.2
 jupyter_server==2.14.1
 jupyter_server_terminals==0.5.3
-jupyterlab==4.2.2
+jupyterlab==4.2.3
 jupyterlab_pygments==0.3.0
 jupyterlab_server==2.27.2
 jupyterlab_widgets==3.0.10
 kiwisolver==1.4.5
+locket==1.0.0
 MarkupSafe==2.1.5
 matplotlib==3.9.0
 matplotlib-inline==0.1.7
@@ -78,6 +83,7 @@ nbclient==0.10.0
 nbconvert==7.16.4
 nbformat==5.10.4
 nest-asyncio==1.6.0
+netCDF4==1.7.1.post1
 nodeenv==1.8.0
 notebook==7.2.1
 notebook_shim==0.2.4
@@ -87,8 +93,10 @@ packaging==24.0
 pandas==2.2.2
 pandocfilters==1.5.1
 parso==0.8.4
+partd==1.4.2
 pexpect==4.9.0
 pillow==10.3.0
+pipdeptree==2.23.0
 platformdirs==4.2.2
 pluggy==1.5.0
 pre-commit==3.7.1
@@ -101,7 +109,7 @@ pure-eval==0.2.2
 py-cpuinfo==9.0.0
 pycodestyle==2.11.1
 pycparser==2.22
--e git+ssh://git@github.com/SEI-DO3SE/pyDO3SE.git@0ecd213c56fdb2a1d9602facbb95457cc3e8cb17#egg=pyDO3SE4
+-e git+ssh://git@github.com/SEI-DO3SE/pyDO3SE.git@5000af377fcb2ead5ccb4a9fd8c67dd6919d2c77#egg=pyDO3SE4
 pydocstyle==6.3.0
 pyflakes==3.2.0
 Pygments==2.18.0
@@ -136,6 +144,7 @@ terminado==0.18.1
 tinycss2==1.3.0
 tomli==2.0.1
 tomlkit==0.12.5
+toolz==0.12.1
 tornado==6.4.1
 traitlets==5.14.3
 types-python-dateutil==2.9.0.20240316
@@ -152,3 +161,5 @@ webencodings==0.5.1
 websocket-client==1.8.0
 widgetsnbextension==4.0.10
 wrapt==1.16.0
+xarray==2024.7.0
+zipp==3.19.2

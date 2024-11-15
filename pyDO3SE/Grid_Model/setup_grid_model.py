@@ -313,6 +313,7 @@ def initialize_grid_configs(
         config_cell = deepcopy(base_config)
         for k, v in override_dict.items():
             if v is None or math.isnan(v):
+                print(override_dict)
                 raise ValueError(f'{k} is invalid for ({xi},{yi})')
             config_cell = rsetattr(config_cell, k, v, True)
 
@@ -325,6 +326,8 @@ def initialize_grid_configs(
 def init_all_grid_model_configs(
     project_paths: GridProjectPaths,
     logger: Logger = print,
+    e_state_overrides_field_map_path: str = None,
+    run_mask_path: str = None,
     sample_size: int = 0,
 ):
     """Initialize grid state for all configs in project dir
@@ -333,6 +336,11 @@ def init_all_grid_model_configs(
     ----------
     project_paths: GridProjectPaths
         file paths specific to project
+    e_state_overrides_field_map_path: bool = None
+        If provided then override the e_state_overrides_field_map_path
+    run_mask_path: bool = None
+        If true then override the run_mask_path
+
     logger: Logger,
         Logger func or class
     sample_size: int, optional
@@ -347,7 +355,11 @@ def init_all_grid_model_configs(
     e_state_overrides_dataset = xr.open_dataset(project_paths.e_state_overrides_file_path)
     for config_file_path in configs:
         config_name = '.'.join(config_file_path.split('.')[:-1])
-        run_paths = get_grid_run_paths(project_paths, config_name)
+        run_paths = get_grid_run_paths(
+            project_paths, config_name,
+            e_state_overrides_field_map_path=e_state_overrides_field_map_path,
+            run_mask_path=run_mask_path,
+        )
         try:
             create_grid_run_path_directories(run_paths)
             loaded_files: GridRunFiles = load_grid_run_files(project_paths, run_paths)
@@ -433,21 +445,42 @@ def get_grid_project_paths(
 def get_grid_run_paths(
     project_paths: GridProjectPaths,
     config_id: str,
+    e_state_overrides_field_map_path: str = None,
+    run_mask_path: str = None,
 ) -> GridRunPaths:
+    """Get the run paths for a config run.
+
+    Parameters
+    ----------
+    project_paths : GridProjectPaths
+        A project paths object
+    config_id : str
+        The config id. This normally corresponds to a config file name.
+    e_state_overrides_field_map_path: bool = None
+        If provided then override the e_state_overrides_field_map_path
+    run_mask_path: bool = None
+        If true then override the run_mask_path
+
+    Returns
+    -------
+    GridRunPaths
+        Grid run paths object populated with paths
+
+    """
     config_run_dir = f"{project_paths.run_dir}/{config_id}"
 
     return GridRunPaths(
         config_id=config_id,
         config_run_dir=config_run_dir,
         config_path=f"{project_paths.project_dir}/configs/{config_id}.json",
-        e_state_overrides_field_map_path=f"{project_paths.e_state_overrides_field_map_path}/{config_id}.json",
+        e_state_overrides_field_map_path=e_state_overrides_field_map_path or f"{project_paths.e_state_overrides_field_map_path}/{config_id}.json",
         initial_state_dir=f"{config_run_dir}/initial_state",
         live_state_dir=f"{config_run_dir}/current_state",
         final_state_dir=f"{config_run_dir}/final_state",
         prev_state_dir=f"{config_run_dir}/prev_state",
         output_data_dir=f"{config_run_dir}/outputs_grid",
         processed_configs_dir=f"{config_run_dir}/processed_configs",
-        run_mask_path=f"{project_paths.project_dir}/run_masks/{config_id}.nc",
+        run_mask_path=run_mask_path or f"{project_paths.project_dir}/run_masks/{config_id}.nc",
     )
 
 

@@ -15,7 +15,7 @@
     },
     "Land_Cover": {
         "nL": 1,
-        "nP": 3,
+        "nP": 1,
         "layer_height_frac": [
             1.0
         ],

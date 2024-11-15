@@ -91,15 +91,13 @@ def run_model(
     model_processes: List[Process],
     start_index: int = None,
     logger: Callable[[str], None] = Logger(),
-    DEBUG_MODE: bool = False,
 ) -> Tuple[Model_State_Shape, List[List[Any]]]:
     """Run the model from the point we have received all external data."""
-    logger("Running model")
+    logger(f"Running model run on config")
 
     # Validate Input
     assert len(config.output.fields) > 0, "Must supply output fields in config or cli args!"
-
-    process_runner = ProcessRunner(config, external_state, DEBUG_MODE=DEBUG_MODE)
+    process_runner = ProcessRunner(config, external_state, DEBUG_MODE=logger.log_level>=2)
     model_state = deepcopy(initial_state)
     start_index = start_index if start_index is not None else model_state.temporal.row_index or 0
     process_runner.tm.row_index = model_state.temporal.row_index or 0
@@ -108,6 +106,8 @@ def run_model(
         model_processes,
         model_state,
     )
+    logger(f"Running model run on config-COMPLETE")
+
 
     output_logs = process_runner.state_logs
     return final_state, output_logs

@@ -1,0 +1,4 @@
+
+git+ssh://git@github.com/SEI-DO3SE/thermal_time@RELEASE
+git+ssh://git@github.com/SEI-DO3SE/do3se_phenology@RELEASE
+git+ssh://git@github.com/SEI-DO3SE/do3se_met@RELEASE
