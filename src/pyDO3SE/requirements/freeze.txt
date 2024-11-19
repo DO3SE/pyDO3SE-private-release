@@ -109,7 +109,7 @@ pure-eval==0.2.2
 py-cpuinfo==9.0.0
 pycodestyle==2.11.1
 pycparser==2.22
--e git+ssh://git@github.com/SEI-DO3SE/pyDO3SE.git@8f1773cc3ccaa58fa4d314d75630ab5870a98df9#egg=pyDO3SE4
+-e git+ssh://git@github.com/SEI-DO3SE/pyDO3SE.git@cd061830181ecef76891396944ce3c548c3547f1#egg=pyDO3SE4
 pydocstyle==6.3.0
 pyflakes==3.2.0
 Pygments==2.18.0
