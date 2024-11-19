@@ -41,6 +41,10 @@ fi
 # If the version of any of the dependencies have changed and PYDO3SE hasn't then we need to
 # ask the user to update the version of pyDO3SE before continuing
 
+if [[ "$1" == "check-only" ]]; then
+  echo "Versions are consistent"
+  exit 0
+fi
 
 echo "Bumping version"
 bumpversion --new-version="$PYDO3SE_VERSION" patch --allow-dirty
@@ -52,7 +56,11 @@ echo "thermal_time version: $THERMAL_TIME_VERSION" >> SUB_VERSIONS.txt
 echo "do3se_phenology version: $DO3SE_PHENOLOGY_VERSION" >> SUB_VERSIONS.txt
 echo "do3se_met version: $DO3SE_MET_VERSION" >> SUB_VERSIONS.txt
 
+
+
 # Commit the changes
+cp src/pyDO3SE/VERSION.txt VERSION.txt
+git add VERSION.txt
 git add SUB_VERSIONS.txt
 git add .bumpversion.cfg
 git commit -m "Bump version to $PYDO3SE_VERSION"
