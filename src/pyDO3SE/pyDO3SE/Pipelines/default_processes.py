@@ -4536,7 +4536,7 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
         ])))) if log_multilayer else [],
         # Debug outputs
         log_values(lambda state: flatten_list(list(filter(lambda f: f, [
-            __SPACER__("Debug >") if include_spacers else None,
+            __SPACER__("Debug >"),
             I(state.debug.ewert_loop_iterations, as_='ewert_loop_iterations'),
         ])))) if "_debug" in fields else [],
     ]
