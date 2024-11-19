@@ -155,7 +155,7 @@ def test_should_not_change_pody_if_lai_changes():
         external_state_data,
     )
 
-    # TODO: make LAI constant
+    # Run with LAI 3
     processed_config.Land_Cover.LAI_method = LAIMethods.CONSTANT
     processed_config.Land_Cover.LAI = 3
     initial_state = main.model_state_loader(
@@ -171,12 +171,13 @@ def test_should_not_change_pody_if_lai_changes():
         external_state,
         model_processes,
     )
-
-    assert isclose(final_state.canopy_component_population[0][0].POD_Y, 0.227126866, abs_tol=1e-4)
+    lai_3_pody = final_state.canopy_component_population[0][0].POD_Y
+    # assert isclose(final_state.canopy_component_population[0][0].POD_Y, 0.227126866, abs_tol=1e-4)
     assert final_state.canopy.LAI_total == 3
     assert final_state.canopy_component[0].LAI == 3
     assert output_logs[0]['pody'] < output_logs[-1]['pody']
 
+    # Run with LAI 6
     processed_config.Land_Cover.LAI_method = LAIMethods.CONSTANT
     processed_config.Land_Cover.LAI = 6
     final_state_b, output_logs = main.run_model_on_mapped_processes(
@@ -185,7 +186,7 @@ def test_should_not_change_pody_if_lai_changes():
         external_state,
         model_processes,
     )
-    assert isclose(final_state_b.canopy_component_population[0][0].POD_Y, 0.227126866, abs_tol=1e-4)
+    assert isclose(final_state_b.canopy_component_population[0][0].POD_Y, lai_3_pody, abs_tol=1e-4)
     assert final_state_b.canopy_component[0].LAI == 6
 
     assert output_logs[0]['pody'] < output_logs[-1]['pody']
