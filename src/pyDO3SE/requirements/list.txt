@@ -31,7 +31,7 @@ defusedxml                               0.7.1
 Deprecated                               1.2.14                                  
 dill                                     0.3.8                                   
 distlib                                  0.3.8                                   
-do3se_met                                0.3.5                                   
+do3se-met                                0.3.5                                   
 do3se-phenology                          0.14.12                                 
 exceptiongroup                           1.2.1                                   
 executing                                2.0.1                                   
@@ -97,7 +97,7 @@ parso                                    0.8.4
 partd                                    1.4.2                                   
 pexpect                                  4.9.0                                   
 pillow                                   10.3.0                                  
-pip                                      24.3.1                                  
+pip                                      24.1.2                                  
 pipdeptree                               2.23.0                                  
 platformdirs                             4.2.2                                   
 pluggy                                   1.5.0                                   

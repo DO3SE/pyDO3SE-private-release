@@ -8,9 +8,9 @@ import queue
 from pyDO3SE.optional_dependencies import xarray as xr
 from multiprocessing import Process, Queue
 from pathlib import Path
-from typing import Any, Callable, List, Tuple, Generator, Optional
+from typing import Any, Callable, List, Tuple, Generator, Optional, TypeAlias
 from datetime import datetime
-
+from data_helpers.list_helpers import flatten_list
 from pyDO3SE.Config.config_loader import grid_config_loader
 from pyDO3SE.setup_model import (
     Main_Overrides,
@@ -56,6 +56,7 @@ from pyDO3SE.Output.process_outputs import (
     dump_output_to_file_netcdf_grid,
 )
 from pyDO3SE.Output.Output_Shape import OutputData
+from pyDO3SE.Output.utils import get_multi_dimension_output_fields
 
 from pyDO3SE.Config import Config_Shape
 from pyDO3SE.Model_State import Model_State_Shape
@@ -130,21 +131,19 @@ def run_cell(
     # Each iteration runs a single grid cell over all the hours in the input data.
     # OPTIMIZE: This step taking a long time
 
-    [i, (xi, yi), config_cell, external_state_data_cell,
-        prev_hour_state_loaded, cell_processes] = cell_model
+    [i, (xi, yi), config_cell, external_state_data_cell, prev_hour_state_loaded, cell_processes] = cell_model
 
-    logger(
-        f'Preping coord ({xi}, {yi} ({i+1}/{cell_count}) for date: {start_date})')
+    logger(f"Preping coord ({xi}, {yi} ({i+1}/{cell_count}) for date: {start_date})")
 
-    logger('Model Extracted. Ready to run cell.')
+    logger("Model Extracted. Ready to run cell.")
     assert row_count <= len(
-        external_state_data_cell.dd), \
-        f"External state row count({len(external_state_data_cell.dd)}) is less than requested row count{row_count}"
+        external_state_data_cell.dd
+    ), f"External state row count({len(external_state_data_cell.dd)}) is less than requested row count{row_count}"
     # Make sure start and end day set in config.
     config_cell.Location.start_day = start_day
     config_cell.Location.end_day = end_day
 
-    if (init_first_hour):
+    if init_first_hour:
         prev_hour_state_loaded = run_first_hour_on_state(
             prev_hour_state_loaded,
             config_cell,
@@ -155,8 +154,7 @@ def run_cell(
     # Run DO3SE model
     # TODO: Check if we should still use daily loop setup here or mapped runner
     model_runner = run_model_daily if use_daily_loop else run_model
-    logger(
-        f'Running coord ({xi}, {yi}) for date: {start_date}\nUsing daily loop: {use_daily_loop}')
+    logger(f"Running coord ({xi}, {yi}) for date: {start_date}\nUsing daily loop: {use_daily_loop}")
     try:
         final_state, output_logs = model_runner(
             initial_state=prev_hour_state_loaded,
@@ -170,16 +168,15 @@ def run_cell(
         logger(f"Failed to run file at {xi}_{yi}")
         logger(f"Error: {e}")
         logger(f"Dumping state to tmp/prev_hour_state_loaded.json")
-        os.makedirs('tmp', exist_ok=True)
-        dump_state_to_file(prev_hour_state_loaded, 'tmp/prev_hour_state_loaded.json')
+        os.makedirs("tmp", exist_ok=True)
+        dump_state_to_file(prev_hour_state_loaded, "tmp/prev_hour_state_loaded.json")
         raise Do3seRunError(f"Failed to run file at {xi}_{yi}", e) from e
 
     # Save state at each iteration
     # state_file_out_path = f"{output_state_dir}/{xi}_{yi}.state"
     # dump_state_to_file_quick(final_state, state_file_out_path)
     output_coords = [xi, yi]
-    output_data = [[o.get(k, MISSING_OUTPUT_VALUE)
-                    for o in output_logs] for k in output_fields]
+    output_data = [[o.get(k, MISSING_OUTPUT_VALUE) for o in output_logs] for k in output_fields]
     return output_coords, output_data, final_state, output_fields
 
     # # TODO: Can we save to netcdf here rather than storing all output in memory till end of runs?
@@ -261,7 +258,7 @@ def run_in_parallel(
             if running_processes > 0:
                 time.sleep(parallel_args.SLEEP_TIME)
                 try:
-                    queue_get = Qu.get(timeout=.1)
+                    queue_get = Qu.get(timeout=0.1)
                     if queue_get:
                         i, res = queue_get
                         procs[i].join()
@@ -278,7 +275,7 @@ def run_in_parallel(
                 time.sleep(0.1)
                 # Already running max number of processes. Wait for some to finish
                 continue
-            if (next_index < total_population):
+            if next_index < total_population:
                 args = next(input_args)
                 p = Process(target=q_wrap, args=([Qu, [next_index, args], func_kwargs]))
                 procs.append(p)
@@ -291,7 +288,7 @@ def run_in_parallel(
                 try:
                     print(p.exitcode)
                     p.terminate()
-                    p.join(.1)
+                    p.join(0.1)
                 except:
                     p.kill()
         except:
@@ -302,8 +299,8 @@ def run_in_parallel(
     return outputs
 
 
-Coords = Tuple[int, int]
-OutputFields = List[str]
+Coords: TypeAlias = Tuple[int, int]
+OutputFields: TypeAlias = List[str]
 
 
 class ExternalStateIterable:
@@ -369,12 +366,14 @@ def setup_external_state_iter(
     # TODO: Should only load 1 cell.
     # OPTIMIZE: This step is taking over 1 min. Seems to be exponential based on number of rows loading
     # e_state_overrides_dataset = xr.open_dataset(project_paths.e_state_overrides_file_path)
-    sample_e_state = next(load_external_state(
-        external_data_file_path,
-        [grid_coords[0]],
-        external_state_options,
-        logger=logger,
-    ))
+    sample_e_state = next(
+        load_external_state(
+            external_data_file_path,
+            [grid_coords[0]],
+            external_state_options,
+            logger=logger,
+        )
+    )
     sample_e_state_post_processed = run_init_processes_on_e_state(
         sample_e_state,
         config=cell_configs[0],
@@ -399,35 +398,40 @@ def setup_external_state_iter(
         grid_coords,
         external_state_options,
     )
-    e_state_init_processes = (wrap_log(
-        f"Generating e_state processes for config {i}",
-        external_state_init_processes,
-        f'Coord {coord}',
-        logger=logger
-    )(config_met=config.Met)
-        for i, (config, coord) in enumerate(zip(cell_configs, grid_coords)))
+    e_state_init_processes = (
+        wrap_log(
+            f"Generating e_state processes for config {i}",
+            external_state_init_processes,
+            f"Coord {coord}",
+            logger=logger,
+        )(config_met=config.Met)
+        for i, (config, coord) in enumerate(zip(cell_configs, grid_coords))
+    )
 
     # Process external state ready for model run.
-    external_state_preprocessed = (setup_external_state_simple(
-        external_state_data,
-        config,
-        e_state_processes_cell,
-    ) for config, external_state_data, e_state_processes_cell
-        in zip(cell_configs, external_state_data_iter, e_state_init_processes))
+    external_state_preprocessed = (
+        setup_external_state_simple(
+            external_state_data,
+            config,
+            e_state_processes_cell,
+        )
+        for config, external_state_data, e_state_processes_cell in zip(
+            cell_configs, external_state_data_iter, e_state_init_processes
+        )
+    )
 
     logger(f"Row count: {row_count}, start_day: {start_day}, end_day: {end_day}")
-    assert len(
-        hours) == row_count, f"Hours length({len(hours)}) does not match row count ({row_count})"
+    assert len(hours) == row_count, f"Hours length({len(hours)}) does not match row count ({row_count})"
     try:
         lat_data = e_state_overrides_dataset.lat_data.values
         lon_data = e_state_overrides_dataset.lon_data.values
         time_data = pd.date_range(start_date, periods=row_count, freq="1H")
-        input_shape = [len(e_state_overrides_dataset.x), len(
-            e_state_overrides_dataset.y)]
+        input_shape = [len(e_state_overrides_dataset.x), len(e_state_overrides_dataset.y)]
 
     except AttributeError as e:
         raise AttributeError(
-            f"e_state_overrides_dataset must be an xarray.Dataset with lat_data, lon_data and x, y dimensions. Dataset has following keys: {list(e_state_overrides_dataset.keys())}") from e
+            f"e_state_overrides_dataset must be an xarray.Dataset with lat_data, lon_data and x, y dimensions. Dataset has following keys: {list(e_state_overrides_dataset.keys())}"
+        ) from e
 
     return ExternalStateIterable(
         start_day,
@@ -510,23 +514,29 @@ def main_partial(
     """
     logger("== Running Main = SETUP ==")
 
-    model_processes = overrides.model_processes \
-        or (get_row_processes_hourly(config, list(range(24)))
-            for config in cell_configs) \
-        if use_daily_loop \
-        else (get_row_processes_hourly(config, external_states.hours)
-              for config in cell_configs)
+    model_processes = (
+        overrides.model_processes or (get_row_processes_hourly(config, list(range(24))) for config in cell_configs)
+        if use_daily_loop
+        else (get_row_processes_hourly(config, external_states.hours) for config in cell_configs)
+    )
 
     # setup input args for each cell run
     input_args = (
-        [cell] for cell in zip(
-            range(len(grid_coords)), grid_coords, cell_configs, external_states, prev_hour_states_loaded, model_processes
+        [cell]
+        for cell in zip(
+            range(len(grid_coords)),
+            grid_coords,
+            cell_configs,
+            external_states,
+            prev_hour_states_loaded,
+            model_processes,
         )
     )
 
     run_count = len(grid_coords)
     logger(
-        f"== Running Main = Starting runs\nTotal cells: {len(grid_coords)}\nParallel: {parallel}\n Debug mode: {debug}")
+        f"== Running Main = Starting runs\nTotal cells: {len(grid_coords)}\nParallel: {parallel}\n Debug mode: {debug}"
+    )
     run_cells = run_in_parallel if parallel else run_in_sequence
 
     start_time = datetime.now()
@@ -737,11 +747,10 @@ def output_data_from_outputs_full_grid(
     grid_x_size, grid_y_size, row_count = output_shape
 
     full_output_data = {
-        k: np.full((grid_x_size, grid_y_size, row_count), None,
-                   dtype=np.float64) for k in output_fields
-    } if output_fields else None
+        k: np.full((grid_x_size, grid_y_size, row_count), None, dtype=np.float64) for k in output_fields
+    }
     try:
-        for [xi, yi], outputs_cell, final_state, output_fields in outputs_full_grid:
+        for [xi, yi], outputs_cell, final_state, _output_fields in outputs_full_grid:
             for i, k in enumerate(output_fields):
                 full_output_data[k][xi, yi] = outputs_cell[i]
         return OutputData(
@@ -772,7 +781,7 @@ def save_model_iteration_output(
     time_data: np.ndarray,
 ):
     if output_state_dir:
-        for coord, output_data, final_state, output_fields in outputs_full_grid:
+        for coord, output_data, final_state, _output_fields in outputs_full_grid:
             # Save state at each iteration
             xi, yi = coord
             state_file_out_path = f"{output_state_dir}/{xi}_{yi}.state"
@@ -788,11 +797,10 @@ def save_model_iteration_output(
             lon_data,
             time_data,
         )
-
         # TODO: Check time of output
         # time_data = pd.date_range(external_states.start_date,
         #                           periods=external_states.row_count, freq="1H")
-        target_file_name = f'output_data_{time_string}.nc'
+        target_file_name = f"output_data_{time_string}.nc"
         dump_output_to_file_netcdf_grid(
             full_output_data=output_data.full_output_data,
             output_shape=output_data.output_shape,
@@ -810,7 +818,7 @@ def main_grid_seq_per_config(
     loaded_run_files: GridRunFiles,
     grid_coords: List[Tuple[int, int]],
     output_shape: Tuple[int, int],
-    runnotes: str = '',
+    runnotes: str | list[str] = "",
     output_fields: List[str] = None,
     seperate_live_state: bool = False,
     multi_file_netcdf: bool = False,
@@ -825,7 +833,7 @@ def main_grid_seq_per_config(
     start_input_index: int = None,
     end_input_index: int = None,
     debug: bool = False,
-):
+) -> List[List[Tuple[Coords, ModelGridCellOutput, Model_State_Shape, OutputFields]]]:
     """Run the grid run on a single config.
 
     Parameters
@@ -873,11 +881,18 @@ def main_grid_seq_per_config(
 
     """
     logger(f"== Running main_grid_seq_per_config:\nConfig: {run_paths.config_id} ===")
-    cell_configs: List[Config_Shape] = grid_config_loader(
-        run_paths.processed_configs_dir, grid_coords)
+    cell_configs: List[Config_Shape] = grid_config_loader(run_paths.processed_configs_dir, grid_coords)
     for config in cell_configs:
+        # Make sure that all output fields are in the config.
         config.output.fields = (config.output.fields or []) + (output_fields or [])
         assert len(config.output.fields) > 0, "Must supply output fields in config or cli args!"
+    save_multi_layer_fields = config.output.log_multilayer
+    output_fields_full = (
+        output_fields
+        if not save_multi_layer_fields
+        else flatten_list([[f, *get_multi_dimension_output_fields(f)] for f in output_fields])
+    )
+
     zero_year = cell_configs[0].Location.zero_year
     assert zero_year, "Must supply zero year in configuration for grid runs!"
     errors = []
@@ -892,7 +907,8 @@ def main_grid_seq_per_config(
     )
     total_files = len(input_files) if input_files[0] != "*" else "*"
     logger(
-        f"== Running Model: Total Files: {total_files}. Start index: {start_input_index}. End index: {end_input_index} ===")
+        f"== Running Model: Total Files: {total_files}. Start index: {start_input_index}. End index: {end_input_index} ==="
+    )
 
     external_state_options = EStateOptions(
         file_type=FileTypes.NETCDF,
@@ -904,8 +920,9 @@ def main_grid_seq_per_config(
     )
     duration = None
 
-    full_outputs: List[List[Tuple[Coords, ModelGridCellOutput,
-                                  Model_State_Shape, OutputFields]]] = [] if return_outputs else None
+    full_outputs: List[List[Tuple[Coords, ModelGridCellOutput, Model_State_Shape, OutputFields]]] = (
+        [] if return_outputs else None
+    )
 
     try:
         start_time = datetime.now()
@@ -915,7 +932,9 @@ def main_grid_seq_per_config(
         for i, f in enumerate(input_files):
             logger(f"Running file: {f} ({i+1}/{total_files})")
             state_out_path = run_paths.live_state_dir
-            input_data_file = f"{project_paths.input_data_dir}/{f}" if not multi_file_netcdf else project_paths.input_data_dir
+            input_data_file = (
+                f"{project_paths.input_data_dir}/{f}" if not multi_file_netcdf else project_paths.input_data_dir
+            )
             previous_hour_state_path = run_paths.live_state_dir if not seperate_live_state else run_paths.prev_state_dir
 
             if regex_multi_file_filter:
@@ -932,6 +951,7 @@ def main_grid_seq_per_config(
                 warnings.simplefilter("ignore")
                 # Iterates over each config for each cell in the grid
                 logger(f"Setting up external state iter")
+                # TODO: Check that e_state_overrides dataset shape matches
                 external_states = setup_external_state_iter(
                     cell_configs,
                     external_data_file_path=input_data_file,
@@ -943,8 +963,9 @@ def main_grid_seq_per_config(
                 )
 
                 logger(f"Loading previous state")
-                prev_hour_states_loaded = (load_current_cell_state(previous_hour_state_path, x, y)
-                                           for x, y in grid_coords)
+                prev_hour_states_loaded = (
+                    load_current_cell_state(previous_hour_state_path, x, y) for x, y in grid_coords
+                )
 
                 logger(f"Running cells")
                 outputs_full_grid = main_partial(
@@ -952,7 +973,7 @@ def main_grid_seq_per_config(
                     prev_hour_states_loaded=prev_hour_states_loaded,
                     grid_coords=np.array(grid_coords),
                     external_states=external_states,
-                    output_fields=output_fields,
+                    output_fields=output_fields_full,
                     parallel=parallel,
                     use_daily_loop=use_daily_loop,
                     init_first_hour=i == 0 and config.Location.run_first_hour_on_init,
@@ -961,14 +982,14 @@ def main_grid_seq_per_config(
                     overrides=overrides,
                     debug=debug,
                 )
-                logger(f"Running cells - Complete and saving interation output")
+                logger("Running cells - Complete and saving interation output")
                 save_model_iteration_output(
                     outputs_full_grid=outputs_full_grid,
                     output_state_dir=state_out_path or previous_hour_state_path,
                     output_directory=run_paths.output_data_dir,
                     time_string=external_states.time_string,
                     output_shape=[*output_shape, external_states.row_count],
-                    output_fields=output_fields,
+                    output_fields=output_fields_full,
                     lat_data=external_states.lat_data,
                     lon_data=external_states.lon_data,
                     time_data=external_states.time_data,
@@ -986,7 +1007,7 @@ def main_grid_seq_per_config(
         errors.append((f"Run Dir: {run_paths.config_run_dir} failed", e))
 
     if isinstance(logger, Logger) and logger.log_level >= 0:
-        with open(f'{run_paths.config_run_dir}/notes.log', 'w') as f:
+        with open(f"{run_paths.config_run_dir}/notes.log", "w") as f:
             log_notes = generate_run_notes(
                 runnotes,
                 time_taken=duration,
@@ -1013,7 +1034,7 @@ def main_grid_run(
     project_paths: GridProjectPaths,
     output_fields: List[str],
     multi_file_netcdf: bool = False,
-    runnotes: str = '',
+    runnotes: str = "",
     logger: Logger = print,
     seperate_live_state: bool = False,
     save_final_state: bool = False,
@@ -1021,7 +1042,7 @@ def main_grid_run(
     parallel: bool = False,
     parallel_args: ParallelArgs = ParallelArgs(),
     netcdf_loader_kwargs: dict = {},
-    regex_multi_file_filter: str = '',
+    regex_multi_file_filter: str = "",
     sample_size: int = 0,
     start_input_index: int = None,
     e_state_overrides_field_map_path: str = None,
@@ -1071,13 +1092,13 @@ def main_grid_run(
         If on then run in debug mode
 
     """
-    logger(f'== Running main_grid_run on:\n{project_paths.run_dir}=====')
+    logger(f"== Running main_grid_run on:\n{project_paths.run_dir}=====")
     config_file_names = get_configs(project_paths.config_dir)
 
-    logger(f'Found {len(config_file_names)} configs to run')
+    logger(f"Found {len(config_file_names)} configs to run")
 
     for config_file_name in config_file_names:
-        config_name = '.'.join(config_file_name.split('.')[:-1])
+        config_name = ".".join(config_file_name.split(".")[:-1])
         run_paths = get_grid_run_paths(
             project_paths,
             config_name,
@@ -1086,10 +1107,10 @@ def main_grid_run(
         )
         loaded_run_files = load_grid_run_files(project_paths, run_paths)
         create_grid_run_path_directories(run_paths)
-        grid_coords, *output_shape = get_grid_coords_from_file(
-            run_paths.run_mask_path
-        )
-        grid_coords_sampled = grid_coords[0:sample_size]if sample_size else grid_coords
+        grid_coords, *output_shape = get_grid_coords_from_file(run_paths.run_mask_path)
+        logger(f"== Running main_grid_run on config: {config_name} ==")
+        logger(f"== Output shape: {output_shape} ==")
+        grid_coords_sampled = grid_coords[0:sample_size] if sample_size else grid_coords
 
         main_grid_seq_per_config(
             project_paths=project_paths,
@@ -1114,5 +1135,7 @@ def main_grid_run(
         if save_final_state:
             for x, y in grid_coords_sampled:
                 file_name = f"{x}_{y}"
-                dump_state_to_file(model_state_loader_quick(
-                    f"{run_paths.live_state_dir}/{file_name}.state"), f"{run_paths.final_state_dir}/{file_name}.json")
+                dump_state_to_file(
+                    model_state_loader_quick(f"{run_paths.live_state_dir}/{file_name}.state"),
+                    f"{run_paths.final_state_dir}/{file_name}.json",
+                )

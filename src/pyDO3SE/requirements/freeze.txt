@@ -30,8 +30,8 @@ defusedxml==0.7.1
 Deprecated==1.2.14
 dill==0.3.8
 distlib==0.3.8
--e git+ssh://git@github.com/SEI-DO3SE/do3se_phenology.git@dc3e1af5d893689d7d16b8988cdb79c8851b0611#egg=do3se_phenology
--e git+ssh://git@github.com/SEI-DO3SE/do3se_met.git@2394277376c38ea1b13bbb7c768c57286355517f#egg=do3se_met
+-e git+ssh://git@github.com/SEI-DO3SE/do3se_met.git@2b3be2649d97204eb93a8730a1ca120078320b47#egg=do3se_met
+-e git+ssh://git@github.com/SEI-DO3SE/do3se_phenology.git@95cc5e11d1058c8e1377c4dcea8b6dc4a8f62efc#egg=do3se_phenology
 exceptiongroup==1.2.1
 executing==2.0.1
 fastdiff==0.3.0
@@ -109,7 +109,7 @@ pure-eval==0.2.2
 py-cpuinfo==9.0.0
 pycodestyle==2.11.1
 pycparser==2.22
--e git+ssh://git@github.com/SEI-DO3SE/pyDO3SE.git@5f968b60acca29279c8cdeb461559bddc915a3be#egg=pyDO3SE4
+-e git+ssh://git@github.com/SEI-DO3SE/pyDO3SE.git@0de4d1d4f23e83b25b0a22d531a6ded3ae9ddf6b#egg=pyDO3SE4
 pydocstyle==6.3.0
 pyflakes==3.2.0
 Pygments==2.18.0

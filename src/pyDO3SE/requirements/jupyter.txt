@@ -1,3 +1,2 @@
 ipycanvas
 ipywidgets
-jupyter

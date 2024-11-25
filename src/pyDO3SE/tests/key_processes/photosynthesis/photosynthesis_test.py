@@ -16,9 +16,8 @@ project_dir = "tests/key_processes/photosynthesis"
 def run_with_config(runid: str, project_dir: Path, config_file: str, input_file: str, input_state_file: str, **kwargs):
     project_paths = main.get_project_paths(project_dir)
     run_paths = main.get_run_paths(runid, project_paths, config_file, input_file)
-    if input_state_file:
-        project_paths = project_paths._replace(
-            base_state_path=f"{project_dir}/initial_state/{input_state_file}.json")
+    project_paths = project_paths._replace(
+        base_state_path=f"{project_dir}/initial_state/{input_state_file}.json")
 
     # Create output dir
     main.create_run_path_directories(run_paths)
@@ -33,7 +32,7 @@ def run_with_config(runid: str, project_dir: Path, config_file: str, input_file:
             data_file=run_paths.input_data_file_path,
             output_directory=run_paths.output_directory,
             base_config_file=project_paths.base_config_path,
-            initial_state_path=project_paths.base_state_path if input_state_file else None,
+            initial_state_path=project_paths.base_state_path,
             plot_fields=None,
             runid=runid,
             verbose=2,
@@ -48,7 +47,6 @@ RunSetup = namedtuple('RunSetup', ['runid', 'config_file',
 setups = [
     RunSetup("default_dvi_1_03", "default", "three_days", 'dump_state_dvi_1_03', {}),
     RunSetup("default_dvi_1_94", "default", "three_days", 'dump_state_dvi_1_94', {}),
-    RunSetup("negative_an", "negative_an", "negative_an", None, {}),
 ]
 
 setupsMap = {s.runid: s for s in setups}
@@ -77,7 +75,7 @@ def photosynthesis_test_run(request):
 
 @pytest.mark.usefixtures('photosynthesis_test_run')
 class TestRunAndCompare:
-    output: dict[str, dict]
+
     def test_preruns_run_without_error(self):
         pass
 
@@ -103,13 +101,3 @@ class TestRunAndCompare:
         A_n = hourly_output['A_n'].values
         in_sun_index = next(i for i, v in enumerate(A_n) if v > 0)
         assert A_n_sunlit[in_sun_index] > A_n[in_sun_index]
-
-    @pytest.mark.parametrize('runid', all_setups)
-    def test_should_not_output_negative_An(self, runid):
-        hourly_output = self.output[runid]['hourly_output']
-        A_n_sunlit = hourly_output['A_n_sunlit'].values
-        A_n_canopy = hourly_output['A_n_canopy'].values
-        A_n = hourly_output['A_n'].values
-        assert all(a >= -20 for a in A_n_sunlit), f"Sunlit: {min(A_n_sunlit)}"
-        assert all(a >= -20 for a in A_n_canopy), f"Sunlit: {min(A_n_sunlit)}"
-        assert all(a >= -20 for a in A_n), f"Sunlit: {min(A_n_sunlit)}"

@@ -10,7 +10,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyDO3SE4",
-    version="4.40.9",
+    version="4.40.2",
     author="SEI-York",
     author_email="sam.bland@york.ac.uk",
     description="DO3SE model python API",
@@ -37,7 +37,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     package_dir={'pyDO3SE': 'pyDO3SE', 'pyDO3SE_cli': 'pyDO3SE_cli'},
     classifiers=[
-        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.7",
         "Operating System :: OS Independent",
     ],
 )

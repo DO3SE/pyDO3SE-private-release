@@ -2,9 +2,11 @@
 O_i = 210.0           # O2 concentration                   [mmol/mol]
 E_K_C = 79430.0       # activation energy of K_C           [J/mol]            Medlyn2002
 E_K_O = 36380.0       # activation energy of K_O           [J/mol]            Medlyn2002
+E_R_d = 53000.0       # activation energy of R_d           [J/mol]            Leuning1995
 E_Gamma_star = 37830.0  # activation energy for C-comp-point [J/mol]            Medlyn2002
 K_C_25 = 404.9        # K.C at reference temperature 25    [micro mol/mol]    Medlyn2002
 K_O_25 = 278.4        # K.O at reference temperature 25    [mmol/mol]         Medlyn2002
+R_d_20 = 0.32         # R_d at reference temperature 20    [micro mol/(m^2*s)]Leuning1995
 Gamma_star_25 = 42.75  # CO2 compensation point at T= 25    [micro mol/mol]    Medlyn2002
 A_j_a = 4.0           # electron requirement for NADPH formation
 A_j_b = 8.0           # electron requirement for ATP formation

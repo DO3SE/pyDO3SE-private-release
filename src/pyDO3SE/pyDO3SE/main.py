@@ -300,7 +300,7 @@ def main(
 
     output_filename = run_paths.output_filename
     if run_paths.output_directory:
-        logger("Exporting outputs")
+        logger(f"Exporting outputs to {run_paths.output_directory}")
         export_output(
             output_logs,
             final_state,
@@ -607,7 +607,7 @@ def batch(
     runtime = datetime.now() - start_time
 
     logger(f"Complete! \nRuns took: {runtime}")
-    logger(f"Output file located in {project_paths.project_dir}")
+    logger(f"Output files located in {project_paths.project_dir}")
 
     if run_comparisons:
         if compare_fields is None:

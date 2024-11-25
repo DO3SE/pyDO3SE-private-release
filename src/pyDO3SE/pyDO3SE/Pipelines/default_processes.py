@@ -34,9 +34,9 @@ from do3se_phenology.state import LeafPhenologyStage, PhenologyStage
 from pyDO3SE.Model_State.model_state_loader import dump_state_to_file
 
 from pyDO3SE.util.error_handling import ConfigError
-from pyDO3SE.constants.enums import GAS
 from pyDO3SE.constants.physical_constants import DRATIO_H20_O3, DRATIO_O3_CO2, T0, DIFF_O3
-from pyDO3SE.Config.Config_Shape import Config_Shape, LeafFPhenAnetInfluence
+from pyDO3SE.Config.Config_Shape import Config_Shape
+from pyDO3SE.Config.ConfigEnums import LeafFPhenAnetInfluence
 from pyDO3SE.Model_State.Model_State import Model_State_Shape
 from pyDO3SE.External_State.External_State_Config import (
     InputMethod, ParSunShadeMethods, ThermalTimeMethods,
@@ -47,16 +47,27 @@ from pyDO3SE.Config.ConfigEnums import (
     FVPDMethods,
     LAIMethods,
     LayerLAIDistributionMethods,
-    OzoneDepositionMethods,
     SenescenceFunctionMethods,
     TLeafMethods,
     LandCoverType,
+    FO3_methods,
+    FTempMethods,
+    GstoMethods,
+    ENABLED,
+    DISABLED,
 )
+from do3se_met.soil_moisture.enums import FSW_Methods
 # Processes
 from do3se_met import irradiance as met_irrad_helpers
 from do3se_met import wind as met_wind_helpers
 from do3se_met import deposition as met_deposition_helpers
 from do3se_met import resistance as resistance_helpers
+from do3se_met import f_functions as met_f_functions
+from do3se_met.soil_moisture import helpers as SMD_helpers
+from do3se_met.soil_moisture.enums import SoilMoistureSource
+from do3se_met.soil_moisture import penman_monteith as SMD_PM_helpers
+from do3se_met.enums import GAS
+from do3se_met import model_constants as met_model_constants
 from do3se_phenology import phyllochron_dvi
 from do3se_phenology import canopy_structure
 from do3se_phenology import f_phen as f_phen_helpers
@@ -64,16 +75,11 @@ from do3se_phenology import vernalisation as vernalisation_helpers
 
 from pyDO3SE.constants import model_constants
 from pyDO3SE.plugins.gsto import photosynthesis_helpers as pn_helpers
-from pyDO3SE.plugins.gsto import helpers as gsto_helpers
 from pyDO3SE.plugins.gsto.multiplicative import multiplicative
-from pyDO3SE.plugins.gsto.ewert.ewert import ewert_leaf_pop, ewert_leaf_pop_cubic
-from pyDO3SE.plugins.gsto.ewert.enums import EwertLoopMethods
+from pyDO3SE.plugins.gsto.ewert.ewert import ewert_leaf_pop
 from pyDO3SE.plugins.gsto.ewert.ewert_helpers import calc_all_ozone_damage_factors, calc_mean_gsto
 from pyDO3SE.plugins.leaf_temperature.de_boeck import get_leaf_temp_de_boeck
 from pyDO3SE.plugins.nitrogen.v_cmax import multilayer_vcmax25
-from pyDO3SE.plugins.soil_moisture import helpers as SMD_helpers
-from pyDO3SE.plugins.soil_moisture.enums import SoilMoistureSource
-from pyDO3SE.plugins.soil_moisture import penman_monteith as SMD_PM_helpers
 from pyDO3SE.plugins.O3 import helpers as O3_helpers
 from pyDO3SE.plugins.carbon_allocation import calculations as carbon_calcs
 from pyDO3SE.plugins.carbon_allocation.conversions import umol_c_to_kg_c
@@ -913,8 +919,9 @@ def distribute_lai_per_layer_processes(
                 I(config.Land_Cover.nLC, as_='nLC'),
             ],
             state_inputs=lambda state: [
+                # TODO: This should be as (nLC, nL) i.e. [[1,2,3],[4,5,6]] for nL=3 and nLC=2
                 I([[state.canopy_layer_component[jL][jLC].LAI for jL in range(nL)]
-                for jLC in range(nLC)], as_='LAI_values')
+                   for jLC in range(nLC)], as_='LAI_values')
             ],
             state_outputs=lambda result, iLC=iLC: [
                 (result[iLC], f'canopy_component.{iLC}.LC_dist')
@@ -1207,6 +1214,35 @@ def calc_canopy_SAI(nL: int, nLC: int, SAI_method: str, primary_SAI_method: str)
     ]
 
 
+def calc_PAR_sun_shade_ground_process(nL: int, nLC: int) -> Process:
+    return Process(
+        func=met_irrad_helpers.calc_PAR_sun_shade_farq_b,
+        comment="calculate PAR_sun_shade using Farquhar 1997 method for ground level",
+        config_inputs=lambda config: [
+            # Average cosA
+            I(sum([config.Land_Cover.parameters[jLC].cosA for jLC in range(nLC)]) / nLC,
+                as_='cosA')
+        ],
+        external_state_inputs=lambda e_state, row_index: [
+            I(lget(e_state.sinB, row_index), as_='sinB'),
+            I(lget(e_state.Idrctt, row_index), as_='Ir_beam_0'),
+            I(lget(e_state.Idfuse, row_index), as_='Ir_dfuse_0'),
+        ],
+        state_inputs=lambda state: [
+            # We calculate cumulative Lai here
+            # We sum up LAI from range (iL+1, nL) where nL is no. of layers and is top of canopy
+            I(sum([state.canopy_layer_component[jL][jLC].SAI for jLC in range(nLC)
+                   for jL in range(0, nL)]), as_='LAI_c'),
+        ],
+        state_outputs=lambda result: [
+            # This is the sunlight that can reach this layer.
+            # It takes into account the LAI above the layer but not the LAI in the layer
+            (result.PARsun, f'ground_level.micro_met.PARsun'),
+            (result.PARshade, f'ground_level.micro_met.PARshade'),
+        ],
+    )
+
+
 def calc_PAR_sun_shade_process(parsun_shade_method: ParSunShadeMethods, iL: int, iLC: int, nL: int, nLC: int) -> Process:
     return switch(
         gate=parsun_shade_method,
@@ -1226,10 +1262,13 @@ def calc_PAR_sun_shade_process(parsun_shade_method: ParSunShadeMethods, iL: int,
                 ],
                 state_inputs=lambda state, iL=iL: [
                     # We calculate cumulative Lai here
+                    # We sum up LAI from range (iL+1, nL) where nL is no. of layers and is top of canopy
                     I(sum([state.canopy_layer_component[jL][jLC].SAI for jLC in range(nLC)
                            for jL in range(iL + 1, nL)]), as_='LAI_c'),
                 ],
                 state_outputs=lambda result, iL=iL: [
+                    # This is the sunlight that can reach this layer.
+                    # It takes into account the LAI above the layer but not the LAI in the layer
                     (result.PARsun, f'canopy_layers.{iL}.micro_met.PARsun'),
                     (result.PARshade, f'canopy_layers.{iL}.micro_met.PARshade'),
                 ],
@@ -1274,7 +1313,6 @@ def calc_PAR_sun_shade_process(parsun_shade_method: ParSunShadeMethods, iL: int,
                     (result.PARsun, f'canopy_layers.{iL}.micro_met.PARsun'),
                     (result.PARshade, f'canopy_layers.{iL}.micro_met.PARshade'),
                 ],
-
             ),
         }
     )
@@ -1292,7 +1330,7 @@ def calc_ustar_ref_process(have_Hd_Data: bool, have_ustar_ref_data: bool, have_u
             state_inputs=lambda state: [
                 I(state.met.u_i, as_='u'),
             ],
-            state_outputs=lambda result:[
+            state_outputs=lambda result: [
                 (result['ustar_in'], 'met.ustar_ref'),
                 (result['ustar_in'], 'met.ustar'),
             ],
@@ -1315,7 +1353,7 @@ def calc_ustar_ref_process(have_Hd_Data: bool, have_ustar_ref_data: bool, have_u
             state_inputs=lambda state: [
                 I(state.met.u_i, as_='u'),
             ],
-            state_outputs=lambda result:[
+            state_outputs=lambda result: [
                 (result[0], 'met.ustar_ref'),
                 (result[1], 'met.L'),
             ],
@@ -1338,7 +1376,7 @@ def calc_ustar_ref_process(have_Hd_Data: bool, have_ustar_ref_data: bool, have_u
                 I(state.met.u_i, as_='u'),
                 I(state.met.ustar_ref, as_='ustar_ref_in'),
             ],
-            state_outputs=lambda result:[
+            state_outputs=lambda result: [
                 (result[0], 'met.ustar_ref'),
                 (result[1], 'met.L'),
             ],
@@ -1350,7 +1388,7 @@ def calc_ustar_ref_process(have_Hd_Data: bool, have_ustar_ref_data: bool, have_u
             external_state_inputs=lambda e_state, row_index: [
                 I(e_state.ustar_ref[row_index], as_='ustar_ref_in'),
             ],
-            state_outputs=lambda result:[
+            state_outputs=lambda result: [
                 (result['ustar_ref_in'], 'met.ustar_ref'),
                 (None, 'met.L'),
             ],
@@ -1366,7 +1404,7 @@ def calc_ustar_ref_process(have_Hd_Data: bool, have_ustar_ref_data: bool, have_u
             external_state_inputs=lambda e_state, row_index: [
                 I(lget(e_state.u, row_index), as_='u'),
             ],
-            state_outputs=lambda result:[
+            state_outputs=lambda result: [
                 (result, 'met.ustar_ref'),
                 (None, 'met.L'),
             ],
@@ -1382,7 +1420,7 @@ def calc_ustar_ref_process(have_Hd_Data: bool, have_ustar_ref_data: bool, have_u
             external_state_inputs=lambda e_state, row_index: [
                 I(lget(e_state.u, row_index), as_='u'),
             ],
-            state_outputs=lambda result:[
+            state_outputs=lambda result: [
                 (result, 'met.ustar_ref'),
                 (None, 'met.L'),
             ],
@@ -1457,29 +1495,39 @@ def calc_windspeed_parameters_process(using_ustar_input_data: bool) -> Process:
 
 
 def calc_layer_windspeed_process(iL: int) -> Process:
-    """Set constant wind speed at each layer."""
-    return Process(
-        func=met_wind_helpers.calc_layer_windspeed,
-        comment="Set constant wind speed at each layer",
-        config_inputs=lambda config: [
-            I(config.Location.OTC, as_='o_top_chamber'),
-        ],
-        state_inputs=lambda state, iL=iL: [
-            I(state.canopy.canopy_height, as_='h'),
-            I(state.canopy.Lm_LAI, as_='w'),
-            # TODO: Why is SAI different
-            I(state.canopy.SAI_total, as_='SAI'),
-            I(state.canopy.met.micro_u, as_='u_at_canopy_top'),
-            # TODO: Check layer height not layer depth
-            I(state.canopy_layers[iL].layer_height, as_='z'),
-            # TODO: Calculate layer depth
-            # I(state.canopy_layers[iL].layer_depth, as_='layer_depth'),
-            I(0, as_='layer_depth'),
-        ],
-        state_outputs=lambda result, iL=iL: [
-            (result, f'canopy_layers.{iL}.micro_met.micro_u'),
-        ]
-    )
+    """Calculate windspeed per layer."""
+    return [
+        Process(
+            func=met_wind_helpers.calc_layer_windspeed,
+            comment="Calculate windspeed per layer",
+            config_inputs=lambda config: [
+                I(config.Location.OTC, as_='o_top_chamber'),
+            ],
+            state_inputs=lambda state, iL=iL: [
+                I(state.canopy.canopy_height, as_='h'),
+                I(state.canopy.Lm_LAI, as_='w'),
+                I(state.canopy.SAI_total, as_='SAI'),
+                I(state.canopy.met.micro_u, as_='u_at_canopy_top'),
+                I(state.canopy_layers[iL].layer_height, as_='z'),
+                I(0, as_='layer_depth'),
+            ],
+            state_outputs=lambda result, iL=iL: [
+                (result, f'canopy_layers.{iL}.micro_met.micro_u'),
+            ]
+        ),
+        Process(
+            func=met_wind_helpers.ustar_from_velocity_simple,
+            comment="calculate inter canopyustar at each layer",
+            state_inputs=lambda state, iL=iL: [
+                I(state.canopy_layers[iL].micro_met.micro_u, as_='u'),
+                I(state.canopy_layers[iL].layer_height, as_='z'),
+                I(state.canopy.z0, as_='z0'),
+            ],
+            state_outputs=lambda result, iL=iL: [
+                (result, f'canopy_layers.{iL}.micro_met.micro_ustar'),
+            ]
+        ),
+    ]
 
 
 def MLMC_sunlit_LAI_process(nL: int, nLC: int) -> Process:
@@ -1507,7 +1555,7 @@ def MLMC_sunlit_LAI_process(nL: int, nLC: int) -> Process:
     )
 
 
-def calc_soil_moisture_hourly_process(soil_moisture_source: str) -> List[Process]:
+def calc_soil_moisture_hourly_process(soil_moisture_source: SoilMoistureSource) -> List[Process]:
     """Calculate soil moisture changes during hour.
 
     Sources:
@@ -1874,7 +1922,7 @@ def leaf_f_phen_process(iL: int, iLC: int, leaf_f_phen_method) -> Process:
 def calc_f_light_process(iL: int, iLC: int) -> Process:
     """Calculate f_light."""
     return Process(
-        func=gsto_helpers.calc_f_light_method,
+        func=met_f_functions.calc_f_light_method,
         # gate=f_light_method == "enabled",
         comment="Calculate f_light",
         config_inputs=lambda config: [
@@ -1898,7 +1946,7 @@ def calc_f_light_process(iL: int, iLC: int) -> Process:
     )
 
 
-def calc_f_temp_process(iL: int, iLC: int, f_temp_method: str) -> Process:
+def calc_f_temp_process(iL: int, iLC: int, f_temp_method: FTempMethods) -> Process:
     """Calculate f_temp using specified method.
 
     Method options:
@@ -1910,12 +1958,12 @@ def calc_f_temp_process(iL: int, iLC: int, f_temp_method: str) -> Process:
         gate=f_temp_method,
         comment="Choose f_temp Method",
         options={
-            "disabled": Process(
+            FTempMethods.DISABLED: Process(
                 func=skip,
                 comment="f_temp - disabled",
             ),
-            "default": Process(
-                func=gsto_helpers.calc_f_temp,
+            FTempMethods.DEFAULT: Process(
+                func=met_f_functions.calc_f_temp,
                 comment="f_temp - default",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC].multip_gsto.T_min, as_='T_min'),
@@ -1931,8 +1979,8 @@ def calc_f_temp_process(iL: int, iLC: int, f_temp_method: str) -> Process:
                         f'canopy_layer_component.{iL}.{iLC}.gsto_params.f_temp'),
                 ],
             ),
-            "square high": Process(
-                func=gsto_helpers.calc_f_temp_square_high,
+            FTempMethods.SQUARE_HIGH: Process(
+                func=met_f_functions.calc_f_temp_square_high,
                 comment="f_temp - square high",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC].multip_gsto.T_min, as_='T_min'),
@@ -1971,7 +2019,7 @@ def calc_f_VPD_process(iL: int, iLC: int, f_VPD_method: FVPDMethods) -> Process:
                 comment="f_VPD method - disabled",
             ),
             FVPDMethods.LINEAR: Process(
-                func=gsto_helpers.f_VPD_linear,
+                func=met_f_functions.f_VPD_linear,
                 comment="f_VPD_method - linear",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC].gsto.VPD_max, as_='VPD_max'),
@@ -1987,7 +2035,7 @@ def calc_f_VPD_process(iL: int, iLC: int, f_VPD_method: FVPDMethods) -> Process:
                 ]
             ),
             FVPDMethods.LOG: Process(
-                func=gsto_helpers.f_VPD_log,
+                func=met_f_functions.f_VPD_log,
                 comment="f_VPD_method - log",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC].gsto.fmin, as_='fmin'),
@@ -2028,15 +2076,15 @@ def f_SW_process(iL: int, iLC: int, f_SW_method: str) -> Process:
         gate=f_SW_method,
         comment="Choose f_SW method",
         options={
-            "disabled": Process(
+            FSW_Methods.DISABLED: Process(
                 func=set_value,
                 comment="f_SW_method - Disabled",
                 state_outputs=lambda result: [
                     (1.0, f'canopy_layer_component.{iL}.{iLC}.gsto_params.f_SW'),
                 ],
             ),
-            "fSWP exp": Process(
-                func=gsto_helpers.f_SWP_exp,
+            FSW_Methods.FSWP_EXP: Process(
+                func=met_f_functions.f_SWP_exp,
                 comment="f_SW_method - fSWP exp",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC].gsto.fSWP_exp_a, as_='a'),
@@ -2051,8 +2099,8 @@ def f_SW_process(iL: int, iLC: int, f_SW_method: str) -> Process:
                         f'canopy_layer_component.{iL}.{iLC}.gsto_params.f_SW'),
                 ],
             ),
-            "fSWP linear": Process(
-                func=gsto_helpers.f_SWP_linear,
+            FSW_Methods.FSWP_LINEAR: Process(
+                func=met_f_functions.f_SWP_linear,
                 comment="f_SW_method - linear",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC].gsto.SWP_min, as_='SWP_min'),
@@ -2067,8 +2115,8 @@ def f_SW_process(iL: int, iLC: int, f_SW_method: str) -> Process:
                         f'canopy_layer_component.{iL}.{iLC}.gsto_params.f_SW'),
                 ],
             ),
-            "fPAW": Process(
-                func=gsto_helpers.f_PAW,
+            FSW_Methods.FPAW: Process(
+                func=met_f_functions.f_PAW,
                 comment="f_SW_method - fPAW",
                 config_inputs=lambda config: [
                     I(config.soil_moisture.ASW_FC, as_='ASW_FC'),
@@ -2084,11 +2132,13 @@ def f_SW_process(iL: int, iLC: int, f_SW_method: str) -> Process:
                         f'canopy_layer_component.{iL}.{iLC}.gsto_params.f_SW'),
                 ],
             ),
+            # TODO Implement fLWP method from DO3SE UI
+            FSW_Methods.FLWP_EXP: NOT_IMPLEMENTED_PROCESS("fSW method 'fLWP exp' not implemented"),
         },
     )
 
 
-def f_O3_process(iL: int, iLC: int, f_O3_method: str, nP: int = 0) -> Process:
+def f_O3_process(iL: int, iLC: int, f_O3_method: FO3_methods, nP: int = 0) -> Process:
     """Calculate f_O3 using specified method.
 
     NOTE: Only valid for single layer model
@@ -2100,19 +2150,20 @@ def f_O3_process(iL: int, iLC: int, f_O3_method: str, nP: int = 0) -> Process:
      - "Steph wheat" - Using Steph Wheat calc
 
     """
-    if f_O3_method != "disabled":
+    if f_O3_method != FO3_methods.DISABLED:
         if iL > 0 or nP > 1:
-            raise ConfigError("Cannot use fO3 with multi layer or multi population models")
+            raise ConfigError(
+                f"Cannot use fO3 method: {f_O3_method} with multi layer or multi population models")
     iP = 0
     return switch(
         gate=f_O3_method,
         comment="Choose f_O3 method",
         options={
-            "disabled": Process(
+            FO3_methods.DISABLED: Process(
                 func=skip,
                 comment="f_O3 method - disabled",
             ),
-            "wheat": Process(
+            FO3_methods.WHEAT: Process(
                 func=lambda POD_0: ((1 + (POD_0 / 11.5)**10)**(-1)),
                 comment="f_O3_method - wheat",
                 state_inputs=lambda state, iLC=iLC, iP=iP: [
@@ -2122,7 +2173,7 @@ def f_O3_process(iL: int, iLC: int, f_O3_method: str, nP: int = 0) -> Process:
                     (result, f'canopy_layer_component.{iL}.{iLC}.gsto_params.f_O3'),
                 ],
             ),
-            "potato": Process(
+            FO3_methods.POTATO: Process(
                 func=lambda AOT_0: ((1 + (AOT_0 / 40)**5)**(-1)),
                 comment="f_O3_method - potato",
                 state_inputs=lambda state, iLC=iLC, iP=iP: [
@@ -2132,7 +2183,7 @@ def f_O3_process(iL: int, iLC: int, f_O3_method: str, nP: int = 0) -> Process:
                     (result, f'canopy_layer_component.{iL}.{iLC}.gsto_params.f_O3'),
                 ],
             ),
-            "Steph wheat": Process(
+            FO3_methods.STEPH_WHEAT: Process(
                 func=lambda POD_0: ((1 + (POD_0 / 27)**10)**(-1)),
                 comment="f_O3_method - Steph wheat",
                 state_inputs=lambda state, iLC=iLC, iP=iP: [
@@ -2156,7 +2207,7 @@ def set_vcmax_and_jmax(nL: int, iLC: int, iP: int, V_J_method: str) -> Process:
     """
     return [switch(
         gate=V_J_method,
-        comment="Choose f_O3 method",
+        comment="Choose V_j method",
         options={
             "constant": Process(
                 func=set_value,
@@ -2465,7 +2516,7 @@ def calc_td_dd_per_leaf_pop_process(iLC: int) -> Process:
 def calc_g_bv_process(iLC: int) -> Process:
     """Calculate g_bv_H2O for photosynthesis."""
     return Process(
-        func=pn_helpers.calc_g_bv,
+        func=resistance_helpers.calc_g_bv,
         comment="Calculate g_bv for photosynthesis",
         config_inputs=lambda config, iLC=iLC: [
             I(config.Land_Cover.parameters[iLC].Lm, as_='Lm'),
@@ -2563,13 +2614,10 @@ def ozone_damage_processes(
     ]
 
 
-def ewert_leaf_process(iLC: int, iP: int, nL: int, ewert_loop_method: EwertLoopMethods) -> Process:
+def ewert_leaf_process(iLC: int, iP: int, nL: int) -> Process:
     """Ewert Photosynthesis model."""
-    ewert_leaf_fn = ewert_leaf_pop if ewert_loop_method is EwertLoopMethods.ITERATIVE \
-        else ewert_leaf_pop_cubic if ewert_loop_method is EwertLoopMethods.CUBIC else None
-
     return Process(
-        func=ewert_leaf_fn,
+        func=ewert_leaf_pop,
         comment="Ewert Photosynthesis model",
         config_inputs=lambda config, iLC=iLC: [
             I(config.Land_Cover.nL, as_="nL"),
@@ -2624,7 +2672,6 @@ def ewert_leaf_process(iLC: int, iP: int, nL: int, ewert_loop_method: EwertLoopM
             # (result.f_VPD, f'canopy_component_population.{iLC}.{iP}.gsto_params.f_VPD'),
             (result.v_cmax, f'canopy_component_population.{iLC}.{iP}.V_cmax'),
             (result.j_max, f'canopy_component_population.{iLC}.{iP}.J_max'),
-            (result.loop_iterations, 'debug.ewert_loop_iterations'),
         ]
     )
 
@@ -2672,7 +2719,6 @@ def limit_gsto_l_with_leaf_fphen_process(
     return Process(
         func=lambda leaf_f_phen, leaf_gsto: leaf_f_phen * leaf_gsto,
         comment="Limit the leaf_gsto with leaf_f_phen",
-        # TODO: Use per layer leaf_gsto
         gate=leaf_f_phen_Anet_influence == LeafFPhenAnetInfluence.G_STO,
         state_inputs=lambda state, iL=iL, iLC=iLC, iP=iP: [
             I(state.canopy_component_population[iLC][iP].mean_gsto_per_layer[iL], as_='leaf_gsto'),
@@ -2861,16 +2907,19 @@ def calc_resistance_model_process(
 
     """
     return [
+        # REFERENCE CANOPY NOT OTC
         Process(
             func=resistance_helpers.calc_resistance_model,
             comment="Reset and Calculate the resistance model for O3 over the reference canopy",
+            # TODO: Should we use single layer model for the reference canopy?
             gate=not is_OTC,
             config_inputs=lambda config: [
                 I(config.Land_Cover.nL, as_='nL'),
                 I(config.Land_Cover.nLC, as_='nLC'),
                 I(config.Location.Rsoil, as_='Rsoil'),
-                I(ra_calc_method, as_='ra_calc_method'),
-                I(rsur_calc_method, as_='rsur_calc_method'),
+                I(config.resistance.rb_calc_method, as_='rb_calc_method'),
+                I(config.resistance.ra_calc_method, as_='ra_calc_method'),
+                I(config.resistance.rsur_calc_method, as_='rsur_calc_method'),
                 I(config.Location.h_O3, as_='canopy_height'),
                 I(config.Location.z_O3, as_='measured_height'),
                 I(config.Location.izr, as_='izr'),
@@ -2882,7 +2931,8 @@ def calc_resistance_model_process(
                 I(lget(e_state.snow_depth, row_index), as_='snow_depth'),
             ],
             state_inputs=lambda state: [
-                I(state.met.ustar_ref, as_='ustar'),
+                I(state.met.ustar_ref, as_='ustar_above_canopy'),
+                I([state.canopy_layers[iL].micro_met.micro_ustar for iL in range(nL)], as_='ustar_per_layer'),
                 I(state.met.L, as_='L'),  # TODO: Only required for Ra heat flux
                 I([[state.canopy_layer_component[iL][iLC].SAI for iLC in range(nLC)]
                    for iL in range(nL)], as_='SAI_values'),
@@ -2893,13 +2943,14 @@ def calc_resistance_model_process(
                 # I([[state.canopy_layer_component[iL][iLC].bulk_gsto for iLC in range(nLC)]
                 #    for iL in range(nL)], as_='bulk_gsto_values'),
             ],
-            additional_inputs=lambda:[
+            additional_inputs=lambda: [
                 I(DIFF_O3, as_='Rb_diff'),
             ],
             state_outputs=lambda result: [
                 (result, 'canopy.rmodel_O3_ref'),
             ],
         ),
+        # REFERENCE CANOPY OTC
         Process(
             func=resistance_helpers.calc_resistance_model,
             comment="Reset and Calculate the resistance model for O3 over the reference canopy OTC",
@@ -2909,8 +2960,9 @@ def calc_resistance_model_process(
                 I(config.Land_Cover.nL, as_='nL'),
                 I(config.Land_Cover.nLC, as_='nLC'),
                 I(config.Location.Rsoil, as_='Rsoil'),
-                I(ra_calc_method, as_='ra_calc_method'),
-                I(rsur_calc_method, as_='rsur_calc_method'),
+                I(config.resistance.rb_calc_method, as_='rb_calc_method'),
+                I(config.resistance.ra_calc_method, as_='ra_calc_method'),
+                I(config.resistance.rsur_calc_method, as_='rsur_calc_method'),
                 I(config.Location.izr, as_='izr'),
             ],
             external_state_inputs=lambda e_state, row_index: [
@@ -2922,7 +2974,8 @@ def calc_resistance_model_process(
                 I(state.canopy.canopy_height, as_='measured_height'),
                 I(state.canopy.d, as_='CANOPY_D'),
                 I(state.canopy.z0, as_='CANOPY_Z0'),
-                I(state.met.ustar_ref, as_='ustar'),
+                I(state.met.ustar_ref, as_='ustar_above_canopy'),
+                I([state.canopy_layers[iL].micro_met.micro_ustar for iL in range(nL)], as_='ustar_per_layer'),
                 I(state.met.L, as_='L'),  # TODO: Only required for Ra heat flux
                 I([[state.canopy_layer_component[iL][iLC].SAI for iLC in range(nLC)]
                    for iL in range(nL)], as_='SAI_values'),
@@ -2933,7 +2986,7 @@ def calc_resistance_model_process(
                 # I([[state.canopy_layer_component[iL][iLC].bulk_gsto for iLC in range(nLC)]
                 #    for iL in range(nL)], as_='bulk_gsto_values'),
             ],
-            additional_inputs=lambda:[
+            additional_inputs=lambda: [
                 I(DIFF_O3, as_='Rb_diff'),
                 # Added to stop double counting of CANOPY_D
                 I(1, as_="CANOPY_D"),
@@ -2943,6 +2996,7 @@ def calc_resistance_model_process(
                 (result, 'canopy.rmodel_O3_ref'),
             ],
         ),
+        # MODELLED CANOPY
         Process(
             func=resistance_helpers.calc_resistance_model,
             comment="Reset and Calculate the resistance model for O3 over the target canopy",
@@ -2950,8 +3004,9 @@ def calc_resistance_model_process(
                 I(config.Land_Cover.nL, as_='nL'),
                 I(config.Land_Cover.nLC, as_='nLC'),
                 I(config.Location.Rsoil, as_='Rsoil'),
-                I(ra_calc_method, as_='ra_calc_method'),
-                I(rsur_calc_method, as_='rsur_calc_method'),
+                I(config.resistance.rb_calc_method, as_='rb_calc_method'),
+                I(config.resistance.ra_calc_method, as_='ra_calc_method'),
+                I(config.resistance.rsur_calc_method, as_='rsur_calc_method'),
                 I(config.Location.z_O3, as_='measured_height'),
                 I(config.Location.izr, as_='izr'),
                 I(config.Location.canopy_d, as_='CANOPY_D'),
@@ -2962,9 +3017,10 @@ def calc_resistance_model_process(
                 I(lget(e_state.snow_depth, row_index), as_='snow_depth'),
             ],
             state_inputs=lambda state: [
-                I(state.met.ustar, as_='ustar'),
+                I(state.met.ustar, as_='ustar_above_canopy'),
+                I([state.canopy_layers[iL].micro_met.micro_ustar for iL in range(nL)], as_='ustar_per_layer'),
                 I(state.canopy.canopy_height, as_='canopy_height'),
-                I(state.met.L, as_='L'),  # TODO: Only required for Ra heat flux
+                I(state.met.L, as_='L'),  # NOTE: Only required for Ra heat flux
                 I([[state.canopy_layer_component[iL][iLC].SAI for iLC in range(nLC)]
                    for iL in range(nL)], as_='SAI_values'),
                 I([[state.canopy_layer_component[iL][iLC].LAI for iLC in range(nLC)]
@@ -2974,7 +3030,7 @@ def calc_resistance_model_process(
                 # I([[state.canopy_layer_component[iL][iLC].bulk_gsto for iLC in range(nLC)]
                 #    for iL in range(nL)], as_='bulk_gsto_values'),
             ],
-            additional_inputs=lambda:[
+            additional_inputs=lambda: [
                 I(DIFF_O3, as_='Rb_diff'),
             ],
             state_outputs=lambda result: [
@@ -2986,13 +3042,10 @@ def calc_resistance_model_process(
 
 def calc_deposition_velocity_process() -> Process:
     """Vd calculation duplicated here just for comparison purposes."""
-    # TODO: This may now be redundant as calculated as part of ozone deposition
     return Process(
         func=resistance_helpers.calc_deposition_velocity,
         comment="Vd calculation duplicated here just for comparison purposes",
-        # ! TODO: better way to expose Vd
         state_inputs=lambda state: [
-            # TODO: Fix this
             I(state.canopy.rmodel_O3.Ra_canopy_to_izr, as_='rmodel_Ra_c'),
             I(state.canopy.rmodel_O3.Rtotal[0], as_='rmodel_Rtotal_top_layer'),
         ],
@@ -3020,69 +3073,35 @@ def calc_O3_otc_process(nL) -> Process:
 
 
 def calc_canopy_ozone_concentration_process(
-    canopy_ozone_method: str,
     nL: int,
 ) -> Process:
     """Calculate Top Layer Canopy ozone."""
     top_layer_index = nL - 1
-    return switch(
-        gate=canopy_ozone_method,
-        comment="Calculate canopy_ozone_method",
-        options={
-            OzoneDepositionMethods.SINGLE_LAYER: Process(
-                func=met_deposition_helpers.calc_canopy_ozone_concentration,
-                comment="Calculate Top Layer Canopy ozone single layer",
-                external_state_inputs=lambda e_state, row_index: [
-                    I(lget(e_state.O3, row_index), as_='O3_ppb_zR'),
-                ],
-                state_inputs=lambda state: [
-                    I(state.canopy.rmodel_O3.Rsur[top_layer_index], as_='Rsur_top_layer'),
-                    I(state.canopy.rmodel_O3.Rb, as_='Rb_top_layer'),
-                    I(state.canopy.rmodel_O3_ref.Rb, as_='Rb_ref'),
-                    I(state.canopy.rmodel_O3_ref.Rsur[-1], as_='Rsur_ref'),
-                    I(state.canopy.rmodel_O3.Ra_canopy_to_izr, as_='Ra_tar_canopy'),
-                    I(state.canopy.rmodel_O3.Ra_canopy_top_to_izr, as_='Ra_tar_canopy_top'),
-                    I(state.canopy.rmodel_O3_ref.Ra_canopy_to_izr, as_='Ra_ref_canopy'),
-                    I(state.canopy.rmodel_O3_ref.Ra_measured_to_izr, as_='Ra_ref_measured'),
-                ],
-                state_outputs=lambda result: [
-                    (result.O3_i, 'met.O3_i'),
-                    (result.micro_O3, f'canopy.canopy_top_o3'),
-                    # NOTE: Below will be overriden
-                    (result.micro_O3, f'canopy_layers.{top_layer_index}.micro_met.micro_O3'),
-                    (result.Vd, 'canopy.Vd'),
-                ]),
-            OzoneDepositionMethods.MULTI_LAYER: Process(
-                # TODO: update this!!
-                func=met_deposition_helpers.calc_canopy_ozone_concentration_alt,
-                comment="Calculate Top Layer Canopy ozone multi layer",
-                config_inputs=lambda config: [
-                    I(config.Location.h_O3, as_='h_O3_in'),
-                    I(config.Location.z_O3, as_='z_O3'),
-                    I(config.Location.O3_d, as_='O3_d'),
-                    I(config.Location.O3_z0, as_='O3_z0'),
-                    I(config.resistance.ra_calc_method, as_='ra_method'),
-                    I(config.Location.izr, as_='izr'),
-                ],
-                external_state_inputs=lambda e_state, row_index: [
-                    I(lget(e_state.O3, row_index), as_='O3'),
-                ],
-                state_inputs=lambda state: [
-                    I(state.canopy.canopy_height, as_='canopy_height'),
-                    I(state.canopy.rmodel_O3.Rtotal[top_layer_index], as_='Rtotal_top_layer'),
-                    I(state.met.u_i, as_='u_i'),
-                    I(state.met.L, as_='L'),  # TODO: Should be ozone L
-                    I(state.met.ustar_ref, as_='ustar_ref'),  # TODO: Should be ozone ustar_ref
-                ],
-                state_outputs=lambda result: [
-                    (result.O3_i, 'met.O3_i'),
-                    (result.micro_O3, f'canopy.canopy_top_o3'),
-                    # NOTE: Below will be overriden
-                    (result.micro_O3, f'canopy_layers.{top_layer_index}.micro_met.micro_O3'),
-                ],
-            ),
-        },
+    return Process(
+        func=met_deposition_helpers.calc_canopy_ozone_concentration,
+        comment="Calculate Top Layer Canopy ozone single layer",
+        external_state_inputs=lambda e_state, row_index: [
+            I(lget(e_state.O3, row_index), as_='O3_ppb_zR'),
+        ],
+        state_inputs=lambda state: [
+            I(state.canopy.rmodel_O3.Rsur[top_layer_index], as_='Rsur_top_layer'),
+            I(state.canopy.rmodel_O3.Rb[top_layer_index], as_='Rb_top_layer'),
+            I(state.canopy.rmodel_O3_ref.Rb[top_layer_index], as_='Rb_ref'),
+            I(state.canopy.rmodel_O3_ref.Rsur[top_layer_index], as_='Rsur_ref'),
+            I(state.canopy.rmodel_O3.Ra_canopy_to_izr, as_='Ra_tar_canopy'),
+            I(state.canopy.rmodel_O3.Ra_canopy_top_to_izr, as_='Ra_tar_canopy_top'),
+            I(state.canopy.rmodel_O3_ref.Ra_canopy_to_izr, as_='Ra_ref_canopy'),
+            I(state.canopy.rmodel_O3_ref.Ra_measured_to_izr, as_='Ra_ref_measured'),
+        ],
+        state_outputs=lambda result: [
+            (result.O3_i, 'met.O3_i'),
+            (result.micro_O3, 'canopy.canopy_top_o3'),
+            # NOTE: Below will be overriden
+            (result.micro_O3, f'canopy_layers.{top_layer_index}.micro_met.micro_O3'),
+            (result.Vd, 'canopy.Vd'),
+        ]
     )
+
 
 
 def calc_multi_layer_O3_ozone_concentration_process(nL: int) -> Process:
@@ -3099,28 +3118,36 @@ def calc_multi_layer_O3_ozone_concentration_process(nL: int) -> Process:
         state_inputs=lambda state: [
             I(state.canopy.canopy_top_o3, as_='O3_in'),
             I(0, as_='rm_Ra'),  # 0 because we have already brought ozone to top of canopy
-            # TODO: Check using correct resistances
             # I(state.canopy.rmodel_O3.Ra_canopy_to_izr, as_='rm_Ra'),
+            # DO3SE model code uses rmodel here too (i.e. not leaf_rmodel_O3)
             I(list(reversed(state.canopy.rmodel_O3.Rinc)), as_='rm_Rinc'),
-            I(list(reversed(state.canopy.rmodel_O3.Rsur)), as_='rm_Rsur'),
+            I(list(reversed(state.canopy.rmodel_O3.Rsur_c)), as_='rm_Rsur'),
             I(state.canopy.rmodel_O3.Rgs, as_='rm_Rgs'),
         ],
-        state_outputs=lambda result: [
-            (list(reversed(result))[iL], f'canopy_layers.{iL}.micro_met.micro_O3')
-            for iL in range(nL)
+        state_outputs=lambda result, nL=nL: [
+            [result[nL], 'ground_level.micro_met.micro_O3'],
+            *[(list(reversed(result[:nL]))[iL], f'canopy_layers.{iL}.micro_met.micro_O3')
+            for iL in range(nL)],
         ],
     )
-    # return Process(
-    #     func=set_value,
-    #     comment="Calculate Ozone concentration for other layers",
-    #     state_inputs=lambda state: [
-    #         I(state.canopy_layers[top_layer_index].micro_met.micro_O3, as_='O3_in'),
-    #     ],
-    #     state_outputs=lambda result: [
-    #         (result['O3_in'], f'canopy_layers.{iL}.micro_met.micro_O3')
-    #         for iL in range(nL)
-    #     ],
-    # )
+
+def calc_ozone_at_custom_height_process(iCH: int, nL: int) -> Process:
+    return Process(
+        func=met_deposition_helpers.calc_ozone_at_custom_height_linear,
+        comment="Calculate Ozone concentration for other layers",
+        config_inputs=lambda config, iCH=iCH: [
+            I(config.Location.custom_heights[iCH], as_='custom_height'),
+            I(config.Location.izr, as_='izr_height'),
+        ],
+        state_inputs=lambda state, nL=nL: [
+            I([state.ground_level.micro_met.micro_O3, *[state.canopy_layers[iL].micro_met.micro_O3 for iL in range(nL)]], as_='ozone_at_layers'),
+            I([0, *[state.canopy_layers[iL].layer_height for iL in range(nL)]], as_='layer_heights'),
+            I(state.met.O3_i, as_="ozone_at_izr_height")
+        ],
+        state_outputs=lambda result, iCH=iCH: [
+            (result, f'custom_height.{iCH}.micro_met.micro_O3')
+        ],
+    )
 
 
 def O3_ppb_to_nmol_process(iL: int) -> Process:
@@ -3136,7 +3163,7 @@ def O3_ppb_to_nmol_process(iL: int) -> Process:
             I(lget(e_state.P, row_index), as_='P'),
         ],
         state_outputs=lambda result, iL=iL: [
-            (result, f'canopy_layers.{iL}.micro_met.micro_O3_nmol_m3')
+            (result, f'canopy_layers.{iL}.micro_met.micro_O3_nmol_m3'),
         ],
     )
 
@@ -3152,7 +3179,7 @@ def calc_leaf_resistance_model_process(iLC: int, iP: int, nL: int) -> Process:
                 I(config.Land_Cover.parameters[iLC].Lm, as_='Lm'),
             ],
             additional_inputs=lambda: [
-                I(model_constants.LEAF_G_O3, as_="LEAF_G"),
+                I(met_model_constants.LEAF_G_O3, as_="LEAF_G"),
             ],
             state_inputs=lambda state, iLC=iLC, iP=iP: [
                 I([state.canopy_layers[iL].micro_met.micro_u for iL in range(nL)],
@@ -3173,7 +3200,7 @@ def calc_leaf_resistance_model_process(iLC: int, iP: int, nL: int) -> Process:
                 I(config.Land_Cover.parameters[iLC].Lm, as_='Lm'),
             ],
             additional_inputs=lambda: [
-                I(model_constants.LEAF_G_O3, as_="LEAF_G"),
+                I(met_model_constants.LEAF_G_O3, as_="LEAF_G"),
             ],
             state_inputs=lambda state, iLC=iLC, iP=iP: [
                 I([state.canopy_layers[iL].micro_met.micro_u for iL in range(nL)],
@@ -3262,8 +3289,9 @@ def calc_fst_leaf_acc_hour_process(iLC: int, iP: int) -> Process:
     def fst_acc(
         O3up, O3up_acc, has_emerged, leaf_emerg_to_leaf_fst_acc, td
     ):
-        can_accumulate_fst = has_emerged and (leaf_emerg_to_leaf_fst_acc is None or td > leaf_emerg_to_leaf_fst_acc)
-        return 0 if not can_accumulate_fst else  O3up + O3up_acc
+        can_accumulate_fst = has_emerged and (
+            leaf_emerg_to_leaf_fst_acc is None or td > leaf_emerg_to_leaf_fst_acc)
+        return 0 if not can_accumulate_fst else O3up + O3up_acc
 
     return Process(
         func=fst_acc,
@@ -3399,7 +3427,7 @@ def calc_OT_leaf_process(iLC: int, iP: int, nL: int, nP: int) -> Process:
         func=O3_helpers.calc_OT_leaf,
         comment="Calculate the OT accumulation",
         gate=iP == nP - 1,  # only calculated for flag leaf
-        config_inputs=lambda config, iLC=iLC: [
+        config_inputs=lambda config: [
             I(config.Land_Cover.nL, as_='nL'),
         ],
         external_state_inputs=lambda e_state, row_index: [
@@ -3417,6 +3445,21 @@ def calc_OT_leaf_process(iLC: int, iP: int, nL: int, nP: int) -> Process:
             (result.OT_40, f'canopy_component_population.{iLC}.{iP}.OT_40'),
             (result.AOT_0, f'canopy_component_population.{iLC}.{iP}.AOT_0'),
             (result.AOT_40, f'canopy_component_population.{iLC}.{iP}.AOT_40'),
+        ],
+    )
+
+
+def calc_ftot_process(top_layer_index: int) -> Process:
+    """Calculate the total ozone flux to the vegetated surface."""
+    return Process(
+        func=O3_helpers.calc_ftot,
+        comment="Calculate the total ozone flux to the vegetated surface.",
+        state_inputs=lambda state: [
+            I(state.canopy_layers[top_layer_index].micro_met.micro_O3_nmol_m3, as_='O3_nmol_m3'),
+            I(state.canopy.Vd, as_='Vd'),
+        ],
+        state_outputs=lambda result: [
+            (result, 'canopy.ftot'),
         ],
     )
 
@@ -3467,14 +3510,14 @@ def check_soil_evaporation_blocked_process() -> Process:
     )
 
 
-def penman_monteith_hourly_process(gsto_method) -> Process:
+def penman_monteith_hourly_process(gsto_method: GstoMethods) -> Process:
     return [
         Process(
             # NOTE: Not valid for multilayer or pn_gsto method
             func=SMD_PM_helpers.calc_PET_gsto,
             comment="P-M - Calculate PEt RSTO",
             group="soil-moisture",
-            gate=gsto_method == "multiplicative",
+            gate=gsto_method == GstoMethods.MULTIPLICATIVE,
             config_inputs=lambda config: [
                 I(config.Land_Cover.parameters[0].multip_gsto.gmax, as_='gmax'),
             ],
@@ -3494,7 +3537,7 @@ def penman_monteith_hourly_process(gsto_method) -> Process:
             func=SMD_PM_helpers.calc_PET_gsto_An,
             comment="P-M - Calculate PEt RSTO",
             group="soil-moisture",
-            gate=gsto_method == "photosynthesis",
+            gate=gsto_method == GstoMethods.PHOTOSYNTHESIS,
             state_inputs=lambda state: [
                 # NOTE: Assumes using first component
                 I(state.canopy_component[0].canopy_gsto, as_='bulk_gsto'),
@@ -3602,7 +3645,6 @@ def calc_h2o_r_model_process() -> List[Process]:
             comment="Calculate the total resistance in H2O resistance model",
             group="soil-moisture",
             config_inputs=lambda config: [I(1, as_='nL')],
-            # config_inputs=lambda config: [I(config.Land_Cover.nL, as_='nL')],
             state_inputs=lambda state: [
                 I(state.canopy.rmodel_H2O.Rsur, as_='Rsur'),
                 I(state.canopy.rmodel_H2O.Rinc, as_='Rinc'),
@@ -4110,11 +4152,12 @@ def daily_start_processes(config: Config_Shape, run_dir: Path, dump_state_n: int
         # CANOPY STRUCTURE
         tag_process("== Canopy Structure Processes =="),
         calc_canopy_height_process(nL, nLC, height_method),
+        calc_canopy_displacement_height_process(),
         calc_canopy_LAI_processes(nLC, LAI_method),
         distribute_lai_per_layer_processes(nL, nLC, LAI_distribution_method, LAI_method),
         calc_canopy_SAI(nL, nLC, SAI_method, primary_SAI_method),
         distribute_lai_to_leaf_populations_processes(nL, nP, nLC, LAI_method),
-        calc_canopy_displacement_height_process(),
+
 
         # Soil Moisture
         tag_process("== Soil Moisture Processes =="),
@@ -4172,7 +4215,7 @@ def log_external_state_values(
 #     )
 
 
-def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer: bool = False):
+def log_processes(nL: int, nLC: int, nP: int, nCH: int, fields: List[str], log_multilayer: bool = False, include_spacers: bool = True):
     """Log state to output data.
 
     Where a single layer is used should output top layer
@@ -4187,7 +4230,7 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
     return [
         # TODO: This should come from config or output_values_map
         log_external_state_values(lambda e_state, row_index: list(filter(lambda f: f, [
-            __SPACER__("External Values >"),
+            __SPACER__("External Values >") if include_spacers else None,
             I(row_index, as_='row_index') if 'row_index' in fields else None,
             I(lget(e_state.dd, row_index), as_='dd_e') if 'dd_e' in fields else None,
             I(lget(e_state.hr, row_index), as_='hr') if 'hr' in fields else None,
@@ -4208,7 +4251,7 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
         ]))),
         log_values(lambda state: list(filter(lambda f: f, [
             # Values here should match values in Output_Shape
-            __SPACER__("Canopy Level >"),
+            __SPACER__("Canopy Level >") if include_spacers else None,
             I(state.temporal.dd, as_='dd') if 'dd' in fields else None,
             I(state.temporal.dd_offset, as_='dd_offset') if 'dd_offset' in fields else None,
             I(state.canopy_component[component_index].td, as_='td') if 'td' in fields else None,
@@ -4226,7 +4269,7 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
             I(state.canopy_component[component_index].phenology.phenology_stage,
               as_='phenology_stage') if 'phenology_stage' in fields else None,
             I(state.canopy_component[0].growing_populations[flag_index],
-              as_=f"growing_populations_flag") if 'growing_populations' in fields else [],
+              as_="growing_populations_flag") if 'growing_populations' in fields else [],
             I(state.canopy_component[component_index].phenology.Vf,
               as_='Vf') if 'Vf' in fields else None,
             I(state.canopy_component[component_index].phenology.V_acc,
@@ -4247,11 +4290,19 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
             I(state.canopy.canopy_height, as_='canopy_height') if 'canopy_height' in fields else None,
             I(state.canopy_component[component_index].total_emerged_leaf_populations,
               as_="total_emerged_leaves") if 'total_emerged_leaves' in fields else None,
-            __SPACER__("Top Layer >"),
+            __SPACER__("Top Layer >") if include_spacers else None,
             I(state.canopy_layers[top_layer_index].micro_met.micro_u,
               as_='micro_u') if 'micro_u' in fields else None,
             I(state.canopy_layers[top_layer_index].micro_met.micro_O3,
               as_='micro_O3') if 'micro_O3' in fields else None,
+            I(state.ground_level.micro_met.micro_u,
+              as_='ground_u') if 'ground_u' in fields else None,
+            I(state.ground_level.micro_met.micro_O3,
+              as_='ground_O3') if 'ground_O3' in fields else None,
+            I(state.ground_level.micro_met.PARsun,
+              as_='ground_PARsun') if 'ground_PARsun' in fields else None,
+            I(state.ground_level.micro_met.PARshade,
+              as_='ground_PARshade') if 'ground_PARshade' in fields else None,
             I(state.canopy.canopy_top_o3,
               as_='canopy_top_o3') if 'canopy_top_o3' in fields else None,
             I(state.canopy_layers[top_layer_index].micro_met.PARsun,
@@ -4268,7 +4319,7 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
               as_='gsto') if 'gsto' in fields else None,
             I(state.canopy_layer_component[top_layer_index][component_index].bulk_gsto,
               as_='gsto_bulk') if 'gsto_bulk' in fields else None,
-            __SPACER__("Flag leaf >"),
+            __SPACER__("Flag leaf >") if include_spacers else None,
             I(state.canopy_component_population[component_index]
               [flag_index].LAI, as_='LAI_flag') if 'LAI_flag' in fields else None,
             I(state.canopy_component_population[0][flag_index].fLAI_layer[top_layer_index],
@@ -4320,8 +4371,7 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
               [flag_index].POD_Y_sunlit, as_='pody_sun') if 'pody_sun' in fields else None,
             I(state.canopy_component_population[component_index]
               [flag_index].POD_0, as_='pod0') if 'pod0' in fields else None,
-
-            __SPACER__("Carbon Allocation >"),
+            __SPACER__("Carbon Allocation >") if include_spacers else None,
             I(state.canopy_component[component_index].canopy_gsto,
               as_='gsto_canopy') if 'gsto_canopy' in fields else None,
             I(state.canopy_component[component_index].canopy_anet,
@@ -4372,7 +4422,6 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
               as_='harvest_index') if 'harvest_index' in fields else None,
             I(state.canopy_component[component_index].yield_ha,
               as_='yield_ha') if 'yield_ha' in fields else None,
-
             I(state.canopy_component[component_index].gpp, as_='gpp') if 'gpp' in fields else None,
             I(state.canopy_component[component_index].npp, as_='npp') if 'npp' in fields else None,
             I(state.canopy_component[component_index].npp_acc,
@@ -4381,8 +4430,7 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
               as_='R_pm') if 'R_pm' in fields else None,
             I(state.canopy_component[component_index].R_pg,
               as_='R_pg') if 'R_pg' in fields else None,
-
-            __SPACER__("Ozone damage Flag leaf >"),
+            __SPACER__("Ozone damage Flag leaf >") if include_spacers else None,
             I(state.canopy_component_population[component_index]
               [flag_index].fO3_h, as_='fO3_h') if 'fO3_h' in fields else None,
             I(state.canopy_component_population[component_index]
@@ -4399,26 +4447,22 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
               [flag_index].t_lse_limited, as_='t_lse_limited') if 't_lse_limited' in fields else None,
             I(state.canopy_component_population[component_index]
               [flag_index].c_i, as_='c_i') if 'c_i' in fields else None,
-
-            __SPACER__("Soil Moisture Canopy >"),
+            __SPACER__("Soil Moisture Canopy >") if include_spacers else None,
             I(state.canopy.PM.precip_acc_prev_day, as_='precip_acc') if 'precip_acc' in fields else None,
             I(state.canopy.SMD.SWP, as_='swp') if 'swp' in fields else None,
             I(state.canopy.SMD.ASW, as_='asw') if 'asw' in fields else None,
             I(state.canopy.SMD.SMD, as_='smd') if 'smd' in fields else None,
             I(state.canopy.SMD.Sn, as_='sn') if 'sn' in fields else None,
-
             I(state.canopy.PM.Ei_hr, as_='ei') if 'ei' in fields else None,
             I(state.canopy.PM.Et_hr, as_='et') if 'et' in fields else None,
             I(state.canopy.PM.PEt_hr, as_='pet') if 'pet' in fields else None,
             I(state.canopy.PM.Es_hr, as_='es') if 'es' in fields else None,
-
             I(state.canopy.PM.Ei_acc, as_='ei_acc') if 'ei_acc' in fields else None,
             I(state.canopy.PM.Eat_acc, as_='eat_acc') if 'eat_acc' in fields else None,
             I(state.canopy.PM.Et_acc, as_='et_acc') if 'et_acc' in fields else None,
             I(state.canopy.PM.PEt_acc, as_='pet_acc') if 'pet_acc' in fields else None,
             I(state.canopy.PM.Es_acc, as_='es_acc') if 'es_acc' in fields else None,
-
-            __SPACER__("Multiplicative >"),
+            __SPACER__("Multiplicative >") if include_spacers else None,
             I(state.canopy_layer_component[top_layer_index]
               [component_index].gsto_params.f_phen, as_='f_phen') if 'f_phen' in fields else None,
             I(state.canopy_layer_component[top_layer_index]
@@ -4435,8 +4479,7 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
               [component_index].gsto_params.f_SW, as_='f_SW') if 'f_SW' in fields else None,
             I(state.canopy_layer_component[top_layer_index]
               [component_index].gsto_params.f_O3, as_='f_O3') if 'f_O3' in fields else None,
-
-            __SPACER__("Resistance Canopy Top Layer >"),
+            __SPACER__("Resistance Canopy Top Layer >") if include_spacers else None,
             I(state.canopy.rmodel_O3.Rsto[top_layer_index],
               as_='rsto_c') if 'rsto_c' in fields else None,
             I(state.canopy.rmodel_O3.Rext[top_layer_index],
@@ -4447,7 +4490,7 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
             I(state.canopy.rmodel_O3.Ra_canopy_top_to_izr, as_='ra_c_top') if 'ra' in fields else None,
             I(state.canopy.rmodel_O3_ref.Ra_measured_to_izr,
               as_='ra_measurement') if 'ra' in fields else None,
-            I(state.canopy.rmodel_O3.Rb, as_='rb') if 'rb' in fields else None,
+            I(state.canopy.rmodel_O3.Rb[top_layer_index], as_='rb') if 'rb' in fields else None,
             I(state.canopy.rmodel_O3.Rsur[top_layer_index],
               as_='rsur') if 'rsur' in fields else None,
             I(state.canopy.rmodel_O3_ref.Rsur[top_layer_index],
@@ -4457,7 +4500,7 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
             I(state.canopy.rmodel_H2O.Rsto[0],
               as_='rsto_h2o') if 'rsto_h2o' in fields else None,
 
-            __SPACER__("V_cmax Flag Top Layer >"),
+            __SPACER__("V_cmax Flag Top Layer >") if include_spacers else None,
             I(state.canopy_component_population[component_index]
               [flag_index].V_cmax_25_per_layer[top_layer_index], as_='V_cmax_25') if 'V_cmax_25' in fields else None,
             I(state.canopy_component_population[component_index]
@@ -4467,7 +4510,7 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
             I(state.canopy_component_population[component_index]
               [flag_index].J_max, as_='J_max') if 'J_max' in fields else None,
 
-            __SPACER__("Other >"),
+            __SPACER__("Other >") if include_spacers else None,
             I(state.canopy_layer_component[top_layer_index]
               [component_index].LAIsunfrac, as_='LAIsunfrac_top') if 'LAIsunfrac' in fields else None,
             I(state.canopy_component[component_index].LAI,
@@ -4475,7 +4518,7 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
         ]))),
         # Multi layer/ Multi population outputs
         log_values(lambda state: flatten_list(list(filter(lambda f: f, [
-            __SPACER__("Multi layer population >"),
+            __SPACER__("Multi layer population >") if include_spacers else None,
             [I(state.canopy_component[component_index].td_dd_leaf_pops[iP],
                as_=f'td_dd_iP_{iP}') for iP in range(nP)] if 'td_dd_flag' in fields else [],
             [I(state.canopy_component_population[component_index]
@@ -4524,6 +4567,8 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
                 as_=f'micro_O3_iL_{iL}') for iL in range(nL)] if 'micro_O3' in fields else [],
             [I(state.canopy_layers[iL].micro_met.micro_u,
                 as_=f'micro_u_iL_{iL}') for iL in range(nL)] if 'micro_u' in fields else [],
+            [I(state.custom_height[iCH].micro_met.micro_O3,
+                as_=f'micro_O3_iCH_{iCH}') for iCH in range(nCH)] if 'micro_O3' in fields else [],
             [I(state.canopy_component_population[0][iP].leaf_rmodel_O3.Rsto[iL],
                 as_=f'rsto_l_iL_{iL}_iP_{iP}') for iL in range(nL) for iP in range(nP)] if 'rsto_l' in fields else [],
             [I(state.canopy_component_population[0][iP].leaf_rmodel_O3.Rb[iL],
@@ -4534,11 +4579,6 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
                [iP].phenology.phenology_stage, as_=f'leaf_phenology_stage_{iP}') if 'leaf_phenology_stage' in fields else None
              for iP in range(nP)] if 'leaf_phenology_stage' in fields else [],
         ])))) if log_multilayer else [],
-        # Debug outputs
-        log_values(lambda state: flatten_list(list(filter(lambda f: f, [
-            __SPACER__("Debug >"),
-            I(state.debug.ewert_loop_iterations, as_='ewert_loop_iterations'),
-        ])))) if "_debug" in fields else [],
     ]
 
 
@@ -4550,6 +4590,7 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
     nL = config.Land_Cover.nL
     nLC = config.Land_Cover.nLC
     nP = config.Land_Cover.nP
+    TOP_LAYER_INDEX = nL - 1
 
     # Options
     LAI_method = config.Land_Cover.LAI_method
@@ -4575,7 +4616,6 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
         config.Land_Cover.parameters[iLC].pn_gsto.leaf_f_phen_Anet_influence for iLC in range(nLC)]
     gsto_method = [config.Land_Cover.parameters[iLC].gsto.method for iLC in range(nLC)]
     parsun_shade_method = config.Met.PARsunshade_method
-    canopy_ozone_method = config.Land_Cover.ozone_deposition_method
     use_carbon_allocation = config.carbon_allocation.use_carbon_allocation
     senescence_method = [
         config.Land_Cover.parameters[iLC].pn_gsto.senescence_method for iLC in range(nLC)]
@@ -4583,11 +4623,13 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
     have_Hd_data = config.Met.inputs.Hd_method != InputMethod.SKIP
     have_ustar_ref_data = config.Met.inputs.ustar_ref_method != InputMethod.SKIP
     have_ustar_data = config.Met.inputs.ustar_method != InputMethod.SKIP
+    calculate_met_at_ground_layer = config.Met.calculate_met_at_ground_layer
     is_OTC = config.Location.OTC
     sparse_data = config.Met.sparse_data
     output_fields = config.output.fields
     log_multilayer = config.output.log_multilayer
-    ewert_loop_method = [config.Land_Cover.parameters[iLC].pn_gsto.ewert_loop_method for iLC in range(nLC)]
+    include_spacers = config.output.include_spacers
+    nCH = len(config.Location.custom_heights)if config.Location.custom_heights else 0
 
     return [
         tag_process(f"===== Start of Hourly Processes (Hour: {hr}) ====="),
@@ -4622,6 +4664,7 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
         # Solar
         [calc_PAR_sun_shade_process(parsun_shade_method, iL, iLC, nL, nLC)
          for iL in range(nL) for iLC in range(nLC)],
+        calc_PAR_sun_shade_ground_process(nL, nLC) if calculate_met_at_ground_layer else [],
         MLMC_sunlit_LAI_process(nL, nLC),
 
         # Wind
@@ -4630,7 +4673,6 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
         # TODO: below resets windspeed. Check this is correct
         [calc_layer_windspeed_process(iL) for iL in range(nL)],
 
-
         # TLEAF
         # NOTE: This uses calculated gsto from previous hour
         [calc_leaf_temperature_process(iL, iLC, iP, Tleaf_method[iLC])
@@ -4638,7 +4680,7 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
 
         # GSTO SETUP
         tag_process("=== Gsto Setup Processes ==="),
-        [set_vcmax_and_jmax(nL, iLC, iP, V_J_method[iLC])
+        [set_vcmax_and_jmax(nL, iLC, iP, V_J_method[iLC])if gsto_method[iLC] == GstoMethods.PHOTOSYNTHESIS else []
          for iLC in range(nLC) for iP in range(nP)],
         [calc_leaf_f_phen_effect_on_V_cmax_25_process(
             iL, iLC, iP, leaf_f_phen_Anet_influence[iLC])
@@ -4646,9 +4688,9 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
             for iL in range(nL) for iLC in range(nLC) for iP in range(nP)],
         [[
             # TODO: Check how many of these could be calculated daily instead
-            calc_f_light_process(iL, iLC) if f_light_method[iLC] == "enabled" else [],
+            calc_f_light_process(iL, iLC) if f_light_method[iLC] == ENABLED else [],
             calc_f_temp_process(iL, iLC, f_temp_method[iLC]
-                                ) if f_temp_method[iLC] != "disabled" else [],
+                                ) if f_temp_method[iLC] != DISABLED else [],
             calc_f_VPD_process(iL, iLC, f_VPD_method[iLC]),
             f_SW_process(iL, iLC, f_SW_method[iLC]),
             f_O3_process(iL, iLC, f_O3_method[iLC], nP=nP),
@@ -4663,7 +4705,7 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
             [scale_layer_mean_gsto_to_layer_bulk_gsto_process(iL, iLC)for iL in range(nL)],
             scale_layer_bulk_gsto_to_canopy_gsto_process(nL, iLC),
             scale_leaf_layer_mean_gsto_to_leaf_layer_bulk_gsto_process(iLC, iP, nL),
-        ] for iLC in range(nLC) for iP in range(nP) if gsto_method[iLC] == "multiplicative"],
+        ] for iLC in range(nLC) for iP in range(nP) if gsto_method[iLC] == GstoMethods.MULTIPLICATIVE],
 
         # = OZONE DAMAGE
         [[ozone_damage_processes(iLC, iP, iP == nP - 1, senescence_method[iLC])
@@ -4672,7 +4714,7 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
         # = PHOTOSYNTHESIS
         [[
             calc_D_0_process(iLC),
-            [ewert_leaf_process(iLC, iP, nL, ewert_loop_method[iLC])for iP in range(nP)],
+            [ewert_leaf_process(iLC, iP, nL)for iP in range(nP)],
             [convert_gsto_CO2umol_to_O3mmol_process(iLC, iP, nL) for iP in range(nP)],
             calc_layer_mean_gsto_process(iLC, nP, nL),
             [scale_layer_mean_gsto_to_layer_bulk_gsto_process(iL, iLC) for iL in range(nL)],
@@ -4681,7 +4723,7 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
             [limit_gsto_l_with_leaf_fphen_process(
                 iL, iLC, iP, leaf_f_phen_Anet_influence[iLC])
                 if leaf_f_phen_Anet_influence[iLC] == LeafFPhenAnetInfluence.G_STO else [] for iL in range(nL) for iP in range(nP)]
-        ] for iLC in range(nLC) if gsto_method[iLC] == "photosynthesis"],
+        ] for iLC in range(nLC) if gsto_method[iLC] == GstoMethods.PHOTOSYNTHESIS],
 
         # OZONE DEPOSITION,
         tag_process("=== Ozone Deposition Processes ==="),
@@ -4689,8 +4731,10 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
                                       rsur_calc_method, is_OTC),
         calc_deposition_velocity_process() if not is_OTC else [],
         calc_O3_otc_process(nL) if is_OTC else [],
-        calc_canopy_ozone_concentration_process(canopy_ozone_method, nL) if not is_OTC else [],
+        calc_canopy_ozone_concentration_process(nL) if not is_OTC else [],
         calc_multi_layer_O3_ozone_concentration_process(nL) if not is_OTC else [],
+        [calc_ozone_at_custom_height_process(iCH, nL) for iCH in range(
+            len(config.Location.custom_heights))] if config.Location.custom_heights else [],
         # calc_multi_layer_O3_ozone_concentration_process(nL) if not OTC and nL > 1 else [],
         [O3_ppb_to_nmol_process(iL) for iL in range(nL)],
 
@@ -4703,6 +4747,7 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
         [calc_fst_leaf_acc_hour_process(iLC, iP) for iLC in range(nLC) for iP in range(nP)],
         [calc_POD_leaf_process(iLC, iP) for iLC in range(nLC) for iP in range(nP)],
         [calc_OT_leaf_process(iLC, iP, nL, nP) for iLC in range(nLC) for iP in range(nP)],
+        calc_ftot_process(TOP_LAYER_INDEX) if not is_OTC else [],
 
         # SOIL MOISTURE
         tag_process("=== Soil Moisture Processes ==="),
@@ -4723,11 +4768,11 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
             scale_anet_to_canopy_an_gross_process(iLC, nP),
             calculate_canopy_npp_process(iLC) if use_carbon_allocation else [],
             accumulate_canopy_npp_process(iLC) if use_carbon_allocation else [],
-        ] for iLC in range(nLC) if gsto_method[iLC] == "photosynthesis"],
+        ] for iLC in range(nLC) if gsto_method[iLC] == GstoMethods.PHOTOSYNTHESIS],
 
         # LOGGING
         tag_process("== Hourly Logging Processes =="),
-        log_processes(nL, nLC, nP, output_fields, log_multilayer),
+        log_processes(nL, nLC, nP, nCH, output_fields, log_multilayer, include_spacers),
         store_prev_state(),  # Used when we require the data from previous hour.
         # At end of hour advance time step
         advance_time_step_process(),

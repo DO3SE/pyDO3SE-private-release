@@ -23,3 +23,8 @@ class ResistanceConfig:
     #:  - "single_layer"
     #:  - "multi_layer"
     rsur_calc_method: str = 'single_layer'
+
+    #: Rb calculation method
+    #:  - "single_layer"
+    #:  - "multi_layer"
+    rb_calc_method: str = 'single_layer'

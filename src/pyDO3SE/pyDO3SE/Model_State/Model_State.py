@@ -17,7 +17,7 @@ from typing import List
 from data_helpers.fill_np_array import fill_np_array_with_cls
 from do3se_phenology.state import LeafPhenologyState, PhenologyState
 from do3se_met.resistance.model import Leaf_Resistance_Model, Resistance_Model
-from pyDO3SE.plugins.soil_moisture.state import PM_State_t, SMDData_t
+from do3se_met.soil_moisture.state import PM_State_t, SMDData_t
 from pyDO3SE import settings
 
 
@@ -74,6 +74,7 @@ class layer_Meteorological_State:
 
     #: umet
     micro_u: float = None         #: Windspeed at layer canopy [m/s]
+    micro_ustar: float = None         #: ustar at layer canopy [m/s]
     micro_O3_top: float = None        #: O3 concentration at layer canopy top [ppb]
     micro_O3: float = None        #: O3 concentration at layer canopy middle [ppb]
     micro_O3_nmol_m3: float = None        #: O3 concentration at layer canopy [nmol_m3]
@@ -132,6 +133,7 @@ class Whole_Canopy_State:
         default_factory=lambda: Resistance_Model(1))  #: Must be initialised
     Vd: float = None  #: Velocity of O3 deposition to top of canopy [m/s]
     canopy_top_o3: float = None  #: O3 concentration at top of canopy [ppb]
+    ftot: float = None  #: Total stomatal conductance [mmol O3 m-2 PLA s-1]
 
     #: Single-layer canopy water vapour resistance model
     rmodel_H2O: Resistance_Model = field(default_factory=lambda: Resistance_Model(
@@ -397,13 +399,6 @@ class Canopy_Layer_Component_State:
 
 
 @dataclass(frozen=False)
-class DebugState:
-    """Debug state for storing intermediate values for debugging."""
-
-    ewert_loop_iterations: int = 0  #: Max number of iterations in the Ewert loop for this hour
-
-
-@dataclass(frozen=False)
 class Model_State_Shape:
     """The data shape for the internal model state.
 
@@ -433,6 +428,12 @@ class Model_State_Shape:
         field(default_factory=lambda:
               fill_np_array_with_cls(settings.global_settings.MAX_NUM_OF_CANOPY_LAYERS, Canopy_Layer_State))
 
+    ground_level: Canopy_Layer_State = \
+        field(default_factory=lambda: Canopy_Layer_State())
+
+    custom_height: List[Canopy_Layer_State] = \
+        field(default_factory=lambda:
+              fill_np_array_with_cls(settings.global_settings.MAX_NUM_OF_CANOPY_LAYERS, Canopy_Layer_State))
 
     #: Formally MC_t
     canopy_component: List[Canopy_Component_State] = \
@@ -455,8 +456,6 @@ class Model_State_Shape:
         ))
 
     prev_hour: 'Model_State_Shape' = None  #: Stores the state from the previous hour
-
-    debug: DebugState = field(default_factory=lambda: DebugState())
 
     #: def init():
     #:     #: TODO: Validate input

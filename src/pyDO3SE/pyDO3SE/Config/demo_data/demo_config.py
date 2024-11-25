@@ -1,6 +1,6 @@
 import json
-from pyDO3SE.plugins.soil_moisture.config import SOIL_SANDY_LOAM, Soil_Moisture_Config
-from pyDO3SE.plugins.soil_moisture.enums import SoilMoistureSource
+from do3se_met.soil_moisture.config import SOIL_SANDY_LOAM, Soil_Moisture_Config
+from do3se_met.soil_moisture.enums import SoilMoistureSource
 from pyDO3SE.Config.Config_Shape import Config_Land_Cover, Config_Land_Cover_Parameters, Config_Shape, Config_Location
 
 

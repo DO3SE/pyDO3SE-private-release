@@ -16,9 +16,9 @@ Config Shape Module
 
 """
 from dataclasses import dataclass, field
+from do3se_met.soil_moisture.config import Soil_Moisture_Config
 from pyDO3SE.plugins.carbon_allocation.config import CarbonAllocationConfig
 from pyDO3SE.External_State.External_State_Config import Config_Met
-from pyDO3SE.plugins.soil_moisture.config import Soil_Moisture_Config
 from pyDO3SE.Output.OutputConfig import OutputConfig
 
 from .ConfigEnums import *
