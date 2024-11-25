@@ -27,18 +27,21 @@ class Resistance_Model:
     #: izR and the canopy zo
     Ra_canopy_top_to_izr: float = None  #: Aerodynamic resistance [s m-1] between
     #: izR and the canopy height
-
-    Rb: float = None    #: Quasi-laminar boundary layer resistance [s m-1]
+    Rb: List[float] = field(default_factory=lambda: np.full((MAX_LAYERS,), None))    #: Quasi-laminar boundary layer resistance [s m-1]
     #: In-canopy aerodynamic resistance [s m-1]
     Rinc: List[float] = field(default_factory=lambda: np.full((MAX_LAYERS,), None))
     #: External plant cuticle resistance [s m-1] per layer
     Rext: List[float] = field(default_factory=lambda: np.full((MAX_LAYERS,), None))
-    #: Bulk Stomatal resistance [s m-1]) per layer
+    #: Mean Stomatal resistance [s m-1]) per layer
     Rsto: List[float] = field(default_factory=lambda: np.full((MAX_LAYERS,), None))
+    #: Bulk Stomatal resistance [s m-1]) per layer (LAI inc.)
+    Rsto_c: List[float] = field(default_factory=lambda: np.full((MAX_LAYERS,), None))
     #: Ground surface resistance [s m-1]
     Rgs: float = None
     #: Combined surface resistance [s m-1] per layer
     Rsur: List[float] = field(default_factory=lambda: np.full((MAX_LAYERS,), None))
+    #: Combined bulk surface resistance [s m-1] per layer (LAI Inc.)
+    Rsur_c: List[float] = field(default_factory=lambda: np.full((MAX_LAYERS,), None))
     #: Total resistance for each layer downwards [s m-1]
     Rtotal: List[float] = field(default_factory=lambda: np.full((MAX_LAYERS,), None))
 

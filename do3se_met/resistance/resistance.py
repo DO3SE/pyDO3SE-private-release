@@ -1,13 +1,16 @@
 """Resistance module calculations (External to plant canopy)."""
 
 from math import log, sqrt, pi, atan, inf, exp
+import numpy as np
 from decimal import Decimal as D
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 from deprecated import deprecated
 
 from do3se_met.physical_constants import g, T0, cp, Rmass, VON_KAR as K
-from do3se_met.model_constants import izR
+from do3se_met.model_constants import izR, LEAF_G_CO2, LEAF_G_H2O, LEAF_G_O3
 from do3se_met.resistance.model import Resistance_Model, Leaf_Resistance_Model
+from do3se_met.enums import GAS
+
 
 R_INF = 1000000
 
@@ -41,7 +44,7 @@ def calc_displacement_and_roughness_parameters(
         z0 = min(1.0, h * 0.07)
     else:
         d = h * 0.7
-        z0 = max(0.001, h * 0.1)
+        z0 = max(0.0001, h * 0.1)
     return d, z0
 
 
@@ -66,7 +69,7 @@ def calc_PsiH(zL: float) -> float:
     if zL < 0:  # unstable
         x = sqrt(1.0 - 16.0 * zL)
         stab_h = 2.0 * log((1.0 + x) / 2.0)
-    else:             # stable
+    else:  # stable
         # ESX if ( FluxPROFILE == "Ln95" ) then
         # ESX    stab_h = -( (1+2*a/3.0*zL)**1.5 + b*(zL-c/d)* exp(-d*zL) + (b*c/d-1) )
         # ESX else
@@ -100,7 +103,7 @@ def calc_PsiM(zL: D) -> D:
         x = sqrt(sqrt(D(1.0) - D(16.0) * zL))
         b = D(0.125 * (1.0 + x) * (1.0 + x) * (1.0 + x * x))
         stab_m = b.ln() + D(pi) / D(2.0) - D(2.0 * atan(x))
-    else:             # stable
+    else:  # stable
         # ESX if ( FluxPROFILE == "Ln95" ) then
         # ESX    stab_m = -( a*zL + b*(zl-c/d)*exp(-d*zL) + b*c/d)
         # ESX else
@@ -203,7 +206,7 @@ def calc_Ra_with_heat_flux_old(
 
     # Monin-Obukhov Length
     # TODO: Tk should be virtual temperature
-    L = -ustar**3 * Tk * rho * cp / (K * g * Hd)
+    L = -(ustar**3) * Tk * rho * cp / (K * g * Hd)
 
     Ezd = z2 / L
     Ezo = z1 / L
@@ -214,7 +217,7 @@ def calc_Ra_with_heat_flux_old(
         # Psi_m_zd = -5 * Ezd
     else:
         # Xzd_m = (1 - 16 * Ezd)**(1.0 / 4.0)
-        Xzd_h = (1 - 16 * Ezd)**(1.0 / 2.0)
+        Xzd_h = (1 - 16 * Ezd) ** (1.0 / 2.0)
         # Psi_m_zd = log(((1 + Xzd_m**2) / 2) * ((1 + Xzd_m) / 2)**2) - 2 * atan(Xzd_m) + (pi / 2)
         Psi_h_zd = 2 * log((1 + Xzd_h**2) / 2)
 
@@ -223,7 +226,7 @@ def calc_Ra_with_heat_flux_old(
         # Psi_m_zo = -5 * Ezo
     else:
         # Xzo_m = (1 - 15 * Ezo)**(1 / 4.0)
-        Xzo_h = (1 - 15 * Ezo)**(1 / 2.0)
+        Xzo_h = (1 - 15 * Ezo) ** (1 / 2.0)
         # Psi_m_zo = log(((1 + Xzo_m**2) / 2) * ((1 + Xzo_m) / 2)**2) - 2 * atan(Xzo_m) + (pi / 2)
         Psi_h_zo = 2 * log((1 + Xzo_h**2) / 2)
 
@@ -276,12 +279,44 @@ def calc_Rb(ustar: float, diff: float) -> float:
     Rb: float
         quasi-laminar boundary layer resistance [s/m]
     """
-    PR = 0.72    # Prandtl number
+    PR = 0.72  # Prandtl number
     V = 0.000015  # Kinematic viscosity of air at 20 C (m2 s-1)
-    # K = K  # von Karman's constant
 
-    Rb = (2.0 / (K * ustar)) * (((V / diff) / PR)**(2.0 / 3.0))
+    Rb = (2.0 / (K * ustar)) * (((V / diff) / PR) ** (2.0 / 3.0))
     return Rb
+
+
+def calc_g_bv(Lm: float, u: float, gas: GAS) -> float:
+    """Aproximate the boundary layer conductance for forced convection.
+
+    ! (converted to umol m-2 s-1)
+
+    Parameters
+    ----------
+    Lm : float
+        Cross-wind leaf dimension[m]
+    u : float
+        Wind speed [m/s]
+    gas : GAS
+        The gas to calculate for
+
+    Returns
+    -------
+    float
+        Boundary layer conductance [umol m-2 s-1]
+
+    """
+    leaf_g = (
+        LEAF_G_H2O
+        if gas == GAS.H2O
+        else LEAF_G_CO2
+        if gas == GAS.CO2
+        else LEAF_G_O3
+        if gas == GAS.O3
+        else None
+    )
+    g_bv: float = calc_leaf_gb(leaf_g, Lm, max(0.01, u)) * 1e6
+    return g_bv
 
 
 def calc_deposition_velocity(
@@ -309,7 +344,6 @@ def calc_deposition_velocity(
     return deposition_velocity
 
 
-#   TODO: Check elemental
 def calc_leaf_gb(
     G: float,
     Lm: float,
@@ -328,6 +362,12 @@ def calc_leaf_gb(
         Cross-wind leaf dimension[m]
     u: float
         Wind speed [m/s]
+
+    Returns
+    -------
+    leaf_gb: float
+        Leaf boundary layer conductance [mol m-2 s-1]
+
     """
     # G * 2 : from single surface to PLA (both sides of leaf)
     leaf_gb = (G * 2) * sqrt(u / Lm)
@@ -389,9 +429,10 @@ def calc_Rinc(SAI: float, h: float, ustar: float) -> float:
 
     """
     MAX_RINC = inf  # How do we deal with infinity here
-    Rinc_b: float = 14    # Rinc coefficient
+    Rinc_b: float = 14  # Rinc coefficient
     Rinc = Rinc_b * SAI * h / ustar if ustar > 0 else MAX_RINC
     return Rinc
+
 
 #   !> Estimate in-canopy aerodynamic resistance (Rinc, s m-1).
 #   !!
@@ -425,7 +466,6 @@ def calc_Rext(Rext_base: float, SAI: float) -> float:
 
     """
     MAX_REXT = inf
-    Rext_base: float = 2500
     Rext = Rext_base / SAI if SAI > 0 else MAX_REXT
     return Rext
 
@@ -501,7 +541,7 @@ def calc_Rgs(
 
 def calc_Rsur_multilayer(
     nL: int,
-    Rb: float,
+    Rb: List[float],
     Rsto: List[float],
     Rext: List[float],
     LAI: List[float],
@@ -516,34 +556,34 @@ def calc_Rsur_multilayer(
     nL: int
         Number of layers
     Rb: float
-        [Description]
+        Quasi-laminar boundary layer resistance per layer [s m-1]
     Rsto: List[float]
-        [Description]
+        Mean Stomatal resistance [s m-1]) per layer
     Rext: List[float]
-        [Description]
+        External plant cuticle resistance [s m-1] per layer
     LAI: List[float]
-        [Description]
+        Leaf area index [m^2 m^2]
     SAI: List[float]
-        [Description]
+        Stand area index [m^2 m^2]
 
-    TODO: per-layer Rb
 
     """
-    Rsur = [None for _ in range(nL)]
+    Rsur: list[float] = [np.nan for _ in range(nL)]
     for i in range(nL):
         # TODO: let infinities happen and propagate through this? 1/Inf = 0?
-        if (LAI[i] > 0):
+        if LAI[i] > 0:
             # LAI (and SAI) > 0, include Rsto and Rext components
             # TODO: Rsur should be whole canopy rather than multilayer
-            Rsur[i] = Rb + 1 / (1 / Rsto[i] + 1 / Rext[i])
-        elif (SAI[i] > 0):
+            Rsur[i] = Rb[i] + 1 / (1 / Rsto[i] + 1 / Rext[i])
+        elif SAI[i] > 0:
             # Only SAI, omit the Rsto component
-            Rsur[i] = Rb + Rext[i]
+            Rsur[i] = Rb[i] + Rext[i]
         else:
             # No foliage, very high resistance!
             # TODO: find a justification for this, probably based on Rsto
             # TODO: have an "R_INF" constant?
             Rsur[i] = R_INF
+    assert all([r is not None for r in Rsur])
     return Rsur
 
 
@@ -555,7 +595,7 @@ def calc_Rsur(
     Rsoil: float,
     LAI: float,
     SAI: float,
-) -> List[float]:
+) -> float:
     """Calculate single layer surface resistance - combined Rb, Rsto and Rext.
 
     NOTE: Rext term = Rext_base/SAI, Rext_base = 2500
@@ -564,13 +604,13 @@ def calc_Rsur(
     ----------
     Rb: float
         Quasi-laminar boundary layer resistance [s m-1]
-    Rsto: List[float]
+    Rsto: float
         Bulk Stomatal resistance [s m-1]) per layer
-    Rext: List[float]
+    Rext: float
         External plant cuticle resistance [s m-1] per layer
-    LAI: List[float]
+    LAI: float
         Leaf area index [m^2 m^2]
-    SAI: List[float]
+    SAI: float
         Stand area index [m^2 m^2]
 
 
@@ -636,7 +676,6 @@ def calc_Rtotal(
     The equation below will tend towards the lowest of Rsur or Rinc+prev_layer_total.
     If the previous layer is 0 then the resistance is equal to Rsur + Rinc
 
-    NOTE: Bottom layer is layer 0.
 
     Parameters
     ----------
@@ -654,7 +693,7 @@ def calc_Rtotal(
     tmp[0] = Rgs
     for i in range(1, nL + 1):
         tmp[i] = 1 / (1 / Rsur[i - 1] + 1 / (Rinc[i - 1] + tmp[i - 1]))
-    Rtotal = tmp[1:nL + 1]
+    Rtotal = tmp[1 : nL + 1]
     return Rtotal
 
 
@@ -683,17 +722,19 @@ def calc_deposition_velocity(
 def calc_resistance_model(
     nL: int,
     nLC: int,
-    ustar: float,
+    ustar_above_canopy: float,
     canopy_height: float,
     SAI_values: List[List[float]],
     LAI_values: List[List[float]],
     mean_gsto_values: List[List[float]],
     Rsoil: float,
-    L: float = None,
+    ustar_per_layer: List[float] | None = None,
+    L: Optional[float] = None,
     ra_calc_method: str = "simple",
+    rb_calc_method: str = "single_layer",
     rsur_calc_method: str = "single_layer",
-    Ts_C: float = None,
-    snow_depth: float = None,
+    Ts_C: Optional[float] = None,
+    snow_depth: Optional[float] = None,
     Rext_base: float = 2500.0,
     Rb_diff: float = 0.000015,
     izr: float = izR,
@@ -710,10 +751,8 @@ def calc_resistance_model(
         Number of model layers
     nLC: int
         Number of model components
-    ustar: float
-        Friction velocity over target canopy [m/s]
-    ustar_ref: float
-        Friction velocity over reference canopy [m/s]
+    ustar_above_canopy: float
+        Friction velocity over canopy [m/s]
     canopy_height: float
         The total height of the canopy [m]
     SAI_values: List[float]
@@ -723,7 +762,9 @@ def calc_resistance_model(
     mean_gsto_values: float
         full model mean_gsto values with shape(nL, nLC) [mmol O3 m-2 PLA s-1]
     Rsoil: float
-        Soil resistance?
+        Soil resistance
+    ustar_per_layer: List[float]
+        Friction velocity over target canopy [m/s] for each layer
     L: float
         Monin-Obukhov length [m]
     ra_calc_method: str
@@ -764,16 +805,44 @@ def calc_resistance_model(
     if nL > 1 and rsur_calc_method == "single_layer":
         raise ValueError("Cannot use single layer rsur calc for multilayer model")
 
+    if rb_calc_method == "multi_layer" and ustar_per_layer is None:
+        raise ValueError("Cannot use multi layer rb calc without ustar_per_layer")
+
     TOP_LAYER = -1
     LAI_sum_per_layer = [sum(LAI_values[iL]) for iL in range(nL)]
     SAI_sum_per_layer = [sum(SAI_values[iL]) for iL in range(nL)]
+    ustar_per_layer_c = (
+        [ustar_above_canopy for _ in range(nL)]
+        if ustar_per_layer is None
+        else ustar_per_layer
+    )
     # bulk_gsto_sum_per_layer = [sum([mean_gsto_values[iL][iLC] * LAI_values[iL][iLC]
     #                                for iLC in range(nLC)]) for iL in range(nL)]
-    # TODO: Check that mean gsto correct here
+
+    # NOTE: This will only change mean values if nLC > 1 otherwise mean_gsto_per_layer == mean_gsto_values
     mean_gsto_per_layer = [
         sum(
-            [mean_gsto_values[iL][iLC] * LAI_values[iL][iLC] / LAI_sum_per_layer[iL] if LAI_sum_per_layer[iL] > 0 else 0
-             for iLC in range(nLC)]
+            [
+                mean_gsto_values[iL][iLC] * LAI_values[iL][iLC] / LAI_sum_per_layer[iL]
+                if LAI_sum_per_layer[iL] > 0
+                else 0
+                for iLC in range(nLC)
+            ]
+        )
+        for iL in range(nL)
+    ]
+
+    bulk_gsto_per_layer = [
+        sum(
+            [
+                LAI_values[iL][iLC]
+                * mean_gsto_values[iL][iLC]
+                * LAI_values[iL][iLC]
+                / LAI_sum_per_layer[iL]
+                if LAI_sum_per_layer[iL] > 0
+                else 0
+                for iLC in range(nLC)
+            ]
         )
         for iL in range(nL)
     ]
@@ -783,80 +852,114 @@ def calc_resistance_model(
     canopy_height_d = canopy_height_lim * CANOPY_D
     canopy_height_zo = canopy_height_lim * CANOPY_Z0
 
-    Ra_canopy_to_izr = calc_Ra_with_heat_flux(
-        ustar,
-        z1=canopy_height_zo,  # TODO: Check z0 - d
-        z2=izr,
-        L=L,
-    ) if ra_calc_method == "heat_flux" else calc_Ra_simple(
-        ustar,
-        z1=canopy_height_zo,
-        z2=izr,
-        d=canopy_height_d,
+    Ra_canopy_to_izr = (
+        calc_Ra_with_heat_flux(
+            ustar_above_canopy,
+            z1=canopy_height_zo,  # TODO: Check z0 - d
+            z2=izr,
+            L=L,
+        )
+        if ra_calc_method == "heat_flux"
+        else calc_Ra_simple(
+            ustar_above_canopy,
+            z1=canopy_height_zo,
+            z2=izr,
+            d=canopy_height_d,
+        )
     )
 
-    Ra_canopy_top_to_izr = calc_Ra_with_heat_flux(
-        ustar,
-        z1=canopy_height_zo,  # TODO: Check z0 - d
-        z2=izr,
-        L=L,
-    ) if ra_calc_method == "heat_flux" else calc_Ra_simple(
-        ustar,
-        z1=canopy_height_lim - canopy_height_d,
-        z2=izr,
-        d=canopy_height_d,
+    Ra_canopy_top_to_izr = (
+        calc_Ra_with_heat_flux(
+            ustar_above_canopy,
+            z1=canopy_height_zo,  # TODO: Check z0 - d
+            z2=izr,
+            L=L,
+        )
+        if ra_calc_method == "heat_flux"
+        else calc_Ra_simple(
+            ustar_above_canopy,
+            z1=canopy_height_lim - canopy_height_d,
+            z2=izr,
+            d=canopy_height_d,
+        )
     )
 
-    Rb = calc_Rb(ustar, Rb_diff)
+    Rb = (
+        [calc_Rb(layer_ustar, Rb_diff) for layer_ustar in ustar_per_layer_c]
+        if rb_calc_method == "multi_layer"
+        else [calc_Rb(ustar_above_canopy, Rb_diff) for _ in range(nL)]
+    )
 
-    Ra_measured_to_izr = calc_Ra_with_heat_flux(
-        ustar,
-        z1=measured_height,
-        z2=izr,
-        L=L,
-    ) if ra_calc_method == "heat_flux" else calc_Ra_simple(
-        ustar,
-        z1=measured_height - canopy_height_d,
-        z2=izr,
-        d=canopy_height_d,
+    Ra_measured_to_izr = (
+        calc_Ra_with_heat_flux(
+            ustar_above_canopy,
+            z1=measured_height,
+            z2=izr,
+            L=L,
+        )
+        if ra_calc_method == "heat_flux"
+        else calc_Ra_simple(
+            ustar_above_canopy,
+            z1=measured_height - canopy_height_d,
+            z2=izr,
+            d=canopy_height_d,
+        )
     )
 
     # TODO: Rinc should use layer depth instead of canopy height
     # TODO: to use in a multilayer model, what does h represent?  Height above
     # ground, or thickness of layer?
     # Rinc: List[float] = [calc_Rinc(SAI_sum_per_layer[iL], layer depth, ustar) for iL in range(nL)]
-    Rinc: List[float] = [calc_Rinc(sum(SAI_sum_per_layer), canopy_height_lim, ustar)
-                         for iL in range(nL)]
+    Rinc: List[float] = [
+        calc_Rinc(sum(SAI_sum_per_layer), canopy_height_lim, ustar_per_layer_c[iL])
+        for iL in range(nL)
+    ]
 
-    Rext: List[float] = [calc_Rext(Rext_base, SAI_sum_per_layer[iL]) for iL in range(nL)]
+    Rext: List[float] = [
+        calc_Rext(Rext_base, SAI_sum_per_layer[iL]) for iL in range(nL)
+    ]
 
     Rsto: List[float] = [calc_Rsto(mean_gsto_per_layer[iL]) for iL in range(nL)]
-    # Rsto_c: List[float] = [calc_Rsto(bulk_gsto_sum_per_layer[iL]) for iL in range(nL)]
+    Rsto_c: List[float] = [calc_Rsto(bulk_gsto_per_layer[iL]) for iL in range(nL)]
     Rgs = calc_Rgs(Rsoil, snow_depth, Ts_C)
 
-    # TODO: Should allow input LAI here
     if rsur_calc_method == "single_layer":
-        Rsur: list = [calc_Rsur(
-            Rb,
-            Rsto[TOP_LAYER],
-            Rext[TOP_LAYER],
-            Rinc[TOP_LAYER],
-            Rgs,
-            LAI_sum_per_layer[TOP_LAYER],
-            SAI_sum_per_layer[TOP_LAYER],
-        ) for _ in range(nL)]
+        Rsur: list = [
+            calc_Rsur(
+                Rb[TOP_LAYER],
+                Rsto[TOP_LAYER],
+                Rext[TOP_LAYER],
+                Rinc[TOP_LAYER],
+                Rgs,
+                LAI_sum_per_layer[TOP_LAYER],
+                SAI_sum_per_layer[TOP_LAYER],
+            )
+            for _ in range(nL)
+        ]
+
+        Rsur_c: list = [
+            calc_Rsur(
+                Rb[TOP_LAYER],
+                Rsto_c[TOP_LAYER],
+                Rext[TOP_LAYER],
+                Rinc[TOP_LAYER],
+                Rgs,
+                LAI_sum_per_layer[TOP_LAYER],
+                SAI_sum_per_layer[TOP_LAYER],
+            )
+            for _ in range(nL)
+        ]
     elif rsur_calc_method == "multi_layer":
         Rsur: List = calc_Rsur_multilayer(
-            nL,
-            Rb,
-            Rsto,
-            Rext,
-            LAI_sum_per_layer,
-            SAI_sum_per_layer
+            nL, Rb, Rsto, Rext, LAI_sum_per_layer, SAI_sum_per_layer
+        )
+        Rsur_c: List = calc_Rsur_multilayer(
+            nL, Rb, Rsto_c, Rext, LAI_sum_per_layer, SAI_sum_per_layer
         )
     else:
         raise ValueError("Invalid Rsur calc method")
 
+    # This is experimental and not used in standard runs.
     Rtotal: List[float] = calc_Rtotal(nL, Rsur, Rinc, Rgs)
 
     return Resistance_Model(
@@ -868,8 +971,10 @@ def calc_resistance_model(
         Rinc=Rinc,
         Rext=Rext,
         Rsto=Rsto,
+        Rsto_c=Rsto_c,
         Rgs=Rgs,
         Rsur=Rsur,
+        Rsur_c=Rsur_c,
         Rtotal=Rtotal,
     )
 
@@ -900,8 +1005,9 @@ def calc_leaf_resistance_model(
     -------
     Leaf_Resistance_Model
     """
-    Rb_per_layer: List[float] = [calc_leaf_rb(calc_leaf_gb(
-        LEAF_G, Lm, u_per_layer[iL])) for iL in range(nL)]
+    Rb_per_layer: List[float] = [
+        calc_leaf_rb(calc_leaf_gb(LEAF_G, Lm, u_per_layer[iL])) for iL in range(nL)
+    ]
 
     # TODO: Implement advanced Rext equation
     # Calculating Rext currently disabled to align with DO3SE ui
@@ -912,7 +1018,9 @@ def calc_leaf_resistance_model(
     # TODO: Get Rext_const from config
     Rext_per_layer: List[float] = [2500 for iL in range(nL)]
 
-    Rsto_per_layer: List[float] = [calc_Rsto(leaf_gsto_per_layer[iL]) for iL in range(nL)]
+    Rsto_per_layer: List[float] = [
+        calc_Rsto(leaf_gsto_per_layer[iL]) for iL in range(nL)
+    ]
 
     leaf_r_model = Leaf_Resistance_Model(
         Rb=Rb_per_layer,

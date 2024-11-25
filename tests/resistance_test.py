@@ -1,15 +1,18 @@
 import pytest
 from math import isclose, inf
 from decimal import Decimal as D
+from dataclasses import asdict
+import pprint
 
+from do3se_met.enums import GAS
 from do3se_met.resistance import (
     calc_PsiH,
     calc_displacement_and_roughness_parameters,
     calc_PsiM,
     calc_Ra_with_heat_flux,
-    calc_Ra_with_heat_flux_old,
     calc_Ra_simple,
     calc_Rb,
+    calc_g_bv,
     calc_leaf_rb,
     calc_leaf_gb,
     calc_Rtotal,
@@ -23,6 +26,10 @@ from do3se_met.resistance import (
     calc_resistance_model,
     Resistance_Model,
     R_INF,
+)
+
+from do3se_met.wind import (
+    calc_monin_obukhov_length
 )
 
 
@@ -209,7 +216,7 @@ def test_calc_Rsto_compare_with_ui_row_2816():
 def test_calc_Rsur_multilayer():
     Rsur = calc_Rsur_multilayer(
         nL=3,
-        Rb=0.3,
+        Rb=[0.3, 0.3, 0.3],
         Rsto=[100, 200, 300],
         Rext=[100, 200, 300],
         LAI=[0, 0.2, 0.3],
@@ -307,19 +314,133 @@ def test_calc_Rgs_with_snow_cover():
     assert isclose(Rgs, 160.8435465029701, abs_tol=1e-4)
 
 
-class TestCalcResistanceModel:
-    def test_works_without_error(self, snapshot):
+class BaseCalcResistanceModel:
+    nL = 2
+    nLC = 2
+    SAI_values = [[1, 2], [2, 3]]
+    LAI_values = [[1, 2], [2, 3]]
+    mean_gsto_values = [[1, 2], [2, 3]]
+    ustar_values = [1.1, 1.2]
+
+    def test_works_without_error_multiple_layer(self, snapshot):
         rmodel = calc_resistance_model(
-            nL=2,
-            nLC=2,
-            ustar=1.1,
+            nL=self.nL,
+            nLC=self.nLC,
+            ustar_above_canopy=1.1,
             canopy_height=3.3,
-            SAI_values=[[1, 2], [2, 3]],
-            LAI_values=[[1, 2], [2, 3]],
-            mean_gsto_values=[[1, 2], [2, 3]],
+            SAI_values=self.SAI_values,
+            LAI_values=self.LAI_values,
+            mean_gsto_values=self.mean_gsto_values,
+            ustar_per_layer=self.ustar_values,
             Rsoil=123,
             rsur_calc_method="multi_layer",
             ra_calc_method="simple",
         )
         assert isinstance(rmodel, Resistance_Model)
-        snapshot.assert_match(rmodel)
+        assert rmodel.nL == self.nL
+        assert rmodel.Ra_measured_to_izr is not None
+        assert rmodel.Ra_canopy_to_izr is not None
+        assert rmodel.Ra_canopy_top_to_izr is not None
+        assert rmodel.Rb is not None
+        assert len(rmodel.Rinc) == self.nL
+        assert len(rmodel.Rext) == self.nL
+        assert len(rmodel.Rsto) == self.nL
+        assert rmodel.Rgs is not None
+        assert len(rmodel.Rsur) == self.nL
+        assert len(rmodel.Rsur_c) == self.nL
+        assert len(rmodel.Rtotal) == self.nL
+
+        snapshot.assert_match(pprint.pformat(asdict(rmodel), indent=4), f"rmodel_{type(self).__name__}")
+
+
+class TestCalcResistanceModelMultiLayerMultiComponent(BaseCalcResistanceModel):
+    nL = 3
+    nLC = 2
+    SAI_values = [[1, 2], [2, 3], [4, 5]]
+    LAI_values = [[1, 2], [2, 3], [4, 5]]
+    mean_gsto_values = [[1, 2], [2, 3], [4, 5]]
+    ustar_values = [1.1, 1.2, 1.3]
+
+
+class TestCalcResistanceModelMultiLayerSingleComponent(BaseCalcResistanceModel):
+    nL = 3
+    nLC = 1
+    SAI_values = [[1], [2], [4]]
+    LAI_values = [[1], [2], [4]]
+    mean_gsto_values = [[1], [2], [4]]
+    ustar_values = [1.1, 1.2, 1.3]
+
+
+class TestCalcResistanceModelSingleLayerSingleComponent(BaseCalcResistanceModel):
+    nL = 1
+    nLC = 1
+    SAI_values = [[1]]
+    LAI_values = [[1]]
+    mean_gsto_values = [[1]]
+    ustar_values = [1.1]
+
+    def test_should_match_output_of_single_layer_calcs(self):
+        rmodel_single = calc_resistance_model(
+            nL=self.nL,
+            nLC=self.nLC,
+            ustar_above_canopy=1.1,
+            canopy_height=3.3,
+            SAI_values=self.SAI_values,
+            LAI_values=self.LAI_values,
+            mean_gsto_values=self.mean_gsto_values,
+            ustar_per_layer=self.ustar_values,
+            Rsoil=123,
+            rsur_calc_method="single_layer",
+            ra_calc_method="simple",
+        )
+
+        rmodel_multi = calc_resistance_model(
+            nL=self.nL,
+            nLC=self.nLC,
+            ustar_above_canopy=1.1,
+            canopy_height=3.3,
+            SAI_values=self.SAI_values,
+            LAI_values=self.LAI_values,
+            mean_gsto_values=self.mean_gsto_values,
+            ustar_per_layer=self.ustar_values,
+            Rsoil=123,
+            rsur_calc_method="multi_layer",
+            ra_calc_method="simple",
+        )
+        assert rmodel_single.Ra_measured_to_izr == rmodel_multi.Ra_measured_to_izr
+        assert rmodel_single.Ra_canopy_to_izr == rmodel_multi.Ra_canopy_to_izr
+        assert rmodel_single.Ra_canopy_top_to_izr == rmodel_multi.Ra_canopy_top_to_izr
+        assert rmodel_single.Rb == rmodel_multi.Rb
+        assert rmodel_single.Rinc == rmodel_multi.Rinc
+        assert rmodel_single.Rext == rmodel_multi.Rext
+        assert rmodel_single.Rsto == rmodel_multi.Rsto
+        assert rmodel_single.Rgs == rmodel_multi.Rgs
+        assert rmodel_single.Rsur == rmodel_multi.Rsur
+        assert rmodel_single.Rsur_c == rmodel_multi.Rsur_c
+        assert rmodel_single.Rtotal == rmodel_multi.Rtotal
+
+
+
+def test_compare_simple_and_heatflux():
+    """Show that the two methods of calculating Ra are different."""
+    h = 20
+    zo = h * 0.1
+    z = 50
+    d = h * 0.7
+    ustar = 1
+    Tk = 0 + 271.15
+    Hd = -10
+    P = 101.1
+    invL = calc_monin_obukhov_length(Tk, ustar, Hd, P)
+    z1 = zo
+    z1 = h - d + 3
+    z2 = z - d
+    R_heatflux = calc_Ra_with_heat_flux(ustar, z1, z2, invL)
+
+    R_simple = calc_Ra_simple(ustar, h, z, d)
+    assert not isclose(R_simple, R_heatflux, abs_tol=1e-1)
+
+
+def test_calc_g_bv():
+    g_bv = calc_g_bv(Lm=0.01, u=30, gas=GAS.H2O)
+    assert isclose(g_bv, 16103043.1907, abs_tol=1e-3)
