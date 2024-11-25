@@ -1,4 +1,0 @@
--e file:src/pyDO3SE
--e file:src/do3se_met
--e file:src/do3se_phenology
--e file:src/thermal_time
