@@ -331,6 +331,7 @@ class BaseCalcResistanceModel:
             SAI_values=self.SAI_values,
             LAI_values=self.LAI_values,
             mean_gsto_values=self.mean_gsto_values,
+            layer_depths=[1,2,3.3],
             ustar_per_layer=self.ustar_values,
             Rsoil=123,
             rsur_calc_method="multi_layer",

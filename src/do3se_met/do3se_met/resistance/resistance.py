@@ -397,10 +397,8 @@ def calc_leaf_rb(gb: float) -> float:
     return leaf_rb
 
 
-def calc_Rinc(SAI: float, h: float, ustar: float) -> float:
+def calc_Rinc(SAI: float, h: float, ustar: float, Rinc_b: float = 14) -> float:
     """Estimate in-canopy aerodynamic resistance (Rinc, s m-1).
-
-
 
     The in-canopy resistance (Rinc) determines the resistance to ozone transfer
     within the canopy and hence the amount of ozone available for deposition to
@@ -410,17 +408,18 @@ def calc_Rinc(SAI: float, h: float, ustar: float) -> float:
 
     References
     ----------
-
-
+    # TODO: Add reference for Rinc_b
 
     Parameters
     ----------
     SAI: float
         Stand area index [m2 m-2]
     h: float
-        Vegetation height[m]
+        Vegetation height or layer height for multi layer model[m]
     ustar: float
         Friction velocity [m/s]
+    Rinc_b: float
+        Rinc coefficient [s m-1], default 14
 
     Returns
     -------
@@ -429,7 +428,6 @@ def calc_Rinc(SAI: float, h: float, ustar: float) -> float:
 
     """
     MAX_RINC = inf  # How do we deal with infinity here
-    Rinc_b: float = 14  # Rinc coefficient
     Rinc = Rinc_b * SAI * h / ustar if ustar > 0 else MAX_RINC
     return Rinc
 
@@ -714,6 +712,7 @@ def calc_deposition_velocity(
     -------
     float
         Deposition velocity
+
     """
     deposition_velocity = 1.0 / (rmodel_Ra_c + rmodel_Rtotal_top_layer)
     return deposition_velocity
@@ -737,8 +736,10 @@ def calc_resistance_model(
     snow_depth: Optional[float] = None,
     Rext_base: float = 2500.0,
     Rb_diff: float = 0.000015,
+    Rinc_b: float = 14,
     izr: float = izR,
     measured_height: float = 10,
+    layer_depths: List[float] | None = None,
     MIN_CANOPY_HEIGHT: float = 0.01,
     CANOPY_D: float = 0.7,
     CANOPY_Z0: float = 0.1,
@@ -785,8 +786,12 @@ def calc_resistance_model(
         Rext base value
     Rb_diff: float
         Molecular diffusivity in air (m2 s-1)
+    Rinc_b: float
+        Rinc coefficient [s m-1], default 14
     measured_height: float
         The height that the measurement was taken at [m]
+    layer_depths: List[float]
+        The depth of each layer from bottom to top. Last value should equal canopy height [m]
     izr: float
         Decoupled height [m]
     MIN_CANOPY_HEIGHT: float = 0.01
@@ -802,8 +807,13 @@ def calc_resistance_model(
         A new instance of the Resistance Model
 
     """
-    if nL > 1 and rsur_calc_method == "single_layer":
-        raise ValueError("Cannot use single layer rsur calc for multilayer model")
+    if nL > 1:
+        if rsur_calc_method == "single_layer":
+            raise ValueError("Cannot use single layer rsur calc for multilayer model")
+        if layer_depths is None or len(layer_depths) != nL:
+            raise ValueError(
+                f"Invalid layer depths {layer_depths} should be an array with length nL: {nL}"
+            )
 
     if rb_calc_method == "multi_layer" and ustar_per_layer is None:
         raise ValueError("Cannot use multi layer rb calc without ustar_per_layer")
@@ -910,10 +920,26 @@ def calc_resistance_model(
     # TODO: to use in a multilayer model, what does h represent?  Height above
     # ground, or thickness of layer?
     # Rinc: List[float] = [calc_Rinc(SAI_sum_per_layer[iL], layer depth, ustar) for iL in range(nL)]
-    Rinc: List[float] = [
-        calc_Rinc(sum(SAI_sum_per_layer), canopy_height_lim, ustar_per_layer_c[iL])
-        for iL in range(nL)
-    ]
+    Rinc: List[float] = (
+        [
+            calc_Rinc(
+                SAI_sum_per_layer[iL],
+                layer_depths[iL],
+                ustar_per_layer_c[iL],
+                Rinc_b=Rinc_b,
+            )
+            for iL in range(nL)
+        ]
+        if nL > 1
+        else [
+            calc_Rinc(
+                sum(SAI_sum_per_layer),
+                canopy_height_lim,
+                ustar_above_canopy,
+                Rinc_b=Rinc_b,
+            )
+        ]
+    )
 
     Rext: List[float] = [
         calc_Rext(Rext_base, SAI_sum_per_layer[iL]) for iL in range(nL)
