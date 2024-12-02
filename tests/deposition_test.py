@@ -4,7 +4,7 @@ import numpy as np
 from do3se_met.deposition import (
     calc_canopy_ozone_concentration,
     calc_multi_layer_O3_ozone_concentration,
-    calc_ozone_at_custom_height,
+    calc_ozone_at_custom_height_linear,
 )
 
 # TODO: Fix and compare tests for multilayer setup
@@ -174,8 +174,8 @@ class TestCalcMultiLayerOzoneConcentration:
             rm_Rgs=rm_Rgs,
         )
         assert isclose(O3_out[0], O3_in, abs_tol=10)
-        assert isclose(O3_out[1], 5.864, abs_tol=1e-3)
-        assert isclose(O3_out[2], 2.706, abs_tol=1e-3)
+        assert isclose(O3_out[1], 6.00, abs_tol=1e-3)
+        assert isclose(O3_out[2], 2.999, abs_tol=1e-3)
 
     def test_concentration_at_each_layer_low_resistance(self):
         nL = 3
@@ -200,7 +200,7 @@ class TestCalcMultiLayerOzoneConcentration:
     def test_concentration_at_each_layer_high_surface_resistance(self):
         nL = 3
         O3_in = 10
-        rm_Ra = 10  # Assume O3 already at canopy level
+        rm_Ra = 0  # Assume O3 already at canopy level
         rm_Rinc = [0.00000001 for _ in range(nL)]
         rm_Rsur = [100900000000.0 for _ in range(nL)]
         rm_Rgs = 200  # Soil resistance is constant
@@ -213,10 +213,35 @@ class TestCalcMultiLayerOzoneConcentration:
             rm_Rsur=rm_Rsur,
             rm_Rgs=rm_Rgs,
         )
-        # if Rinc is low and Rsur is high, O3 should be close to 0
-        assert isclose(O3_out[0], 0, abs_tol=1e-3)
+        # if Rinc is low and Rsur is high, O3 should be close to input value
+        print(O3_out)
+        assert isclose(O3_out[0], O3_in, abs_tol=1e-3)
+        assert isclose(O3_out[1], O3_in, abs_tol=1e-3)
+        assert isclose(O3_out[2], O3_in, abs_tol=1e-3)
+        assert isclose(O3_out[3], O3_in, abs_tol=1e-3)
+
+    def test_concentration_at_each_layer_high_internal_resistance(self):
+        nL = 3
+        O3_in = 10
+        rm_Ra = 0  # Assume O3 already at canopy level
+        rm_Rinc = [1000000000 for _ in range(nL)]
+        rm_Rsur = [0.00000001 for _ in range(nL)]
+        rm_Rgs = 200  # Soil resistance is constant
+
+        O3_out = calc_multi_layer_O3_ozone_concentration(
+            nL=nL,
+            O3_in=O3_in,
+            rm_Ra=rm_Ra,
+            rm_Rinc=rm_Rinc,
+            rm_Rsur=rm_Rsur,
+            rm_Rgs=rm_Rgs,
+        )
+        # if Rinc is low and Rsur is high, O3 should be close to input value
+        print(O3_out)
+        assert isclose(O3_out[0], O3_in, abs_tol=1e-3)
         assert isclose(O3_out[1], 0, abs_tol=1e-3)
         assert isclose(O3_out[2], 0, abs_tol=1e-3)
+        assert isclose(O3_out[3], 0, abs_tol=1e-3)
 
     def test_should_contain_value_at_ground_level(self):
         nL = 5
@@ -244,9 +269,41 @@ class TestCalcMultiLayerOzoneConcentration:
         )
         assert len(O3_out) == nL + 1
         bottom_layer_index = nL
-        # Should be nearly 0 at the ground level
-        print(O3_out)
         assert O3_out[bottom_layer_index] < O3_out[bottom_layer_index - 1]
+
+
+    def test_should_have_correct_ratio_between_top_and_bottom_of_canopy(self):
+        nL = 5
+        O3_out = calc_multi_layer_O3_ozone_concentration(
+            **{
+                "nL": nL,
+                "O3_in": 30.167430449675667,
+                "rm_Ra": 34.260757032281624,
+                "rm_Rinc": [
+                    898.2900869477606,
+                    1275.278962517186,
+                    1810.4802177712204,
+                    2570.2914540917577,
+                    3648.9756110728913,
+                ],
+                "rm_Rsur": [
+                    6207.1675125913,
+                    6220.793784823008,
+                    6240.1386474315605,
+                    6267.602043361151,
+                    6306.591108894859,
+                ],
+                "rm_Rgs": 200,
+            }
+        )
+        assert len(O3_out) == nL + 1
+        gound_layer_index = nL
+        top_layer_index = 0
+        print(O3_out)
+        assert O3_out[top_layer_index] > O3_out[gound_layer_index]
+        ratio = O3_out[gound_layer_index] /O3_out[top_layer_index]
+        # TODO: This ratio is not correct
+        assert 0.2 < ratio < 0.3
 
 
 class TestCalcOzoneAtCustomHeight:
@@ -254,6 +311,6 @@ class TestCalcOzoneAtCustomHeight:
         x = np.array([0, 1, 2])
         y = np.array([10, 5, 2.5])
 
-        val = calc_ozone_at_custom_height(y, x, 0.5)
+        val = calc_ozone_at_custom_height_linear(y, x, 0.5)
         assert val < 10
         assert val > 5

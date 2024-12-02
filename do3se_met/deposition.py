@@ -171,31 +171,31 @@ def calc_multi_layer_O3_ozone_concentration(
 ) -> List[float]:
     """Calculate O3 concentration for all layers.
 
-        Requires that the value for the top layer (umet(1)%O3) is already known.
+    Requires that the value for the top layer (umet(1)%O3) is already known.
 
-        # TODO: Is this absorbed O3 at each layer?
+    # TODO: Is this absorbed O3 at each layer?
 
-        Assumes layer 0 is top layer.
+    Assumes layer 0 is top layer.
 
-        This uses SGESV which is an old Fortran function. The documentation is vague on this.
+    This uses SGESV which is an old Fortran function. The documentation is vague on this.
 
-        Parameters
-        ----------
-        nL: float
-            number of model layers
-        O3_in: float
-            O3 for top layer micromet[ppb]
-        rm_Ra: float
-            rmodel_O3 Ra
-        rm_Rinc: List[float]
-            rmodel_O3 Rinc per layer
-        rm_Rsur: List[float]
-            rmodel_O3 Rsur per layer
-        rm_Rgs: float
-            rmodel_O3 Rgs
+    Parameters
+    ----------
+    nL: float
+        number of model layers
+    O3_in: float
+        O3 for top layer micromet[ppb]
+    rm_Ra: float
+        rmodel_O3 Ra
+    rm_Rinc: List[float]
+        rmodel_O3 Rinc per layer
+    rm_Rsur: List[float]
+        rmodel_O3 Rsur per layer
+    rm_Rgs: float
+        rmodel_O3 Rgs
 
-        Output
-            O3 per layer[ppb]
+    Output
+        O3 per layer[ppb]
 
     """
     # real, dimension(nL+1) :: bigR, smallR, C
@@ -206,6 +206,8 @@ def calc_multi_layer_O3_ozone_concentration(
     X = np.full((nL + 1, nL + 1), 0, dtype=float)
 
     bigR = np.array([rm_Ra] + rm_Rinc)
+    if sum(bigR) == 0:
+        return [O3_in] * (nL + 1)
     assert bigR.shape == (nL + 1,)
 
     # TODO: per-layer Rb
@@ -213,9 +215,10 @@ def calc_multi_layer_O3_ozone_concentration(
     assert smallR.shape == (nL + 1,)
     # Iterate over columns
     for j in range(0, nL + 1):
-        X[0:j+1, j] = bigR[0:j+1]
-        if j < nL:  # TODO: Check this
+        X[0 : j + 1, j] = bigR[0 : j + 1]
+        if j < nL + 1:
             X[j, j] = X[j, j] + smallR[j]
+        if j < nL:
             X[j + 1, j] = -smallR[j]
     C[0] = O3_in
 
@@ -234,20 +237,78 @@ def calc_multi_layer_O3_ozone_concentration(
     if info != 0:
         raise Exception("SGESV Failed")
     C_final = smallR * C_out
-    O3_out = C_final[0:nL + 1]
-    return O3_out
+    return C_final
 
 
-def calc_ozone_at_custom_height(
+def calc_ozone_at_custom_height_linear(
     ozone_at_layers: List[float] | np.ndarray,
     layer_heights: List[float] | np.ndarray,
     custom_height: float,
+    izr_height: float | None = None,
+    ozone_at_izr_height: float | None = None,
+) -> float:
+    """Calculate the ozone concentration at a custom height.
+
+    This method uses linear interpolation to calculate the ozone at at the custom height.
+
+    Parameters
+    ----------
+    ozone_at_layers: List[float]
+        Ozone concentration at each layer
+    layer_heights: List[float]
+        Height of each layer
+    custom_height: float
+        Custom height to calculate ozone concentration
+    izr_height: float
+        Decoupled height
+    ozone_at_izr_height: float
+        Ozone concentration at decoupled height
+
+    """
+    layer_heights = (
+        layer_heights if izr_height is None else layer_heights + [izr_height]
+    )
+    ozone_at_layers = (
+        ozone_at_layers
+        if ozone_at_izr_height is None
+        else ozone_at_layers + [ozone_at_izr_height]
+    )
+    return np.interp(custom_height, layer_heights, ozone_at_layers)
+
+
+def calc_ozone_at_custom_height_polynomial(
+    ozone_at_layers: List[float] | np.ndarray,
+    layer_heights: List[float] | np.ndarray,
+    custom_height: float,
+    izr_height: float | None = None,
+    ozone_at_izr_height: float | None = None,
 ) -> float:
     """Calculate the ozone concentration at a custom height.
 
     This method fits a polynomial to the ozone concentration at each layer and
     then evaluates the polynomial at the custom height.
 
+    Parameters
+    ----------
+    ozone_at_layers: List[float]
+        Ozone concentration at each layer
+    layer_heights: List[float]
+        Height of each layer
+    custom_height: float
+        Custom height to calculate ozone concentration
+    izr_height: float
+        Decoupled height
+    ozone_at_izr_height: float
+        Ozone concentration at decoupled height
+
     """
+    layer_heights = (
+        layer_heights if izr_height is None else layer_heights + [izr_height]
+    )
+    ozone_at_layers = (
+        ozone_at_layers
+        if ozone_at_izr_height is None
+        else ozone_at_layers + [ozone_at_izr_height]
+    )
     f = np.polynomial.polynomial.Polynomial.fit(layer_heights, ozone_at_layers, 5)
     return float(f(custom_height))
