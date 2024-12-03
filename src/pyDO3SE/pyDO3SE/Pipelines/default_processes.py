@@ -1517,7 +1517,7 @@ def calc_layer_windspeed_process(iL: int) -> Process:
         ),
         Process(
             func=met_wind_helpers.ustar_from_velocity_simple,
-            comment="calculate inter canopyustar at each layer",
+            comment="calculate inter canopy ustar at each layer",
             state_inputs=lambda state, iL=iL: [
                 I(state.canopy_layers[iL].micro_met.micro_u, as_='u'),
                 I(state.canopy_layers[iL].layer_height, as_='z'),
@@ -2920,6 +2920,7 @@ def calc_resistance_model_process(
                 I(config.resistance.rb_calc_method, as_='rb_calc_method'),
                 I(config.resistance.ra_calc_method, as_='ra_calc_method'),
                 I(config.resistance.rsur_calc_method, as_='rsur_calc_method'),
+                I(config.resistance.Rinc_b, as_='Rinc_b'),
                 I(config.Location.h_O3, as_='canopy_height'),
                 I(config.Location.z_O3, as_='measured_height'),
                 I(config.Location.izr, as_='izr'),
@@ -2934,6 +2935,8 @@ def calc_resistance_model_process(
                 I(state.met.ustar_ref, as_='ustar_above_canopy'),
                 I([state.canopy_layers[iL].micro_met.micro_ustar for iL in range(nL)], as_='ustar_per_layer'),
                 I(state.met.L, as_='L'),  # TODO: Only required for Ra heat flux
+                I([state.canopy_layers[iL].layer_depth
+                   for iL in range(nL)], as_='layer_depths'),
                 I([[state.canopy_layer_component[iL][iLC].SAI for iLC in range(nLC)]
                    for iL in range(nL)], as_='SAI_values'),
                 I([[state.canopy_layer_component[iL][iLC].LAI for iLC in range(nLC)]
@@ -2963,6 +2966,7 @@ def calc_resistance_model_process(
                 I(config.resistance.rb_calc_method, as_='rb_calc_method'),
                 I(config.resistance.ra_calc_method, as_='ra_calc_method'),
                 I(config.resistance.rsur_calc_method, as_='rsur_calc_method'),
+                I(config.resistance.Rinc_b, as_='Rinc_b'),
                 I(config.Location.izr, as_='izr'),
             ],
             external_state_inputs=lambda e_state, row_index: [
@@ -2977,6 +2981,8 @@ def calc_resistance_model_process(
                 I(state.met.ustar_ref, as_='ustar_above_canopy'),
                 I([state.canopy_layers[iL].micro_met.micro_ustar for iL in range(nL)], as_='ustar_per_layer'),
                 I(state.met.L, as_='L'),  # TODO: Only required for Ra heat flux
+                I([state.canopy_layers[iL].layer_depth
+                   for iL in range(nL)], as_='layer_depths'),
                 I([[state.canopy_layer_component[iL][iLC].SAI for iLC in range(nLC)]
                    for iL in range(nL)], as_='SAI_values'),
                 I([[state.canopy_layer_component[iL][iLC].LAI for iLC in range(nLC)]
@@ -3007,6 +3013,7 @@ def calc_resistance_model_process(
                 I(config.resistance.rb_calc_method, as_='rb_calc_method'),
                 I(config.resistance.ra_calc_method, as_='ra_calc_method'),
                 I(config.resistance.rsur_calc_method, as_='rsur_calc_method'),
+                I(config.resistance.Rinc_b, as_='Rinc_b'),
                 I(config.Location.z_O3, as_='measured_height'),
                 I(config.Location.izr, as_='izr'),
                 I(config.Location.canopy_d, as_='CANOPY_D'),
@@ -3021,6 +3028,8 @@ def calc_resistance_model_process(
                 I([state.canopy_layers[iL].micro_met.micro_ustar for iL in range(nL)], as_='ustar_per_layer'),
                 I(state.canopy.canopy_height, as_='canopy_height'),
                 I(state.met.L, as_='L'),  # NOTE: Only required for Ra heat flux
+                I([state.canopy_layers[iL].layer_depth
+                   for iL in range(nL)], as_='layer_depths'),
                 I([[state.canopy_layer_component[iL][iLC].SAI for iLC in range(nLC)]
                    for iL in range(nL)], as_='SAI_values'),
                 I([[state.canopy_layer_component[iL][iLC].LAI for iLC in range(nLC)]
