@@ -28,3 +28,7 @@ class ResistanceConfig:
     #:  - "single_layer"
     #:  - "multi_layer"
     rb_calc_method: str = 'single_layer'
+
+
+    #: Rinc coefficient [s m-1], default 14
+    Rinc_b: float = 14
