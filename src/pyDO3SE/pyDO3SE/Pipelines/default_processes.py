@@ -73,7 +73,6 @@ from do3se_phenology import canopy_structure
 from do3se_phenology import f_phen as f_phen_helpers
 from do3se_phenology import vernalisation as vernalisation_helpers
 
-from pyDO3SE.constants import model_constants
 from pyDO3SE.plugins.gsto import photosynthesis_helpers as pn_helpers
 from pyDO3SE.plugins.gsto.multiplicative import multiplicative
 from pyDO3SE.plugins.gsto.ewert.ewert import ewert_leaf_pop
@@ -1183,6 +1182,7 @@ def calc_canopy_SAI(nL: int, nLC: int, SAI_method: str, primary_SAI_method: str)
                     Process(
                         # this%MLMC(:,:)%SAI = this%MLMC(1,1)%SAI * this%fLAI(:,:)
                         func=lambda fLAI, SAI, nL, nLC: [
+                            # TODO: Should this have minimum SAI Value !
                             [SAI * fLAI[iL][iLC] for iLC in range(nLC)] for iL in range(nL)],
                         comment="Spread single SAI value to layers and LCs",
                         config_inputs=lambda config: [
@@ -1525,7 +1525,7 @@ def calc_layer_windspeed_process(iL: int) -> Process:
             ],
             state_outputs=lambda result, iL=iL: [
                 (result, f'canopy_layers.{iL}.micro_met.micro_ustar'),
-            ]
+            ],
         ),
     ]
 
@@ -4488,6 +4488,7 @@ def log_processes(nL: int, nLC: int, nP: int, nCH: int, fields: List[str], log_m
               [component_index].gsto_params.f_SW, as_='f_SW') if 'f_SW' in fields else None,
             I(state.canopy_layer_component[top_layer_index]
               [component_index].gsto_params.f_O3, as_='f_O3') if 'f_O3' in fields else None,
+            I(state.canopy.ftot, as_='ftot') if 'ftot' in fields else None,
             __SPACER__("Resistance Canopy Top Layer >") if include_spacers else None,
             I(state.canopy.rmodel_O3.Rsto[top_layer_index],
               as_='rsto_c') if 'rsto_c' in fields else None,
