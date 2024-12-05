@@ -5,7 +5,7 @@ import math
 from copy import deepcopy
 import numpy as np
 from pathlib import Path
-from typing import Generator, Iterator, Tuple, Callable, List, NamedTuple
+from typing import Generator, Iterator, Tuple, Callable, List, NamedTuple, Optional
 from data_helpers.cls_parsing import rsetattr
 from datetime import datetime
 from pyDO3SE.Config.config_loader import config_loader
@@ -333,6 +333,7 @@ def init_all_grid_model_configs(
     e_state_overrides_field_map_path: str = None,
     run_mask_path: str = None,
     sample_size: int = 0,
+    configs_to_run: Optional[list[str]] = None,
 ):
     """Initialize grid state for all configs in project dir
 
@@ -340,20 +341,23 @@ def init_all_grid_model_configs(
     ----------
     project_paths: GridProjectPaths
         file paths specific to project
+    logger: Logger
+        logger to print out logs
     e_state_overrides_field_map_path: bool = None
         If provided then override the e_state_overrides_field_map_path
     run_mask_path: bool = None
         If true then override the run_mask_path
-
-    logger: Logger,
-        Logger func or class
     sample_size: int, optional
         If greater than 0 then only runs up to sample size number of cells
+    configs_to_run: Optional[list[str]] = None,
+        If provided will only run these configs
 
     """
 
     logger(f"== Running init_all_grid_model_configs =====")
     configs = os.listdir(project_paths.config_dir)
+    if configs_to_run:
+        configs = [c for c in configs if c.split(".")[0] in configs_to_run]
     logger(f"== Found {len(configs)} configs to run =====")
     setup_duration = datetime.now() - datetime.now()
     e_state_overrides_dataset = xr.open_dataset(project_paths.e_state_overrides_file_path)

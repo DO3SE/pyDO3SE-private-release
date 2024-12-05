@@ -1026,8 +1026,14 @@ def main_grid_seq_per_config(
     return full_outputs
 
 
-def get_configs(dir: Path):
-    return os.listdir(dir)
+def get_configs(
+    dir: Path,
+    configs_to_run: Optional[list[str]] = None,
+):
+    configs_list = os.listdir(dir)
+    if configs_to_run:
+        configs_list = [c for c in configs_list if c.split(".")[0] in configs_to_run]
+    return configs_list
 
 
 def main_grid_run(
@@ -1047,6 +1053,7 @@ def main_grid_run(
     start_input_index: int = None,
     e_state_overrides_field_map_path: str = None,
     run_mask_path: str = None,
+    configs_to_run: Optional[list[str]] = None,
     overrides: Main_Overrides = Main_Overrides(),
     debug: bool = False,
 ):
@@ -1086,6 +1093,8 @@ def main_grid_run(
         If provided then override the e_state_overrides_field_map_path
     run_mask_path: bool = None
         If true then override the run_mask_path
+    configs_to_run: Optional[list[str]] = None,
+        If provided will only run these configs
     overrides: Main_Overrides
         Overrides for main
     debug: bool, optional
@@ -1093,7 +1102,7 @@ def main_grid_run(
 
     """
     logger(f"== Running main_grid_run on:\n{project_paths.run_dir}=====")
-    config_file_names = get_configs(project_paths.config_dir)
+    config_file_names = get_configs(project_paths.config_dir, configs_to_run)
 
     logger(f"Found {len(config_file_names)} configs to run")
 
