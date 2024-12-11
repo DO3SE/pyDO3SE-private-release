@@ -319,31 +319,6 @@ def calc_g_bv(Lm: float, u: float, gas: GAS) -> float:
     return g_bv
 
 
-def calc_deposition_velocity(
-    rmodel_Ra_c: float,
-    rmodel_Rtotal_top_layer: float,
-) -> float:
-    """Calculate deposition velocity (\f$V_d\f$) from a canopy resistance model.
-
-    Vd = 1/(Ra + Rb + Rsur)
-
-    Parameters
-    ----------
-    rmodel_Ra_c : float
-        Ra at canopy height
-    rmodel_Rtotal_top_layer : float
-        Should equal Rb + Rsur
-
-    Returns
-    -------
-    float
-        Deposition velocity
-
-    """
-    deposition_velocity = 1.0 / (rmodel_Ra_c + rmodel_Rtotal_top_layer)
-    return deposition_velocity
-
-
 def calc_leaf_gb(
     G: float,
     Lm: float,
@@ -675,6 +650,8 @@ def calc_Rtotal(
     If the previous layer is 0 then the resistance is equal to Rsur + Rinc
 
 
+    NOTE: iL == 0 is the bottom layer
+
     Parameters
     ----------
     nL: int
@@ -693,6 +670,29 @@ def calc_Rtotal(
         tmp[i] = 1 / (1 / Rsur[i - 1] + 1 / (Rinc[i - 1] + tmp[i - 1]))
     Rtotal = tmp[1 : nL + 1]
     return Rtotal
+
+
+def calc_deposition_velocity_multilayer(
+    rmodel_Ra_c: float,
+    rmodel_Rtotal_top_layer: float,
+) -> float:
+    """Calculate deposition velocity (\f$V_d\f$) from a canopy resistance model.
+
+    Parameters
+    ----------
+    rmodel_Ra_c : float
+        Aerodynamic resistance [s m-1] between 50m and inside the canopy.
+    rmodel_Rtotal_top_layer : float
+        Total resistance for each layer downwards [s m-1]
+
+    Returns
+    -------
+    float
+        Deposition velocity
+
+    """
+    deposition_velocity = 1.0 / (rmodel_Ra_c + rmodel_Rtotal_top_layer)
+    return deposition_velocity
 
 
 def calc_deposition_velocity(

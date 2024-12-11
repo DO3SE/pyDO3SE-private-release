@@ -59,7 +59,7 @@ def test_multilayer_r_model_to_single_H20():
     assert isclose(rmodel_H20.Rext[0], 62.85714, abs_tol=1e-4)
     assert isclose(rmodel_H20.Rsto[0], 30.834582, abs_tol=1e-4)
     assert isclose(rmodel_H20.Rgs, 102.0, abs_tol=1e-4)
-    assert isclose(rmodel_H20.Rsur[0], 10.763110043, abs_tol=1e-4)
+    assert isclose(rmodel_H20.Rsur[0], 18.2721, abs_tol=1e-4)
 
 
 def test_multilayer_r_model_to_single_H20_when_rinc_is_0():

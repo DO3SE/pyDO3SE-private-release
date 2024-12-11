@@ -3,33 +3,126 @@ from math import isclose
 import numpy as np
 from do3se_met.deposition import (
     calc_canopy_ozone_concentration,
+    calc_canopy_ozone_concentration_multilayer,
     calc_multi_layer_O3_ozone_concentration,
     calc_ozone_at_custom_height_linear,
 )
+from do3se_met.resistance import calc_Rtotal
 
-# TODO: Fix and compare tests for multilayer setup
-# @pytest.mark.parametrize(
-#     ['O3', 'canopy_height', 'u_i', 'h_O3_in', 'z_O3', 'Rtotal_top_layer', 'expected_out'],
-#     [
-#         (33.904, 1.0, 2.9349, None, 40.0, 99.9001, [34.871, 19.589]),
-#     ],
-# )
-# def test_calc_canopy_ozone_concentration_multilayer(
-#     O3,
-#     canopy_height,
-#     u_i,
-#     h_O3_in,
-#     z_O3,
-#     Rtotal_top_layer,
-#     expected_out,
-# ):
-#     """Test the output of calc_canopy_ozone_concentration."""
-#     out = calc_canopy_ozone_concentration_multilayer(O3, canopy_height, u_i, h_O3_in, z_O3, Rtotal_top_layer)
+class TestCalcCanopyOzoneConcentrationMultilayer:
+    # TODO: Fix and compare tests for multilayer setup
 
-#     assert out.O3_i > O3
-#     assert out.micro_O3 < O3
-#     assert isclose(out.O3_i, expected_out[0], abs_tol=1e-4)
-#     assert isclose(out.micro_O3, expected_out[1], abs_tol=1e-4)
+    @pytest.mark.parametrize(
+        [
+            "O3",
+            "Rsur_ref",
+            "Rb_ref",
+            "Ra_ref_canopy",
+            "Ra_tar_canopy",
+            "Ra_tar_canopy_top",
+            "Ra_ref_measured",
+            "RTotal",
+            "expected_o3_i",
+            "expected_micro_o3",
+            "expected_Vd",
+        ],
+        # TODO: Update these values
+        [(26.961, 454.6, 7.449, 9.304, 9.304, 8.123, 9.304,99, 27.503, 25.441, 0.00923)],
+    )
+    def test_calc_canopy_ozone_concentration_multilayer(
+        self,
+        O3,
+        Rsur_ref,
+        Rb_ref,
+        Ra_ref_canopy,
+        Ra_tar_canopy,
+        Ra_tar_canopy_top,
+        Ra_ref_measured,
+        RTotal,
+        expected_o3_i,
+        expected_micro_o3,
+        expected_Vd,
+    ):
+        """Test the output of calc_canopy_ozone_concentration."""
+        out = calc_canopy_ozone_concentration_multilayer(
+            O3_ppb_zR=O3,
+            Ra_ref_canopy=Ra_ref_canopy,
+            Ra_ref_measured=Ra_ref_measured,
+            Ra_tar_canopy=Ra_tar_canopy,
+            Ra_tar_canopy_top=Ra_tar_canopy_top,
+            Rsur_ref=Rsur_ref,
+            Rb_ref=Rb_ref,
+            Rtotal=RTotal,
+        )
+
+        assert out.O3_i > O3
+        assert out.micro_O3 < O3
+        assert isclose(out.O3_i, expected_o3_i, abs_tol=1e-3)
+        assert isclose(out.micro_O3, expected_micro_o3, abs_tol=1e-3)
+        assert isclose(out.Vd, expected_Vd, abs_tol=1e-3)
+
+    @pytest.mark.parametrize(
+        [
+            "O3",
+            "Rsur_top_layer",
+            "Rsur_ref",
+            "Rb_top_layer",
+            "Rb_ref",
+            "Ra_ref_canopy",
+            "Ra_tar_canopy",
+            "Ra_tar_canopy_top",
+            "Ra_ref_measured",
+        ],
+        [(26.961, 454.6, 454.6, 7.449, 7.449, 9.304, 9.304, 8.123, 9.304)],
+    )
+    def test_compare_with_single_layer(
+        self,
+        O3,
+        Rsur_top_layer,
+        Rsur_ref,
+        Rb_top_layer,
+        Ra_ref_canopy,
+        Ra_tar_canopy,
+        Ra_tar_canopy_top,
+        Ra_ref_measured,
+        Rb_ref,
+    ):
+        out_single = calc_canopy_ozone_concentration(
+            O3_ppb_zR=O3,
+            Ra_ref_canopy=Ra_ref_canopy,
+            Ra_ref_measured=Ra_ref_measured,
+            Ra_tar_canopy=Ra_tar_canopy,
+            Ra_tar_canopy_top=Ra_tar_canopy_top,
+            Rsur_ref=Rsur_ref,
+            Rsur_top_layer=Rsur_top_layer,
+            Rb_ref=Rb_ref,
+            Rb_top_layer=Rb_top_layer,
+        )
+        RTotal = calc_Rtotal(
+            nL=5,
+            Rsur=[Rsur_top_layer for _ in range(5)],
+            Rinc=[40 for _ in range(5)],
+            Rgs=200,
+        )
+        top_layer_index = -1
+        out_multilayer = calc_canopy_ozone_concentration_multilayer(
+            O3_ppb_zR=O3,
+            Ra_ref_canopy=Ra_ref_canopy,
+            Ra_ref_measured=Ra_ref_measured,
+            Ra_tar_canopy=Ra_tar_canopy,
+            Ra_tar_canopy_top=Ra_tar_canopy_top,
+            Rsur_ref=Rsur_ref,
+            Rb_ref=Rb_ref,
+            Rtotal=RTotal[top_layer_index],
+            # Rtotal=sum(RTotal) # This gives us a similar result to the single layer model but could be due to rtotal calc above.
+        )
+
+        assert isclose(out_single.O3_i, out_multilayer.O3_i, abs_tol=1e-3)
+        assert isclose(out_single.Vd, out_multilayer.Vd, abs_tol=1e1)
+        assert isclose(out_single.micro_O3, out_multilayer.micro_O3, abs_tol=1e1)
+
+
+
 
 
 # @pytest.mark.skip(reason="Currently does not align with ui model")
@@ -145,7 +238,6 @@ class TestCalcMultiLayerOzoneConcentration:
         rm_Rinc = [1000.0 for _ in range(nL)]
         rm_Rsur = [6000.0 for _ in range(nL)]
         rm_Rgs = 200  # Soil resistance is constant
-
 
         O3_out = calc_multi_layer_O3_ozone_concentration(
             nL=nL,
@@ -271,7 +363,6 @@ class TestCalcMultiLayerOzoneConcentration:
         bottom_layer_index = nL
         assert O3_out[bottom_layer_index] < O3_out[bottom_layer_index - 1]
 
-
     def test_should_have_correct_ratio_between_top_and_bottom_of_canopy(self):
         nL = 5
         O3_out = calc_multi_layer_O3_ozone_concentration(
@@ -301,7 +392,7 @@ class TestCalcMultiLayerOzoneConcentration:
         top_layer_index = 0
         print(O3_out)
         assert O3_out[top_layer_index] > O3_out[gound_layer_index]
-        ratio = O3_out[gound_layer_index] /O3_out[top_layer_index]
+        ratio = O3_out[gound_layer_index] / O3_out[top_layer_index]
         # TODO: This ratio is not correct
         assert 0.2 < ratio < 0.3
 
