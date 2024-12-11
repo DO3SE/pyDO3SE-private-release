@@ -4,7 +4,7 @@ import numpy as np
 from typing import List
 from collections import namedtuple
 from scipy.linalg.lapack import sgesv  # type: ignore
-
+from do3se_met.resistance import calc_deposition_velocity_multilayer
 
 def O3_transfer_up(Ra: float, O3: float, Vd: float) -> float:
     """Scale O3 concentration up from the resistance model's reference height.
@@ -60,9 +60,6 @@ def calc_canopy_ozone_concentration(
     Rb_top_layer: float,
 ) -> OzoneConcentrationOutput:
     r"""Calculate the ozone concentration at top of canopy.
-
-    This method is taken from the DO3SE-UI model and should be
-    replaced with calc_canopy_ozone_concentration_multilayer.
 
     This procedure results in the calculation of deposition velocity (Vd) and
     the ozone concentration at the canopy in both parts-per-billion and
@@ -139,6 +136,10 @@ def calc_canopy_ozone_concentration(
         Ozone concentration at izR[ppb]
     micro_O3
         Ozone concentration at canopy top[ppb]
+    vd_i: float
+        deposition velocity at izR [m/s]
+    vd: float
+        deposition velocity at canopy top [m/s]
 
     """
     # z1 = canopy_ref_z0 and z2 = izr
@@ -160,6 +161,107 @@ def calc_canopy_ozone_concentration(
         Vd=Vd,
     )
 
+
+def calc_canopy_ozone_concentration_multilayer(
+    O3_ppb_zR: float,
+    Ra_ref_canopy: float,
+    Ra_ref_measured: float,
+    Ra_tar_canopy: float,
+    Ra_tar_canopy_top: float,
+    Rsur_ref: float,
+    Rb_ref: float,
+    Rtotal: float,
+):
+    r"""Calculate the ozone concentration at top of canopy.
+
+    This procedure results in the calculation of deposition velocity (Vd) and
+    the ozone concentration at the canopy in both parts-per-billion and
+    nmol/m^3
+
+    We translate the ozone from the measured height up to a decoupled height
+    then back down to the target canopy. As the measured data may have had a canopy
+    of a different height we need to calculate the deposition velocity for a
+    reference canopy.
+
+
+    --------------------------------------------------- Decoupled height
+              ^ O3_ppb_i                |
+              |                         |
+              | Ra_O3zR_i * vd_i        | Ra * Vd
+              |                         |/_\ Vd =1/(Ra + Rb + Rsur)
+    O3_ppb_zR |                         |
+    ------------------------------------|------------------------- Measured height
+                                        |
+                                        |
+    ------------------------------------|--------------------------Measured Canopy height
+                                        |
+                                        |
+    ------------------------------------|----------------Canopy height
+    ------------------------------------|---------------
+                                        |               ^
+                                        |               zo
+                                        |               v
+    ------------------------------------v---------------
+                                                        ^
+                                                        d
+                                                        v
+    ---------------------------------------------------- Soil
+
+
+
+
+    Parameters
+    ----------
+    O3_ppb_zR: float
+        input O3 data[ppb]
+    Ra_ref_canopy: float
+        Ra for reference canopy to izr
+    Ra_ref_measured: float
+        Ra for measured height to izr
+    Ra_tar_canopy: float
+        Ra for target canopy to izr
+    Ra_tar_canopy_top: float
+        Ra for top of target canopy to izr
+    Rsur_ref: float
+        Rsur for ref canopy
+    Rb_ref: float
+        Rb reference canopy
+    Rtotal: float
+        Total resistance for canopy
+
+    Returns
+    -------
+    O3_i: float
+        Ozone concentration at izR[ppb]
+    micro_O3
+        Ozone concentration at canopy top[ppb]
+    vd_i: float
+        deposition velocity at izR [m/s]
+    vd: float
+        deposition velocity at canopy top [m/s]
+
+    """
+    # TODO: Compare this with single layer method
+    # z1 = canopy_ref_z0 and z2 = izr
+    Vd_i = 1.0 / (Ra_ref_canopy + Rb_ref + Rsur_ref)
+
+    # z1 = measure height - canopy_ref_d and z2 = izr
+    O3_ppb_i = O3_ppb_zR / (1.0 - (Ra_ref_measured * Vd_i))
+
+    # z1 = canopy_zo and z2 = izr
+    Vd = calc_deposition_velocity_multilayer(
+        Ra_tar_canopy, Rtotal,
+    )
+
+    # z1 = canopy_height - canopy_d and z2 = izr
+    O3_ppb = O3_ppb_i * (1.0 - (Ra_tar_canopy_top * Vd))
+
+    return OzoneConcentrationOutput(
+        O3_i=O3_ppb_i,
+        micro_O3=O3_ppb,
+        Vd_i=Vd_i,
+        Vd=Vd,
+    )
 
 def calc_multi_layer_O3_ozone_concentration(
     nL: int,
