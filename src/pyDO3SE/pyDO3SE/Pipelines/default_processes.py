@@ -3049,14 +3049,16 @@ def calc_resistance_model_process(
     ]
 
 
-def calc_deposition_velocity_process() -> Process:
+def calc_deposition_velocity_process(nL: int) -> Process:
     """Vd calculation duplicated here just for comparison purposes."""
+
+    top_layer_index = nL - 1
     return Process(
-        func=resistance_helpers.calc_deposition_velocity,
+        func=resistance_helpers.calc_deposition_velocity_multilayer,
         comment="Vd calculation duplicated here just for comparison purposes",
         state_inputs=lambda state: [
             I(state.canopy.rmodel_O3.Ra_canopy_to_izr, as_='rmodel_Ra_c'),
-            I(state.canopy.rmodel_O3.Rtotal[0], as_='rmodel_Rtotal_top_layer'),
+            I(state.canopy.rmodel_O3.Rtotal[top_layer_index], as_='rmodel_Rtotal_top_layer'),
         ],
         state_outputs=lambda result: [
             (result, 'canopy.Vd'),
@@ -3086,30 +3088,56 @@ def calc_canopy_ozone_concentration_process(
 ) -> Process:
     """Calculate Top Layer Canopy ozone."""
     top_layer_index = nL - 1
-    return Process(
-        func=met_deposition_helpers.calc_canopy_ozone_concentration,
-        comment="Calculate Top Layer Canopy ozone single layer",
-        external_state_inputs=lambda e_state, row_index: [
-            I(lget(e_state.O3, row_index), as_='O3_ppb_zR'),
-        ],
-        state_inputs=lambda state: [
-            I(state.canopy.rmodel_O3.Rsur[top_layer_index], as_='Rsur_top_layer'),
-            I(state.canopy.rmodel_O3.Rb[top_layer_index], as_='Rb_top_layer'),
-            I(state.canopy.rmodel_O3_ref.Rb[top_layer_index], as_='Rb_ref'),
-            I(state.canopy.rmodel_O3_ref.Rsur[top_layer_index], as_='Rsur_ref'),
-            I(state.canopy.rmodel_O3.Ra_canopy_to_izr, as_='Ra_tar_canopy'),
-            I(state.canopy.rmodel_O3.Ra_canopy_top_to_izr, as_='Ra_tar_canopy_top'),
-            I(state.canopy.rmodel_O3_ref.Ra_canopy_to_izr, as_='Ra_ref_canopy'),
-            I(state.canopy.rmodel_O3_ref.Ra_measured_to_izr, as_='Ra_ref_measured'),
-        ],
-        state_outputs=lambda result: [
-            (result.O3_i, 'met.O3_i'),
-            (result.micro_O3, 'canopy.canopy_top_o3'),
-            # NOTE: Below will be overriden
-            (result.micro_O3, f'canopy_layers.{top_layer_index}.micro_met.micro_O3'),
-            (result.Vd, 'canopy.Vd'),
-        ]
-    )
+    if nL > 1:
+        return Process(
+            func=met_deposition_helpers.calc_canopy_ozone_concentration_multilayer,
+            comment="Calculate Top Layer Canopy ozone single layer",
+            external_state_inputs=lambda e_state, row_index: [
+                I(lget(e_state.O3, row_index), as_='O3_ppb_zR'),
+            ],
+            state_inputs=lambda state: [
+                I(state.canopy.rmodel_O3_ref.Rb[top_layer_index], as_='Rb_ref'),
+                I(state.canopy.rmodel_O3_ref.Rsur[top_layer_index], as_='Rsur_ref'),
+                I(state.canopy.rmodel_O3.Ra_canopy_to_izr, as_='Ra_tar_canopy'),
+                I(state.canopy.rmodel_O3.Ra_canopy_top_to_izr, as_='Ra_tar_canopy_top'),
+                I(state.canopy.rmodel_O3_ref.Ra_canopy_to_izr, as_='Ra_ref_canopy'),
+                I(state.canopy.rmodel_O3_ref.Ra_measured_to_izr, as_='Ra_ref_measured'),
+                I(state.canopy.rmodel_O3.Rtotal[top_layer_index], as_='Rtotal'),
+
+            ],
+            state_outputs=lambda result: [
+                (result.O3_i, 'met.O3_i'),
+                (result.micro_O3, 'canopy.canopy_top_o3'),
+                # NOTE: Below will be overriden
+                (result.micro_O3, f'canopy_layers.{top_layer_index}.micro_met.micro_O3'),
+                (result.Vd, 'canopy.Vd'),
+            ]
+        )
+
+    else:
+        return Process(
+            func=met_deposition_helpers.calc_canopy_ozone_concentration,
+            comment="Calculate Top Layer Canopy ozone single layer",
+            external_state_inputs=lambda e_state, row_index: [
+                I(lget(e_state.O3, row_index), as_='O3_ppb_zR'),
+            ],
+            state_inputs=lambda state: [
+                I(state.canopy.rmodel_O3.Rsur[top_layer_index], as_='Rsur_top_layer'),
+                I(state.canopy.rmodel_O3.Rb[top_layer_index], as_='Rb_top_layer'),
+                I(state.canopy.rmodel_O3_ref.Rb[top_layer_index], as_='Rb_ref'),
+                I(state.canopy.rmodel_O3_ref.Rsur[top_layer_index], as_='Rsur_ref'),
+                I(state.canopy.rmodel_O3.Ra_canopy_to_izr, as_='Ra_tar_canopy'),
+                I(state.canopy.rmodel_O3.Ra_canopy_top_to_izr, as_='Ra_tar_canopy_top'),
+                I(state.canopy.rmodel_O3_ref.Ra_canopy_to_izr, as_='Ra_ref_canopy'),
+                I(state.canopy.rmodel_O3_ref.Ra_measured_to_izr, as_='Ra_ref_measured'),
+            ],
+            state_outputs=lambda result: [
+                (result.O3_i, 'met.O3_i'),
+                (result.micro_O3, 'canopy.canopy_top_o3'),
+                (result.micro_O3, f'canopy_layers.{top_layer_index}.micro_met.micro_O3'),
+                (result.Vd, 'canopy.Vd'),
+            ]
+        )
 
 
 
@@ -4739,8 +4767,8 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
         tag_process("=== Ozone Deposition Processes ==="),
         calc_resistance_model_process(nL, nLC, ra_calc_method,
                                       rsur_calc_method, is_OTC),
-        calc_deposition_velocity_process() if not is_OTC else [],
         calc_O3_otc_process(nL) if is_OTC else [],
+        calc_deposition_velocity_process(nL) if not is_OTC and nL > 1 else [],
         calc_canopy_ozone_concentration_process(nL) if not is_OTC else [],
         calc_multi_layer_O3_ozone_concentration_process(nL) if not is_OTC else [],
         [calc_ozone_at_custom_height_process(iCH, nL) for iCH in range(
