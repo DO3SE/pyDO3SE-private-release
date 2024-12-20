@@ -32,7 +32,10 @@ dev = [
   "pre-commit>=2.7.1",
   "bump2version>=1.0.1",
   "pytest-benchmark>=3.4.1",
-  "decorator>=5.0.0"
+  "decorator>=5.0.0",
+  "thermal-time",
+  "do3se-met",
+  "do3se-phenology",
 ]
 
 [project.optional-dependencies]
@@ -73,4 +76,4 @@ line-length = 100
 
 [tool.uv.sources]
 do3se-met = { path = "../do3se_met", editable = true }
-do3se-phenology = { path = "../do3se_phenology", editable = true }
+thermal-time = { path = "../thermal_time", editable = true }
