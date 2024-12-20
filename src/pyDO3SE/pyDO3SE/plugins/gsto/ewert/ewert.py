@@ -47,14 +47,15 @@ from .ewert_helpers import (
     calc_input_factors,
     calc_stomatal_conductance,
     calc_CO2_assimilation_rate,
-    calc_CO2_assimilation_rate_alt,
+    calc_CO2_assimilation_rate_cubic,
 )
 
 from .types import (
     CO2_Constant_Loop_Inputs,
+    CO2_Concentration_Args,
     CO2_loop_State,
     ModelOptions,
-    Output_Shape
+    Output_Shape,
 )
 
 
@@ -151,10 +152,8 @@ def co2_concentration_in_stomata_iteration(
     return new_state
 
 
-
-
 def co2_concentration_in_stomata_cubic(
-    constant_inputs: CO2_Constant_Loop_Inputs,
+    constant_inputs: CO2_Concentration_Args,
     model_options: ModelOptions,
 ) -> CO2_loop_State:
     """Single iteration to find CO2 concentration (c_i) and stomatal conductance (g_sto).
@@ -162,13 +161,10 @@ def co2_concentration_in_stomata_cubic(
     by allowing CO2 to converge.
 
 
-
     Parameters
     ----------
-    constant_inputs: CO2_Constant_Loop_Inputs
-        Inputs that are constant throughout the loop
-    state_current: CO2_loop_State
-        state that changes through the loop
+    constant_inputs: CO2_Concentration_Args
+        Inputs provided to CO2 concentration cubic equations
     model_options: ModelOptions
         Ewert photosynthesis model options
 
@@ -178,15 +174,7 @@ def co2_concentration_in_stomata_cubic(
         state after iteration
 
     """
-    # 1. get args from input and state
-    # args from previous loop
-    # TODO: Check what these should be
-    c_i_in = 391.0
-    g_sto_in = constant_inputs.g_sto_0
-    # 2. Run calculations
-
-    co2_assimilation_rate_values = calc_CO2_assimilation_rate_alt(
-        c_i_in=c_i_in,
+    co2_assimilation_rate_values = calc_CO2_assimilation_rate_cubic(
         V_cmax=constant_inputs.V_cmax,
         Gamma_star=constant_inputs.Gamma_star,
         K_C=constant_inputs.K_C,
@@ -195,13 +183,26 @@ def co2_concentration_in_stomata_cubic(
         f_LS=constant_inputs.f_LS,
         J=constant_inputs.J,
         R_d=constant_inputs.R_d,
-        constant_inputs=constant_inputs,
-        model_options=model_options
+        g_bl=constant_inputs.g_bl,
+        g_sto_0=constant_inputs.g_sto_0,
+        g_sto_prev=constant_inputs.g_sto_prev,
+        G_1c=constant_inputs.m,
+        c_a=constant_inputs.c_a,
+        RH=constant_inputs.RH,
+        Gamma=constant_inputs.Gamma,
+        P=constant_inputs.P,
+        e_a=constant_inputs.e_a,
+        e_sat_i=constant_inputs.e_sat_i,
+        D_0=constant_inputs.D_0,
+        f_VPD=constant_inputs.f_VPD,
+        m=constant_inputs.m,
+        f_SW=constant_inputs.f_SW,
+        f_VPD_method=model_options.f_VPD_method,
     )
 
     f_VPD = (
         calc_humidity_defecit_fVPD(
-            g_sto_in=g_sto_in,
+            g_sto_in=constant_inputs.g_sto_prev,
             e_a=constant_inputs.e_a,
             g_bl=constant_inputs.g_bl,
             e_sat_i=constant_inputs.e_sat_i,
@@ -230,11 +231,14 @@ def co2_concentration_in_stomata_cubic(
         g_bl=constant_inputs.g_bl,
     )
 
-    c_i = c_i_in - (c_i_in - co2_supply) / 2
+    # TODO: This may not be needed anymore
+    # c_i = c_i_in - (c_i_in - co2_supply) / 2
 
     new_state = CO2_loop_State(
-        c_i=c_i,
-        c_i_diff=abs(c_i_in - co2_supply),
+        # c_i=c_i,
+        c_i=co2_supply,
+        # c_i_diff=abs(c_i_in - co2_supply),
+        c_i_diff=0,
         g_sto=g_sto,
         A_n=co2_assimilation_rate_values.A_n,
         A_c=co2_assimilation_rate_values.A_c,
@@ -290,252 +294,6 @@ def co2_concentration_in_stomata_loop(
     return final_state
 
 
-# @deprecated(reason="use ewert_leaf_pop")
-# def ewert(
-#     # Config Inputs
-#     nP: int,
-#     g_sto_0: float,
-#     m: float,
-#     V_cmax_25: float,
-#     J_max_25: float,
-
-#     # State Inputs
-#     PARsun: float,
-#     PARshade: float,
-#     layer_LAI: float,
-#     LAIsunfrac: float,
-#     D_0: float,
-#     g_bv: float,
-
-#     Tleaf_C: float,
-#     eact: float,
-#     c_a: float,
-#     R_d_coeff: float,
-#     f_SW: float,
-#     f_VPD: float,
-#     leaf_pop_distribution: List[float],
-
-#     # TODO: Check ok as lists
-#     f_LA: List[float],
-#     f_LS: List[float],
-#     fO3_d: List[float],
-
-#     # model_options
-#     f_VPD_method: FVPDMethods,
-# ) -> Output_Shape:
-#     """Run the Ewert Photosynthesis model.
-
-#     NOTE: Be careful of units if modifying
-
-#     Parameters
-#     ----------
-#     nP: int
-#         Number of leaf populations
-#     g_sto_0: float
-#         Closed stomata conductance [umol/m^2/s CO2]
-#         The stomatal conductance when A_n -> 0 and incident irradiance, I -> 0
-#     m: float
-#         Species-specific sensitivity to An [dimensionless]
-#     V_cmax_25: float
-#         Maximum catalytic rate at 25 degrees [umol/m^2/s]
-#     J_max_25: float
-#         Maximum rate of electron transport at 25 degrees [umol/m^2/s]
-#     PARsun: float
-#         PAR received by sunlit leaves [W m-2]
-#     PARshade: float
-#         PAR received by shaded leaves [W m-2]
-#     layer_LAI: float
-#         Leaf area index for current layer [m2 m-2]
-#     D_0: float
-#         "The VPD at which g_sto is reduced by a factor of 2" [kPa] (Leuning et al. 1998)
-#     g_bv: float
-#         boundary layer conductance for forced convection [umol m-2 s-1 H2O]
-#     Tleaf_C: float
-#         Leaf Temperature [degrees celsius]
-#     eact: float
-#         Ambient vapour pressure [kPa]
-#     sinB: float
-#         sin() of solar elevation angle [degrees]
-#     c_a: float
-#         CO2 concentration [ppm CO2]
-#     R_d_coeff: float
-#         Dark respiration coefficient [Fraction] (Clark et al 2011)
-#     f_SW: float
-#         Soil water influence on photosynthesis [0-1]
-#     f_VPD: float
-#         VPD effect on gsto [fraction] (Use if pre-calculated)
-#     leaf_pop_distribution: float
-#         distribution of lai between leaf populations
-#     f_LA: float
-#         Leaf repair capacity age factor. Between 0-1 over t_lma [dimensionless]
-#     f_LS: float
-#         factor effect of leaf senescence on A_c [Dimensionless][0-1]
-#     fO3_d: float
-#         Hourly accumulated ozone impace factor [dimensionless][0-1]
-#     f_VPD_method: FVPDMethods
-#         If "photosynthesis" then f_VPD is calculated internally else should be provided as input
-
-#     Returns
-#     -------
-#         a named tuple of shape Output_Shape. See Output_Shape class for list of outputs
-
-#     """
-#     # TODO: Do we need to run when total PAR == 0
-#     if layer_LAI == 0 or sum(leaf_pop_distribution) == 0:
-#         # TODO: Check if any of these should be a min values
-#         return Output_Shape(
-#             g_sv=0,
-#             A_n=0,
-#             A_c=0,
-#             A_j=0,
-#             A_p=0,
-#             A_n_limit_factor='NA',
-#             R_d=0,
-#             c_i=0,
-#             f_VPD=f_VPD,
-#         )
-#     populations_to_run = [i > 0 for i in leaf_pop_distribution]
-#     zero_state = CO2_loop_State(
-#         c_i=0,
-#         c_i_diff=0,
-#         g_sto=0,
-#         A_n=0,
-#         A_c=0,
-#         A_p=0,
-#         A_j=0,
-#         A_n_limit_factor=0,
-#         f_VPD=0,
-#         iterations=0,
-#     )
-
-#     model_options = ModelOptions(
-#         f_VPD_method,
-#     )
-
-#     e_a = eact * 1e3
-
-#     # ========== Run for PARsun
-#     inputs_sun: Ewert_Input_Factors = calc_input_factors(
-#         Tleaf_C=Tleaf_C,
-#         Q=PARsun * 4.57,
-#         V_cmax_25=V_cmax_25,
-#         J_max_25=J_max_25,
-#         R_d_coeff=R_d_coeff,
-#     )
-
-#     loop_inputs_sun: List[CO2_Constant_Loop_Inputs] = [CO2_Constant_Loop_Inputs(
-#         c_a=c_a,
-#         e_a=e_a,
-#         g_bl=g_bv,
-#         g_sto_0=g_sto_0,
-#         m=m,
-#         D_0=D_0,
-#         Gamma=inputs_sun.Gamma,
-#         Gamma_star=inputs_sun.Gamma_star,
-#         V_cmax=inputs_sun.V_cmax,
-#         K_C=inputs_sun.K_C,
-#         K_O=inputs_sun.K_O,
-#         J=inputs_sun.J,
-#         R_d=inputs_sun.R_d,
-#         e_sat_i=inputs_sun.e_sat_i,
-#         f_SW=f_SW,
-#         f_LA=f_LA,
-#         f_LS=f_LS,
-#         fO3_d=fO3_d,
-#         f_VPD=f_VPD,
-#     ) for iP in range(nP)]
-
-#     state_out_sun: List[CO2_loop_State] = [
-#         co2_concentration_in_stomata_loop(loop_inputs_sun[iP], model_options)
-#         if should_run else zero_state
-#         for iP, should_run in enumerate(populations_to_run)
-#     ]
-
-#     # ============= Run for PARshade
-
-#     inputs_shade: Ewert_Input_Factors = calc_input_factors(
-#         Tleaf_C=Tleaf_C,
-#         Q=PARshade * 4.57,
-#         V_cmax_25=V_cmax_25,
-#         J_max_25=J_max_25,
-#         R_d_coeff=R_d_coeff,
-#     )
-
-#     loop_inputs_shade: List[CO2_Constant_Loop_Inputs] = [replace(
-#         loop_inputs_sun[iP],
-#         Gamma=inputs_shade.Gamma,
-#         Gamma_star=inputs_shade.Gamma_star,
-#         V_cmax=inputs_shade.V_cmax,
-#         K_C=inputs_shade.K_C,
-#         K_O=inputs_shade.K_O,
-#         J=inputs_shade.J,
-#         R_d=inputs_shade.R_d,
-#         e_sat_i=inputs_shade.e_sat_i,
-#     ) for iP in range(nP)]
-
-#     state_out_shade: List[CO2_loop_State] = [
-#         co2_concentration_in_stomata_loop(loop_inputs_shade[iP], model_options)
-#         if should_run else zero_state
-#         for iP, should_run in enumerate(populations_to_run)
-#     ]
-
-#     # Get sun shade parts
-#     # TODO: total_lai is a temp fix as layer_lai and leaf pop do not match
-#     total_lai = sum(leaf_pop_distribution)
-#     sun_fracs = [LAIsunfrac * (pop_lai / total_lai) for pop_lai in leaf_pop_distribution]
-#     shade_fracs = [(1 - LAIsunfrac) * (pop_lai / total_lai) for pop_lai in leaf_pop_distribution]
-#     try:
-#         assert isclose(sum(sun_fracs) + sum(shade_fracs), 1.0)
-#     except AssertionError as e:
-#         print(sun_fracs)
-#         print(shade_fracs)
-#         raise e
-#     shade_frac = 1 - LAIsunfrac
-
-#     # Get Total sun shade values
-#     # TODO: Check g_sv upscaling
-#     g_sv_canopy = sum([state_out_sun[iP].g_sto * sun_fracs[iP] +
-#                        state_out_shade[iP].g_sto * shade_fracs[iP] for iP in range(nP)])
-#     g_sv_per_pop = [state_out_sun[iP].g_sto * LAIsunfrac +
-#                     state_out_shade[iP].g_sto * shade_frac for iP in range(nP)]
-
-#     A_n = sum([state_out_sun[iP].A_n * sun_fracs[iP] + state_out_shade[iP].A_n *
-#                shade_fracs[iP] for iP in range(nP)])
-#     A_c = sum([state_out_sun[iP].A_c * sun_fracs[iP] + state_out_shade[iP].A_c *
-#                shade_fracs[iP] for iP in range(nP)])
-#     A_j = sum([state_out_sun[iP].A_j * sun_fracs[iP] + state_out_shade[iP].A_j *
-#                shade_fracs[iP] for iP in range(nP)])
-#     A_p = sum([state_out_sun[iP].A_p * sun_fracs[iP] + state_out_shade[iP].A_p *
-#                shade_fracs[iP] for iP in range(nP)])
-#     c_i = sum([state_out_sun[iP].c_i * sun_fracs[iP] + state_out_shade[iP].c_i *
-#                shade_fracs[iP] for iP in range(nP)])
-#     R_d = sum([inputs_sun.R_d * sun_fracs[iP] + inputs_shade.R_d *
-#                shade_fracs[iP] for iP in range(nP)])
-
-#     # TODO: How do we deal with multi pop f_VPD
-#     f_VPD_out = [state_out_sun[iP].f_VPD * LAIsunfrac +
-#                  state_out_shade[iP].f_VPD * shade_frac for iP in range(nP)][0]
-
-#     v_cmax_out = inputs_sun.V_cmax * LAIsunfrac + inputs_shade.V_cmax * shade_frac
-#     j_max_out = inputs_sun.J_max * LAIsunfrac + inputs_shade.J_max * shade_frac
-
-#     # Other
-#     A_n_limit_factor = [state_out_sun[i].A_n_limit_factor for i in range(nP)]
-
-#     return Output_Shape(
-#         g_sv=g_sv_canopy,
-#         A_n=A_n,
-#         A_c=A_c,
-#         A_j=A_j,
-#         A_p=A_p,
-#         A_n_limit_factor=A_n_limit_factor,
-#         R_d=R_d,
-#         c_i=c_i,
-#         f_VPD=f_VPD_out,
-#         v_cmax=v_cmax_out,
-#         j_max=j_max_out,
-#     )
-
 @deprecated(reason="use ewert_leaf_pop_cubic instead")
 def ewert_leaf_pop(
     # Config Inputs
@@ -566,7 +324,6 @@ def ewert_leaf_pop(
     f_VPD_method: FVPDMethods,
     co2_concentration_balance_threshold: float = 0.001,
     co2_concentration_max_iterations: int = 50,
-    calc_CO2_assimilation_rate=None,
 ) -> Output_Shape:
     """Run the Ewert Photosynthesis model.
 
@@ -651,9 +408,6 @@ def ewert_leaf_pop(
         i > 0 and (psun + pshade) > 0
         for psun, pshade, i in zip(PARsun, PARshade, layer_lai_frac)
     ]
-
-    # layers_to_run = [True for psun, pshade,
-    #                  i in zip(PARsun, PARshade, layer_lai_frac)]
 
     # Output state of layers that have no sun or lai
     zero_state = CO2_loop_State(
@@ -835,8 +589,8 @@ def ewert_leaf_pop(
     # Log only outputs
     # TODO: Check how we upscale f_VPD(Note only used for logging)
     f_VPD_out = [
-        state_out_sun[iL].f_VPD * LAIsunfrac[iL]
-        + state_out_shade[iL].f_VPD * shade_fracs[iL]
+        (state_out_sun[iL].f_VPD or 0) * LAIsunfrac[iL]
+        + (state_out_shade[iL].f_VPD or 0) * shade_fracs[iL]
         for iL in range(nL)
     ][0]
 
@@ -864,7 +618,6 @@ def ewert_leaf_pop(
     g_sv_sunlit = state_out_sun[nL - 1].g_sto
     # Other
     A_n_limit_factor = [state_out_sun[iL].A_n_limit_factor for iL in range(nL)]
-
 
     return Output_Shape(
         g_sv_per_layer=g_sv_per_layer,
@@ -899,6 +652,9 @@ def ewert_leaf_pop_cubic(
     layer_lai_frac: List[float],
     layer_lai: List[float],
     Tleaf_C: List[float],
+    g_sto_prev: List[float],
+    RH: float,
+    P: float,
     # State Inputs full leaf pop
     D_0: float,
     g_bv: float,
@@ -950,6 +706,10 @@ def ewert_leaf_pop_cubic(
         distribution of lai between layers
     Tleaf_C: List[float]
         Leaf Temperature [degrees celsius]
+    RH: float
+        Relative humidity [%]
+    P: float
+        Air pressure [kPa]
     f_SW: float
         Soil water influence on photosynthesis [0-1]
     f_VPD: float
@@ -998,9 +758,6 @@ def ewert_leaf_pop_cubic(
         for psun, pshade, i in zip(PARsun, PARshade, layer_lai_frac)
     ]
 
-    # layers_to_run = [True for psun, pshade,
-    #                  i in zip(PARsun, PARshade, layer_lai_frac)]
-
     # Output state of layers that have no sun or lai
     zero_state = CO2_loop_State(
         c_i=0,
@@ -1035,15 +792,17 @@ def ewert_leaf_pop_cubic(
         for iL in range(nL)
     ]
 
-    loop_inputs_sun: List[CO2_Constant_Loop_Inputs] = [
-        CO2_Constant_Loop_Inputs(
+    co2_concentration_inputs_sun: List[CO2_Concentration_Args] = [
+        CO2_Concentration_Args(
             c_a=c_a,
             e_a=e_a,
             g_bl=g_bv,
             g_sto_0=g_sto_0,
+            g_sto_prev=g_sto_prev[iL],
             m=m,
             D_0=D_0,
             Gamma=inputs_sun[iL].Gamma,
+            # TODO: We no longer use gamma_star is this correct?
             Gamma_star=inputs_sun[iL].Gamma_star,
             V_cmax=inputs_sun[iL].V_cmax,
             K_C=inputs_sun[iL].K_C,
@@ -1055,13 +814,15 @@ def ewert_leaf_pop_cubic(
             f_LS=f_LS,
             fO3_d=fO3_d,
             f_VPD=f_VPD,
+            RH=RH,
+            P=P,
         )
         for iL in range(nL)
     ]
 
     state_out_sun: List[CO2_loop_State] = [
         co2_concentration_in_stomata_cubic(
-            loop_inputs_sun[iP],
+            co2_concentration_inputs_sun[iP],
             model_options,
         )
         if should_run
@@ -1082,11 +843,12 @@ def ewert_leaf_pop_cubic(
         for iL in range(nL)
     ]
 
-    loop_inputs_shade: List[CO2_Constant_Loop_Inputs] = [
+    co2_concentration_inputs_shade: List[CO2_Concentration_Args] = [
         replace(
-            loop_inputs_sun[iL],
+            co2_concentration_inputs_sun[iL],
             Gamma=inputs_shade[iL].Gamma,
-            Gamma_star=inputs_shade[iL].Gamma_star,
+            # TODO: We no longer use gamma_star is this correct?
+            # Gamma_star=inputs_shade[iL].Gamma_star,
             V_cmax=inputs_shade[iL].V_cmax,
             K_C=inputs_shade[iL].K_C,
             K_O=inputs_shade[iL].K_O,
@@ -1098,9 +860,7 @@ def ewert_leaf_pop_cubic(
     ]
 
     state_out_shade: List[CO2_loop_State] = [
-        co2_concentration_in_stomata_cubic(
-            loop_inputs_shade[iP], model_options
-        )
+        co2_concentration_in_stomata_cubic(co2_concentration_inputs_shade[iP], model_options)
         if should_run
         else zero_state
         for iP, should_run in enumerate(layers_to_run)
@@ -1186,8 +946,8 @@ def ewert_leaf_pop_cubic(
     # Log only outputs
     # TODO: Check how we upscale f_VPD(Note only used for logging)
     f_VPD_out = [
-        state_out_sun[iL].f_VPD * LAIsunfrac[iL]
-        + state_out_shade[iL].f_VPD * shade_fracs[iL]
+        (state_out_sun[iL].f_VPD or 0) * LAIsunfrac[iL]
+        + (state_out_shade[iL].f_VPD or 0) * shade_fracs[iL]
         for iL in range(nL)
     ][0]
 

@@ -113,3 +113,15 @@ class TestRunAndCompare:
         assert all(a >= -20 for a in A_n_sunlit), f"Sunlit: {min(A_n_sunlit)}"
         assert all(a >= -20 for a in A_n_canopy), f"Sunlit: {min(A_n_sunlit)}"
         assert all(a >= -20 for a in A_n), f"Sunlit: {min(A_n_sunlit)}"
+
+    @pytest.mark.parametrize('runid', all_setups)
+    def test_a_n_equal_zero_when_f_ls_is_zero(self, runid):
+        hourly_output = self.output[runid]['hourly_output']
+        A_n_values = hourly_output['A_n'].values
+        f_LS_values = hourly_output['f_LS'].values
+        failed_index = next((i for i, (A_n, f_LS) in enumerate(zip(A_n_values, f_LS_values)) if A_n != 0 and f_LS == 0), None)
+        if failed_index is not None:
+            print(f"Failed at index: {failed_index}")
+            print(f"A_n: {A_n_values[failed_index-5:failed_index+5]}")
+            print(f"f_LS: {f_LS_values[failed_index-5:failed_index+5]}")
+        assert all(A_n == 0 if f_LS == 0 else True for A_n, f_LS in zip(A_n_values, f_LS_values)), "Failed at " + str(next(i for i, (A_n, f_LS) in enumerate(zip(A_n_values, f_LS_values)) if A_n != 0 and f_LS == 0))
