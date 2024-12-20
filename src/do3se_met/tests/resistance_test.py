@@ -1,13 +1,14 @@
 import pytest
 from math import isclose, inf
 from decimal import Decimal as D
+from dataclasses import asdict
+import pprint
 
 from do3se_met.resistance import (
     calc_PsiH,
     calc_displacement_and_roughness_parameters,
     calc_PsiM,
     calc_Ra_with_heat_flux,
-    calc_Ra_with_heat_flux_old,
     calc_Ra_simple,
     calc_Rb,
     calc_leaf_rb,
@@ -322,4 +323,4 @@ class TestCalcResistanceModel:
             ra_calc_method="simple",
         )
         assert isinstance(rmodel, Resistance_Model)
-        snapshot.assert_match(rmodel)
+        snapshot.assert_match(pprint.pformat(asdict(rmodel), indent=2), "resistance_model")
