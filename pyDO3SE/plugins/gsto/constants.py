@@ -22,11 +22,3 @@ S_V_jmax = 495        # entropy terms                      [J/(mol*K)
 fDO3 = 0.93
 Gamma_3 = 0.5
 
-# parameters considered (or defined) to be constant for all species
-A_j_a = 4.0  # electron requirement for NADPH formation
-A_j_b = 8.0  # electron requirement for ATP formation
-
-# species spedific model paarameters (that don't tend to have species specific
-# values, others are supplied as arguments)
-fDO3 = 0.93
-Gamma_3 = 0.5

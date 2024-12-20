@@ -31,6 +31,7 @@ from pyDO3SE.plugins.gsto.photosynthesis_helpers import calc_g_bv
 from .ewert import (
     CO2_Constant_Loop_Inputs,
     CO2_loop_State,
+    CO2_Concentration_Args,
     ModelOptions,
     co2_concentration_in_stomata_iteration,
     co2_concentration_in_stomata_loop,
@@ -750,7 +751,7 @@ class TestEwertLeafPop:
                         ]
                     )
                 )
-
+                gsto_prev = [DRATIO_O3_CO2 * (max(0.0, output_data[-1].g_sv_per_layer[iL]) / 1000) if len(output_data) > 0 else ewert_constant_inputs['g_sto_0'] for iL in range(nL)]
                 ewert_inputs = {
                     **ewert_constant_inputs,
                     "PARsun": PARsun,
@@ -760,6 +761,9 @@ class TestEwertLeafPop:
                     "layer_lai": LAI,
                     "D_0": D_0,
                     "g_bv": g_bv,
+                    "RH": 0.5,
+                    "P": data["P"][dd][hr],
+                    "g_sto_prev": gsto_prev,
                     "Tleaf_C": [data["Ts_C"][dd][hr] for _ in range(nL)],
                     "eact": data["VPD"][dd][hr],
                     "c_a": 391.0,
@@ -938,39 +942,6 @@ class TestEwertLeafPop:
         # snapshot.assert_match(np.array2string(np.random.choice(g_bv_full, 30, replace=False), precision=5, separator=',', threshold=np.inf), 'g_bv')  # noqa: E501
 
 
-# def test_negative_A_n_values_invalid():
-#     constant_inputs = CO2_Constant_Loop_Inputs(
-#         c_a=391.0,
-#         e_a=712.529,
-#         g_bl=4594662.0,
-#         g_sto_0=10000.0,
-#         m=4,
-#         D_0=2.2,
-#         Gamma=57.89,
-#         Gamma_star=48.51,
-#         V_cmax=159.98,
-#         K_C=528.0415080745356,
-#         K_O=314.4035643006643,
-#         J=180.94373072965217,
-#         R_d=1.5998275062496985,
-#         e_sat_i=3670.6412787571467,
-#         f_SW=1.0,
-#         f_LS=1,
-#         fO3_d=1.0,
-#         f_VPD=1.0,
-#     )
-#     model_options = ModelOptions(
-#         f_VPD_method=FVPDMethods.DISABLED,
-#         co2_concentration_balance_threshold=0.001,
-#         co2_concentration_max_iterations=50,
-#     )
-#     final_state = co2_concentration_in_stomata_loop(
-#         constant_inputs=constant_inputs,
-#         model_options=model_options,
-#     )
-#     assert final_state.A_n < 0
-
-
 def test_negative_A_n_values():
     R_d = 0.19323428021561032
     constant_inputs = CO2_Constant_Loop_Inputs(
@@ -1007,11 +978,14 @@ def test_negative_A_n_values():
 
 def test_negative_A_n_values_using_cubic_method():
     R_d = 0.19323428021561032
-    constant_inputs = CO2_Constant_Loop_Inputs(
+    cubic_inputs = CO2_Concentration_Args(
         c_a=391.0,
         e_a=635.2238437279115,
         g_bl=3478654.912462574,
         g_sto_0=20000.0,
+        g_sto_prev=20000.0,
+        P=101.325,
+        RH=0.5,
         m=6,
         D_0=2.7,
         Gamma=14.333665361703794,
@@ -1027,13 +1001,14 @@ def test_negative_A_n_values_using_cubic_method():
         fO3_d=1.0,
         f_VPD=1.0,
     )
+
     model_options = ModelOptions(
         f_VPD_method=FVPDMethods.DISABLED,
         co2_concentration_balance_threshold=0.001,
         co2_concentration_max_iterations=50,
     )
     final_state = co2_concentration_in_stomata_cubic(
-        constant_inputs=constant_inputs,
+        constant_inputs=cubic_inputs,
         model_options=model_options,
     )
     assert final_state.A_n >= -R_d
@@ -1062,13 +1037,37 @@ def test_negative_A_n_values_compare_methods():
         fO3_d=1.0,
         f_VPD=1.0,
     )
+
+    cubic_inputs = CO2_Concentration_Args(
+        c_a=391.0,
+        e_a=3000.2238437279115,
+        g_bl=1478654.912462574,
+        g_sto_0=10000.0,
+        g_sto_prev=10000.0,
+        P=101.325,
+        RH=0.5,
+        m=6,
+        D_0=2.7,
+        Gamma=14.333665361703794,
+        Gamma_star=12.52438053902872,
+        V_cmax=12.882285347707354,
+        K_C=30.750578109134757,
+        K_O=85.49206630570801,
+        J=40.30643977341539,
+        R_d=R_d,
+        e_sat_i=747.3221690916605,
+        f_SW=1.0,
+        f_LS=1.0,
+        fO3_d=1.0,
+        f_VPD=1.0,
+    )
     model_options = ModelOptions(
         f_VPD_method=FVPDMethods.DISABLED,
         co2_concentration_balance_threshold=0.001,
         co2_concentration_max_iterations=50,
     )
     final_state = co2_concentration_in_stomata_cubic(
-        constant_inputs=constant_inputs,
+        constant_inputs=cubic_inputs,
         model_options=model_options,
     )
 
@@ -1088,4 +1087,3 @@ def test_negative_A_n_values_compare_methods():
     # assert isclose(final_state_cubic.A_p, final_state.A_p, abs_tol=1e-1)  False = isclose(6.441142673853677, 6.247908393638067, abs_tol=0.1)
     assert isclose(final_state_cubic.g_sto, final_state.g_sto, rel_tol=5)
     assert isclose(final_state_cubic.c_i, final_state.c_i, rel_tol=5)
-

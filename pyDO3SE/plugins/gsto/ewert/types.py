@@ -137,13 +137,13 @@ class CO2_Constant_Loop_Inputs:
     g_bl: float
         Boundary layer conductance to H2O vapour [umol m-2 PLA s-1 H2O?]
     g_sto_0: float
-        Closed stomata conductance [umol/m^2/s CHECK GAS]
+        Closed stomata conductance [umol/m^2/s CO2]
     m: float
         Species-specific sensitivity to An [dimensionless]
     Gamma: float
         CO2 compensation point [umol/mol CO2]
     Gamma_star: float
-        # CO2 comp. point without day resp.  [umol/mol CO2]
+        CO2 comp. point without day resp.  [umol/mol CO2]
     V_cmax: float
         Max catalytic rate of Rubisco [umol/(m^2*s) CO2]
     K_C: float
@@ -164,7 +164,10 @@ class CO2_Constant_Loop_Inputs:
         Hourly accumulated ozone impace factor [dimensionless][0-1]
     f_VPD: float
         VPD effect on gsto [fraction] (Optional if pre-calculated)
-
+    RH: float
+        Relative humidity [%] Only needed for cubic method
+    P: float
+        Air pressure [kPa]
 
     """
 
@@ -186,6 +189,82 @@ class CO2_Constant_Loop_Inputs:
     f_LS: float
     fO3_d: float
     f_VPD: float
+
+
+
+
+@dataclass
+class CO2_Concentration_Args:
+    """Inputs to the CO2 concentration cubic calculation
+
+    Parameters
+    ------
+    D_0: float
+        "The VPD at which g_sto is reduced by a factor of 2" [Pa] (Leuning et al. 1998)
+    c_a: float
+        CO2 concentration [ppm]
+    e_a: float
+        Ambient vapour pressure [Pa]
+    g_bl: float
+        Boundary layer conductance to H2O vapour [umol m-2 PLA s-1 H2O?]
+    g_sto_0: float
+        Closed stomata conductance [umol/m^2/s CO2]
+    g_sto_prev: float
+        g_sto from previous hour [umol/m^2/s CO2]
+    m: float
+        Species-specific sensitivity to An [dimensionless]
+    Gamma: float
+        CO2 compensation point [umol/mol CO2]
+    Gamma_star: float
+        CO2 comp. point without day resp.  [umol/mol CO2]
+    V_cmax: float
+        Max catalytic rate of Rubisco [umol/(m^2*s) CO2]
+    K_C: float
+        Michaelis constant CO2 [umol/mol CHECK GAS]
+    K_O: float
+        Michaelis constant O2 [mmol/mol CHECK GAS]
+    J: float
+        Rate of electron transport [umol/(m^2*s) CHECK GAS]
+    R_d: float
+        day respiration rate [umol/(m^2*s) CHECK GAS]
+    e_sat_i: float
+        internal saturation vapour pressure[Pa]
+    f_SW: float
+        Soil water influence on photosynthesis [0-1]
+    f_LS: float
+        factor effect of leaf senescence on A_c [Dimensionless][0-1]
+    fO3_d: float
+        Hourly accumulated ozone impace factor [dimensionless][0-1]
+    f_VPD: float
+        VPD effect on gsto [fraction] (Optional if pre-calculated)
+    RH: float
+        Relative humidity [%] Only needed for cubic method
+    P: float
+        Air pressure [kPa]
+
+    """
+
+    c_a: float
+    e_a: float
+    g_bl: float
+    g_sto_0: float
+    g_sto_prev: float
+    m: float
+    D_0: float
+    Gamma: float
+    Gamma_star: float
+    V_cmax: float
+    K_C: float
+    K_O: float
+    J: float
+    R_d: float
+    e_sat_i: float
+    f_SW: float
+    f_LS: float
+    fO3_d: float
+    f_VPD: float
+    RH: float
+    P: float
 
 
 class Ewert_Input_Factors(NamedTuple):

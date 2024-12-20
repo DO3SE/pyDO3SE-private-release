@@ -2597,15 +2597,18 @@ def ewert_leaf_process(iLC: int, iP: int, nL: int, ewert_loop_method: EwertLoopM
             I(state.canopy_component_population[iLC][iP].fLAI_layer, as_='layer_lai_frac'),
             I([state.canopy_component[iLC].leaf_pop_distribution[iL][iP]
                for iL in range(nL)], as_='layer_lai'),
-            # NOTE: Below should all be same for all layers and populations
             I([state.canopy_layer_component_pop[iL][iLC]
                [iP].Tleaf_C_estimate for iL in range(nL)], as_='Tleaf_C'),
+            I([state.canopy_layer_component[iL][iLC].mean_gsto for iL in range(nL)], as_='g_sto_prev'),
+            # NOTE: Below should all be same for all layers and populations
             I(state.canopy_layer_component[0][iLC].gsto_params.f_SW, as_='f_SW'),
             I(state.canopy_layer_component[0][iLC].gsto_params.f_VPD, as_='f_VPD'),
         ],
         external_state_inputs=lambda e_state, row_index: [
             I(lget(e_state.eact, row_index), as_='eact'),
             I(lget(e_state.CO2, row_index), as_='c_a'),
+            I(lget(e_state.RH, row_index), as_='RH'),
+            I(lget(e_state.P, row_index), as_='P'),
         ],
         state_outputs=lambda result, iLC=iLC, iP=iP: [
             (result.g_sv_per_layer, f'canopy_component_population.{iLC}.{iP}.g_sv_per_layer'),
