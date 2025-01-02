@@ -16,6 +16,24 @@ dependencies = [
   "data-helpers>=0.1.29",
   "dill>=0.3.8",
 ]
+
+[dependency-groups]
+dev = [
+  "pytest-cov>=5.0.0",
+  "pytest-mock>=3.14.0",
+  "pytest-snapshot>=0.9.0",
+  "ruff>=0.7.0",
+  "pre-commit>=2.7.1",
+  "bump2version>=1.0.1",
+  "pytest>=8.3.4",
+]
+
+grid = [
+    "netCDF4",
+    "xarray",
+    "dask",
+]
+
 [tool.uv.workspace]
 members = [
   "src/pyDO3SE",
@@ -24,6 +42,9 @@ members = [
   "src/do3se_met",
 ]
 
+[tool.uv.sources]
+thermal-time = { path = "src/thermal_time", editable = true }
+do3se-met = { path = "src/do3se_met", editable = true }
 
 [build-system]
 requires = ["hatchling"]

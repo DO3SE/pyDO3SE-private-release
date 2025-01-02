@@ -2,15 +2,18 @@
 set -e
 
 source .venv/bin/activate
-uv pip install -r requirements/common.txt
-uv pip install -r requirements/tests.txt
-uv pip install -r requirements/local.txt --no-deps # These should be installed separately to ensure they do not clash with the other requirements
+
+uv sync --extra dev
+uv sync --extra grid
 
 # Copy integration tests from pyDO3SE
 rm -R tests/key_processes
-cp -R src/pyDO3SE/tests/key_processes tests/key_processes
+mkdir -p tests/key_processes
+cp -R src/pyDO3SE/tests/key_processes tests
 
 rm -R examples
-cp -R src/pyDO3SE/examples examples
+mkdir -p examples
+cp -R src/pyDO3SE/examples .
 
+# Delete all .pyc files
 find tests -name "*.pyc" -type f -delete
