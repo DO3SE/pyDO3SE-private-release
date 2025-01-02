@@ -13,6 +13,8 @@ dependencies = [
   "click>=7.1.2",
   "deprecated>=1.2.12",
   "data-helpers>=0.1.29",
+  "thermal-time",
+  "do3se-met",
 ]
 
 [dependency-groups]
@@ -24,8 +26,6 @@ dev = [
   "ruff>=0.7.0",
   "pre-commit>=2.7.1",
   "bump2version>=1.0.1",
-  "thermal-time",
-  "do3se-met",
 ]
 
 [build-system]
@@ -42,5 +42,5 @@ line-length = 100
 "test_*.py" = ["D100", "D101", "D102", "D103", "D107"]
 
 [tool.uv.sources]
-thermal-time = { path = "../thermal_time", editable = true }
-do3se-met = { path = "../do3se_met", editable = true }
+thermal-time = { workspace = true }
+do3se-met = { workspace = true }
