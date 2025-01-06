@@ -1,0 +1,92 @@
+version: 2.1 # Use version 2.1 to enable orb usage.
+# NOTE: To run this on Circle CI ensure you have set up the user key in project ssh settings
+orbs:
+  win: circleci/windows@2.4.1 # The Windows orb give you everything you need to start using the Windows executor.
+
+jobs:
+  test:
+    docker:
+      - image: python:3.8
+    resource_class: medium
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: pip install -r requirements/common.txt && pip install -r requirements/test.txt
+      - run:
+          name: test
+          command: pytest
+          environment:
+            TQUICK: true
+  build-docs:
+    docker:
+      - image: python:3.8
+    resource_class: medium
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: pip install -r requirements/common.txt && pip install -r requirements/docs.txt
+      - run:
+          name: Install Pandoc with pyPandoc
+          command: python -c "from pypandoc.pandoc_download import download_pandoc; download_pandoc(version='2.5')"
+      - run:
+          name: Build docs
+          command: cd docs/ && make production
+      - attach_workspace:
+          at: dist
+      - persist_to_workspace:
+          root: docs/_build
+          paths:
+            - html
+  deploy-docs:
+    docker:
+      - image: node:8.10.0
+    resource_class: medium
+    steps:
+      - checkout
+      - attach_workspace:
+          at: docs/_build
+      - run:
+          name: Disable jekyll builds
+          command: touch docs/_build/html/.nojekyll
+      - run:
+          name: Install and configure dependencies
+          command: |
+            npm install -g --silent gh-pages@2.0.1
+            git config user.email "sam.bland@sei.org"
+            git config user.name "ci-build"
+      - run:
+          name: Add index.php
+          command:  echo '<?php include_once("index.html"); ?>' > docs/_build/html/index.php
+      - run:
+          name: Add blank composer.json
+          command:  echo '{}' > docs/_build/html/composer.json
+      - run:
+          name: Deploy docs to gh-pages branch
+          command: gh-pages --dotfiles --message "[skip ci] Updates" --dist docs/_build/html --branch gh-pages-${CIRCLE_BRANCH}
+workflows:
+  version: 2
+  build:
+    jobs:
+      - test:
+          filters:
+            branches:
+              only:
+                - RELEASE
+                - master
+      - build-docs:
+          filters:
+            branches:
+              only:
+                - RELEASE
+                - master
+      - deploy-docs:
+          requires:
+            # - test
+            - build-docs
+          filters:
+            branches:
+              only:
+                - RELEASE
+                - master
