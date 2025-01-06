@@ -50,9 +50,10 @@ members = [
 ]
 
 [tool.uv.sources]
-thermal-time = { path = "src/thermal_time", editable = true }
-do3se-met = { path = "src/do3se_met", editable = true }
-do3se-phenology = { path = "src/do3se_phenology", editable = true }
+thermal-time = { workspace = true }
+do3se-met = { workspace = true }
+do3se-phenology = { workspace = true }
+
 
 [build-system]
 requires = ["hatchling"]
