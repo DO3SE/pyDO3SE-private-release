@@ -11,7 +11,7 @@ temperature, day length and cultivar thermal characteristics
 
 from math import acos, cos, exp, pi, radians, sin, sqrt, asin, tan
 from itertools import zip_longest
-from typing import List, NamedTuple, Tuple
+from typing import NamedTuple, Tuple
 from collections import namedtuple
 from deprecated import deprecated
 from scipy.integrate import quad as integrate
@@ -25,7 +25,7 @@ from do3se_met.physical_constants import (
     # SBC,
     T0,
     Rn_MJ_to_W,
-    seaP
+    seaP,
 )
 
 from do3se_met.model_constants import MIN_DAYLIGHT_R
@@ -51,8 +51,7 @@ def calc_is_daylight(global_radiation: float) -> bool:
     return global_radiation > MIN_DAYLIGHT_R
 
 
-def calc_photoperiod(dd: int,
-                     lat: float) -> float:
+def calc_photoperiod(dd: int, lat: float) -> float:
     """Calculate the photoperiod using site latitude and Julian day number.
 
     Parameters
@@ -68,9 +67,14 @@ def calc_photoperiod(dd: int,
         Day length [???]
 
     """
-    dec = asin(0.3978 * sin(((2 * pi) * (dd - 80) / 365) +  # noqa:W504
-                    (0.0335 * (sin(2 * pi * dd) - sin(2 * pi * 80)) / 365)))
-    perc =((-0.10453) / (cos(radians(lat))) * (cos(dec)))- tan(radians(lat)) * tan(dec)
+    dec = asin(
+        0.3978
+        * sin(
+            ((2 * pi) * (dd - 80) / 365)  # noqa:W504
+            + (0.0335 * (sin(2 * pi * dd) - sin(2 * pi * 80)) / 365)
+        )
+    )
+    perc = ((-0.10453) / (cos(radians(lat))) * (cos(dec))) - tan(radians(lat)) * tan(dec)
 
     if perc < -1:
         return 24
@@ -78,6 +82,7 @@ def calc_photoperiod(dd: int,
         return 0
     pr = 24 * (acos((perc))) / pi  # noqa:W503
     return pr
+
 
 def calc_photoperiod_factor(photoperiod: float, PID: float) -> float:
     """Calculate the photoperiod factor.
@@ -101,15 +106,15 @@ def calc_photoperiod_factor(photoperiod: float, PID: float) -> float:
         Between 0->1
 
     """
-    return 1-((PID/10000)*(20-photoperiod)**2)
+    return 1 - ((PID / 10000) * (20 - photoperiod) ** 2)
 
 
 def MLMC_sunlit_LAI(
     nL: int,
     nLC: int,
-    LAI: List[List[float]],
+    LAI: list[list[float]],
     sinB: float,
-) -> float:
+) -> list[list[float]]:
     """Multi-layer multi-component sunlit LAI model.
 
     LAI and LAIsunfrac must be the same dimension(nL,nLC).
@@ -121,36 +126,36 @@ def MLMC_sunlit_LAI(
         Number of layers
     nLC: int
         Number of components
-    LAI : List[List[float]]
+    LAI : list[list[float]]
         Leaf area index [m^2/m^2] with shape (nL, nLC)
     sinB : float
         sin() of solar elevation angle
 
     Returns
     -------
-    List[List[float]]
+    list[list[float]]
         sunlit LAI  with shape (nL, nLC)
 
     """
-    LAIsunfrac = [[None for i in range(nLC)] for iLC in range(nL)]
-    sunLAI_acc = [None for i in range(nL + 1)]
+    LAIsunfrac: list[list[float | None]] = [[None for i in range(nLC)] for iLC in range(nL)]
+    sunLAI_acc: list[float | None] = [None for i in range(nL + 1)]
 
     sunLAI_acc[0] = 0.0
     for iL in range(nL):
         # How much of "canopy so far" is sunlit?
         # TODO: should top layer be 1.0
-        lai_c = sum([sum(LAI_iL) for LAI_iL in LAI[0:iL + 1]])
+        lai_c = sum([sum(LAI_iL) for LAI_iL in LAI[0 : iL + 1]])
         sunLAI_acc[iL + 1] = sunlit_LAI(lai_c, sinB)
         # How much of that is in this layer?
-        sunLAI_layer = sunLAI_acc[iL + 1] - sunLAI_acc[iL]
+        sunLAI_layer = sunLAI_acc[iL + 1] - sunLAI_acc[iL]  # type: ignore
         # Fraction of LAI which is sunlit
         LAI_layer = sum(LAI[iL])
-        if (LAI_layer > 0.0):
+        if LAI_layer > 0.0:
             LAIsunfrac[iL] = [sunLAI_layer / LAI_layer for i in range(nLC)]
         else:
             LAIsunfrac[iL] = [0 for i in range(nLC)]
 
-    return LAIsunfrac
+    return LAIsunfrac  # type: ignore
 
 
 def sunlit_LAI(LAI: float, sinB: float) -> float:
@@ -167,8 +172,8 @@ def sunlit_LAI(LAI: float, sinB: float) -> float:
 
     """
     # TODO: (2 * sinB) should be sinB/cosA
-    if (LAI > 0.0 and sinB > 0.0):
-        return ((1 - exp(-0.5 * LAI / sinB)) * (2 * sinB))
+    if LAI > 0.0 and sinB > 0.0:
+        return (1 - exp(-0.5 * LAI / sinB)) * (2 * sinB)
     else:
         return 0.0
 
@@ -176,9 +181,9 @@ def sunlit_LAI(LAI: float, sinB: float) -> float:
 def calc_Idrctt_Idfuse(
     sinB: float,
     P: float,
-    PAR: float = None,
-    cloudFrac: float = None,
-) -> float:
+    PAR: float | None = None,
+    cloudFrac: float | None = None,
+) -> tuple[float, float, float]:
     """Estimate above canopy diffuse and direct PAR components.
 
     Must provide either cloud cover or PAR.
@@ -221,7 +226,7 @@ def calc_Idrctt_Idfuse(
         if PAR is not None:
             ST = max(0.21, min(0.9, PAR / pPARtotal))
         elif cloudFrac is not None:
-            ST = 1.0 - 0.75 * (cloudFrac ** 3.4)
+            ST = 1.0 - 0.75 * (cloudFrac**3.4)
         else:
             raise ValueError("Must supply PAR or cloudFrac")
 
@@ -229,9 +234,9 @@ def calc_Idrctt_Idfuse(
         # A = 0.9
         # B = 0.7
         if ST < 0.9:
-            fPARdir = (pPARdir / pPARtotal) * (1 - ((0.9 - ST) / 0.7)**(2.0 / 3.0))
+            fPARdir = (pPARdir / pPARtotal) * (1 - ((0.9 - ST) / 0.7) ** (2.0 / 3.0))
         else:
-            fPARdir = (pPARdir / pPARtotal)
+            fPARdir = pPARdir / pPARtotal
         fPARdif = 1 - fPARdir
 
         # Apply calculated direct and diffuse fractions to PARtotal
@@ -247,46 +252,20 @@ def calc_Idrctt_Idfuse(
     return Idrctt, Idfuse, PAR_out
 
 
-def check_required_inputs(
-    PAR_in: float = None,
-    Idrctt_in: float = None,
-    Idfuse_in: float = None,
-    PPFD_in: float = None,
-    R_in: float = None,
-    Rn_in: float = None,
-    sinB: float = None,
-    P: float = None,
-    cloudfrac: float = None,
-) -> str:
-    if PAR is None:
-        Idrctt, Idfuse, PAR = calc_Idrctt_Idfuse(sinB, P, PAR=PAR_in, cloudFrac=cloudfrac) if (cloudfrac is not None and sinB is not None and P is not None) \
-            else [Idrctt_in, Idfuse_in, Idrctt_in + Idfuse_in] if (Idrctt_in is not None and Idfuse_in is not None) \
-            else [None, None, PPFD_in / PAR_Wm2_to_photons] if PPFD_in is not None \
-            else [None, None, R_in * PARfrac] if R_in is not None \
-            else [None, None, Rn_in * Rn_MJ_to_W * PARfrac] if Rn_in is not None \
-            else [None, None, None]
-        if PAR is None:
-            raise InputError("PAR", "Could not define PAR check inputs")
-    if Idfuse is None or Idrctt is None:
-        Idrctt, Idfuse, _ = calc_Idrctt_Idfuse(sinB, P, PAR=PAR)
-        if Idrctt is None:
-            raise InputError("Idrctt", "Could not define Idrctt check inputs")
-        if Idfuse is None:
-            raise InputError("Idfuse", "Could not define Idfuse check inputs")
-
+RadiationOutput = namedtuple("Output", "PAR PPFD Idrctt Idfuse R Rn")
 
 
 def calc_radiation(
-    PAR_in: float = None,
-    Idrctt_in: float = None,
-    Idfuse_in: float = None,
-    PPFD_in: float = None,
-    R_in: float = None,
-    Rn_in: float = None,
-    sinB: float = None,
-    P: float = None,
-    cloudfrac: float = None,
-) -> NamedTuple:
+    PAR_in: float | None = None,
+    Idrctt_in: float | None = None,
+    Idfuse_in: float | None = None,
+    PPFD_in: float | None = None,
+    R_in: float | None = None,
+    Rn_in: float | None = None,
+    sinB: float | None = None,
+    P: float | None = None,
+    cloudfrac: float | None = None,
+) -> RadiationOutput:
     """Calculate missing radiation data from provided data.
 
     pure subroutine met_radiation from Fortran model
@@ -318,7 +297,6 @@ def calc_radiation(
         PAR PPFD Idrctt Idfuse R Rn
 
     """
-    Output = namedtuple('Output', 'PAR PPFD Idrctt Idfuse R Rn')
 
     Idrctt = Idrctt_in
     Idfuse = Idfuse_in
@@ -328,15 +306,24 @@ def calc_radiation(
     Rn = Rn_in
 
     if PAR is None:
-        Idrctt, Idfuse, PAR = calc_Idrctt_Idfuse(sinB, P, PAR=PAR_in, cloudFrac=cloudfrac) if (cloudfrac is not None and sinB is not None and P is not None) \
-            else [Idrctt_in, Idfuse_in, Idrctt_in + Idfuse_in] if (Idrctt_in is not None and Idfuse_in is not None) \
-            else [None, None, PPFD_in / PAR_Wm2_to_photons] if PPFD_in is not None \
-            else [None, None, R_in * PARfrac] if R_in is not None \
-            else [None, None, Rn_in * Rn_MJ_to_W * PARfrac] if Rn_in is not None \
+        Idrctt, Idfuse, PAR = (
+            calc_Idrctt_Idfuse(sinB, P, PAR=PAR_in, cloudFrac=cloudfrac)
+            if (cloudfrac is not None and sinB is not None and P is not None)
+            else [Idrctt_in, Idfuse_in, Idrctt_in + Idfuse_in]
+            if (Idrctt_in is not None and Idfuse_in is not None)
+            else [None, None, PPFD_in / PAR_Wm2_to_photons]
+            if PPFD_in is not None
+            else [None, None, R_in * PARfrac]
+            if R_in is not None
+            else [None, None, Rn_in * Rn_MJ_to_W * PARfrac]
+            if Rn_in is not None
             else [None, None, PAR_in]
+        )
         if PAR is None:
             raise InputError("PAR", "Could not define PAR check inputs. Must supply ")
     if Idfuse is None or Idrctt is None:
+        assert sinB is not None, "Must supply sinB"
+        assert P is not None, "Must supply P"
         Idrctt, Idfuse, _ = calc_Idrctt_Idfuse(sinB, P, PAR=PAR)
         if Idrctt is None:
             raise InputError("Idrctt", "Could not define Idrctt check inputs")
@@ -352,48 +339,48 @@ def calc_radiation(
     if Rn is None:
         Rn = R / Rn_MJ_to_W
 
-    return Output(
-        Idrctt = Idrctt,
-        Idfuse = Idfuse,
-        PAR = PAR,
-        PPFD = PPFD,
-        R = R,
-        Rn = Rn,
+    return RadiationOutput(
+        Idrctt=Idrctt,
+        Idfuse=Idfuse,
+        PAR=PAR,
+        PPFD=PPFD,
+        R=R,
+        Rn=Rn,
     )
 
 
 def calc_radiation_list(
-    PAR_list: List[float] = [],
-    Idrctt_list: List[float] = [],
-    Idfuse_list: List[float] = [],
-    PPFD_list: List[float] = [],
-    R_list: List[float] = [],
-    Rn_list: List[float] = [],
-    sinB_list: List[float] = [],
-    P_list: List[float] = [],
-    cloudfrac_list: List[float] = [],
+    PAR_list: list[float] = [],
+    Idrctt_list: list[float] = [],
+    Idfuse_list: list[float] = [],
+    PPFD_list: list[float] = [],
+    R_list: list[float] = [],
+    Rn_list: list[float] = [],
+    sinB_list: list[float] = [],
+    P_list: list[float] = [],
+    cloudfrac_list: list[float] = [],
 ) -> NamedTuple:
     """Run calc_radiation on list of data.
 
     Parameters
     ----------
-    PAR_list : List[float], optional
+    PAR_list : list[float], optional
         [description], by default None [UNIT]
-    Idrctt_list : List[float], optional
+    Idrctt_list : list[float], optional
         [description], by default None [UNIT]
-    Idfuse_list : List[float], optional
+    Idfuse_list : list[float], optional
         [description], by default None [UNIT]
-    PPFD_list : List[float], optional
+    PPFD_list : list[float], optional
         [description], by default None [UNIT]
-    R_list : List[float], optional
+    R_list : list[float], optional
         [description], by default None [UNIT]
-    R_list : List[float], optional
+    R_list : list[float], optional
         [description], by default None [UNIT]
-    sinB_list : List[float], optional
+    sinB_list : list[float], optional
         [description], by default None [UNIT]
-    P_list : List[float], optional
+    P_list : list[float], optional
         [description], by default None [UNIT]
-    cloudfrac_list: List[float], optional
+    cloudfrac_list: list[float], optional
         Cloud fraction [Fraction]
 
     Returns
@@ -402,7 +389,7 @@ def calc_radiation_list(
         [description]
 
     """
-    Output = namedtuple('Output', 'PAR Idrctt Idfuse PPFD R Rn cloudfrac')
+    Output = namedtuple("Output", "PAR Idrctt Idfuse PPFD R Rn cloudfrac")
     PAR_out = []
     Idrctt_out = []
     Idfuse_out = []
@@ -419,9 +406,17 @@ def calc_radiation_list(
     _P_list = P_list if P_list is not None else []
     _cloudfrac_list = cloudfrac_list if cloudfrac_list is not None else []
 
-
-    for PAR_in, Idfuse_in, Idfuse_in, PPFD_in, R, Rn, sinB, P, cloudfrac \
-            in zip_longest(_PAR_list, _Idrctt_list, _Idfuse_list, _PPFD_list, _R_list, _Rn_list, _sinB_list, _P_list, _cloudfrac_list):
+    for PAR_in, Idfuse_in, Idfuse_in, PPFD_in, R, Rn, sinB, P, cloudfrac in zip_longest(
+        _PAR_list,
+        _Idrctt_list,
+        _Idfuse_list,
+        _PPFD_list,
+        _R_list,
+        _Rn_list,
+        _sinB_list,
+        _P_list,
+        _cloudfrac_list,
+    ):
         out = calc_radiation(PAR_in, Idfuse_in, Idfuse_in, PPFD_in, R, Rn, sinB, P, cloudfrac)
         PAR_out.append(out.PAR)
         Idrctt_out.append(out.Idrctt)
@@ -509,8 +504,13 @@ def calc_net_radiation(
         dec = solar_declination(dd)
         # External radiation (with fix to stop div by zero)
         # TODO: fix this to be less hackish
-        Re = max(0.00000000001,
-                 ((12 * 60) / pi) * GSC * dr * ((h2 - h1) * sin(lat_rad) * sin(dec) + cos(lat_rad) * cos(dec) * (sin(h2) - sin(h1))))  # noqa:E501
+        Re = max(
+            0.00000000001,
+            ((12 * 60) / pi)
+            * GSC
+            * dr
+            * ((h2 - h1) * sin(lat_rad) * sin(dec) + cos(lat_rad) * cos(dec) * (sin(h2) - sin(h1))),
+        )  # noqa:E501
         # TODO: what was this for?
         # Re = max(0.0, ((12*60)/pi)*Gsc*dr*sinB)
 
@@ -519,8 +519,12 @@ def calc_net_radiation(
         assert Re is not None
         pR = (0.75 + (2e-5 * elev)) * Re
 
-        Rnl = max(0.0, (SBC * ((Ts_C + T0)**4)) * (0.34 - (0.14 * sqrt(eact)))
-                  * ((1.35 * (min(1.0, R_MJ / pR))) - 0.35))  # noqa:W503
+        Rnl = max(
+            0.0,
+            (SBC * ((Ts_C + T0) ** 4))
+            * (0.34 - (0.14 * sqrt(eact)))
+            * ((1.35 * (min(1.0, R_MJ / pR))) - 0.35),
+        )  # noqa:W503
         Rns = (1 - albedo) * R_MJ
 
         net_radiation = max(0.0, Rns - Rnl)
@@ -528,17 +532,17 @@ def calc_net_radiation(
 
 
 def get_net_radiation(
-    Rn_in: float = None,
-    lat: float = None,
-    lon: float = None,
-    elev: float = None,
-    albedo: float = None,
-    dd: int = None,
-    hr: int = None,
-    sinB: float = None,
-    R: float = None,
-    Ts_C: float = None,
-    eact: float = None,
+    Rn_in: float | None = None,
+    lat: float | None = None,
+    lon: float | None = None,
+    elev: float | None = None,
+    albedo: float | None = None,
+    dd: int | None = None,
+    hr: int | None = None,
+    sinB: float | None = None,
+    R: float | None = None,
+    Ts_C: float | None = None,
+    eact: float | None = None,
 ) -> float:
     """Get the net radiation (Rn) using calc_net_radiation if Rn is None.
 
@@ -573,9 +577,11 @@ def get_net_radiation(
         [description]
 
     """
-    Rn = Rn_in if Rn_in is not None \
-        else calc_net_radiation(lat, lon, elev, albedo,
-                                dd, hr, sinB, R, Ts_C, eact)
+    Rn = (
+        Rn_in
+        if Rn_in is not None
+        else calc_net_radiation(lat, lon, elev, albedo, dd, hr, sinB, R, Ts_C, eact) # type: ignore
+    )
     return Rn
 
 
@@ -583,8 +589,8 @@ def calc_PAR_sun_shade_multilayer(
     Idrctt: float,
     Idfuse: float,
     sinB: float,
-    cosA: List[float],
-    LAI: List[float],
+    cosA: list[float],
+    LAI: list[float],
 ) -> Tuple[float, float]:
     """Calculate PAR sun and shade for multilayer model.
 
@@ -650,13 +656,12 @@ def calc_PAR_sun_shade(
         PAR received by shaded leaves [W m-2]
 
     """
-    Output = namedtuple('Output', 'PARsun PARshade')
+    Output = namedtuple("Output", "PARsun PARshade")
     if sinB > 0.0:
         # PAR flux densities evaluated using method of Norman(1982, p.79):
         # "conceptually, 0.07 represents a scattering coefficient"
 
-        PARshade = Idfuse * exp(-0.5 * LAI**0.8) + \
-            0.07 * Idrctt * (1.1 - (0.1 * LAI)) * exp(-sinB)
+        PARshade = Idfuse * exp(-0.5 * LAI**0.8) + 0.07 * Idrctt * (1.1 - (0.1 * LAI)) * exp(-sinB)
         PARsun = Idrctt * 0.8 * (cosA / sinB) + PARshade
     else:
         PARshade = 0.0
@@ -715,6 +720,7 @@ def calc_diffuse_irradiance_refl(
     # TODO: This needs checking
 
     """
+
     # f
     def f(alpha):
         """Calculate integral per rotation unit of sun[radian]"""
@@ -766,8 +772,7 @@ def calc_Ir_scattered_b(
 
     """
     Ir_bs = Ir_beam_0 * (
-        ((1 - P_cb) * k_b_alt * exp(-k_b * LAI_c))
-        - (1 - sigma) * k_b * exp(-k_b * LAI_c)  # noqa:W503
+        ((1 - P_cb) * k_b_alt * exp(-k_b * LAI_c)) - (1 - sigma) * k_b * exp(-k_b * LAI_c)  # noqa:W503
     )
     return Ir_bs
 
@@ -869,7 +874,7 @@ def calc_PAR_sun_shade_farq_b(
     without the errors of big-leaf models)
 
     """
-    Output = namedtuple('Output', 'PARsun, PARshade')
+    Output = namedtuple("Output", "PARsun, PARshade")
     if sinB <= 0:
         return Output(0, 0)
     if Ir_dfuse_0 + Ir_beam_0 < 0.001:
@@ -883,15 +888,17 @@ def calc_PAR_sun_shade_farq_b(
     Ir_diffuse = (1 - P_cd) * k_d_alt * Ir_dfuse_0 * exp(-k_d_alt * LAI_c)
     Ir_beam_sun = (1 - sigma) * Ir_beam_0 * cosA / sinB
     Ir_scattered_b = Ir_beam_0 * (
-        ((1 - P_cb) * k_b_alt * exp(-k_b * LAI_c))
-        - (1 - sigma) * k_b * exp(-k_b * LAI_c)  # noqa:W503
+        ((1 - P_cb) * k_b_alt * exp(-k_b * LAI_c)) - (1 - sigma) * k_b * exp(-k_b * LAI_c)  # noqa:W503
     )
     PAR_shade = Ir_diffuse + Ir_scattered_b
     PAR_sun = PAR_shade + Ir_beam_sun
     return Output(PAR_sun, PAR_shade)
 
 
-@deprecated(version="0", reason="Only required to match old UI output. Use get_parSunShade_from_par instead.")
+@deprecated(
+    version="0",
+    reason="Only required to match old UI output. Use get_parSunShade_from_par instead.",
+)
 def calc_PAR_sun_shade_UI(
     PAR: float,
     sinB: float,
@@ -925,13 +932,14 @@ def calc_PAR_sun_shade_UI(
         PAR received by shaded leaves [W m-2]
 
     """
-    Output = namedtuple('Output', 'PARsun PARshade')
+    Output = namedtuple("Output", "PARsun PARshade")
     if sinB <= 0:
         return Output(0, 0)
     Idrctt, Idfuse, _ = calc_Idrctt_Idfuse(sinB, P, PAR=PAR)
     C = 4.57
-    PARshade = Idfuse * C * exp(-0.5 * (LAI**0.8)) + 0.07 * Idrctt * C * \
-        (1.1 - (0.1 * LAI)) * exp(-sinB)
+    PARshade = Idfuse * C * exp(-0.5 * (LAI**0.8)) + 0.07 * Idrctt * C * (1.1 - (0.1 * LAI)) * exp(
+        -sinB
+    )
     PARsun = Idrctt * C * 0.8 * (cosA / sinB) + PARshade
     return Output(PARsun / C, PARshade / C)
 
