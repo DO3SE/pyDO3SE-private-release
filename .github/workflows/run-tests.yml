@@ -24,6 +24,7 @@ jobs:
       run: |
         uv sync --extra test
         uv sync --extra grid
+        uv add xarray --group=grid
 
     - name: Setup test env
       run: |
@@ -34,4 +35,5 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest tests
+        source .venv/bin/activate
+        python -m pytest tests
