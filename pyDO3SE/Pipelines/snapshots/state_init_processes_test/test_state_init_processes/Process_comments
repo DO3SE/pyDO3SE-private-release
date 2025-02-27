@@ -1,0 +1,11 @@
+Trim state
+Reset previous state
+Set initial td_dd if zero day is after emergence
+Set initial td_dd to 0
+Set initial vernalised_thermal_time
+Set initial thermal_time
+Set initial Sn to 0
+P-M - Set initial SMD state
+set_value
+Init O3 Resistance Model
+Initialise gsto params

@@ -1,13 +1,6 @@
-.ignore
-
-# This is copied for development only so as to not bloat the repo
-examples/
-tests/
+.vscode/settings.json
 
 tmp/*
-
-# === Language specific files ===
-
 # Excel temp files
 ~$*
 
