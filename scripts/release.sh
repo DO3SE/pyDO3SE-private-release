@@ -1,4 +1,4 @@
 #!/bin/bash
 set -e
 
-../.subtree/snapshot_versions.sh
+.subtree/snapshot_versions.sh
