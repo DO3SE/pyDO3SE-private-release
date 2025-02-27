@@ -23,6 +23,7 @@ References
 from typing import NamedTuple, List
 from math import sqrt
 import numpy as np
+from warnings import warn
 from pyDO3SE.constants.physical_constants import R
 from pyDO3SE.util.error_handling import ConfigError
 from pyDO3SE.Config.ConfigEnums import FVPDMethods
@@ -48,6 +49,7 @@ from pyDO3SE.plugins.gsto.constants import (
     Teta,
     O_i,
 )
+from .enums import AdjustNegativeAnMethods
 
 
 def calc_A_n_product_limited(V_cmax: float, R_d: float) -> float:
@@ -84,7 +86,7 @@ def calc_A_n_rubisco_limited(
     G_1c: float,
     g_bl: float,
     c_a: float,
-    RH: float,
+    f_VPD: float,
     Gamma: float,
     Gamma_star: float,
     K_C: float,
@@ -116,7 +118,7 @@ def calc_A_n_rubisco_limited(
         Dark respiration rate [umol/m^2/s CO2]
     g_sto_0: float
         See gsto_0 [umol/m^2/s CO2]
-    G_1c: 5.625
+    G_1c(m): 5.625
         the species specific sensitivity of stomatal conductance to VPD and stomatal conductance [dimensionless]
     g_bl: float
         Boundary Layer Conductance [mmol/m^2/s H2O]
@@ -161,18 +163,17 @@ def calc_A_n_rubisco_limited(
     # Converts Pressure from kPa (in DO3SE code) to Pa (in this code)
     P = 1000 * P
 
-    #Convert gsto0 from micro moles m-2 PLA s-1 of H2O to moles m-2 PLA s-1 of CO2
-    g_bl_mol_co2=g_bl*1e-6/1.37
+    # Convert gsto0 from micro moles m-2 PLA s-1 of H2O to moles m-2 PLA s-1 of CO2
+    g_bl_mol_co2 = g_bl * 1e-6 / 1.37
 
-    #Convert gsto0 from micro moles m-2 PLA s-1 of CO2 to moles m-2 PLA s-1 of CO2
-    g_sto_0_mol=g_sto_0*1e-6
+    # Convert gsto0 from micro moles m-2 PLA s-1 of CO2 to moles m-2 PLA s-1 of CO2
+    g_sto_0_mol = g_sto_0 * 1e-6
 
     # Define Factors for cubic Equations
     alpha = g_bl_mol_co2 * c_a
-    beta = (g_bl_mol_co2 * G_1c * RH) - g_sto_0_mol
-    gamma_c = (
-        (V_cmax * fO3_d * f_LS * f_SW * Gamma_star)
-        + (K_C * (1 + ((1000 * O2 / P) / K_O)) * R_d)
+    beta = (g_bl_mol_co2 * G_1c * f_VPD) - g_sto_0_mol
+    gamma_c = (V_cmax * fO3_d * f_LS * f_SW * Gamma_star) + (
+        K_C * (1 + ((1000 * O2 / P) / K_O)) * R_d
     )  # in our Ac and Aj we use compensation point in the absence of respiration so need Gamma_star
     zeta_c = V_cmax * fO3_d * f_LS * f_SW - R_d
     eta_c = (alpha * zeta_c) - (g_bl_mol_co2 * gamma_c)
@@ -187,7 +188,8 @@ def calc_A_n_rubisco_limited(
         * (
             c_a * g_sto_0_mol * g_bl_mol_co2 * K_O
             + g_sto_0_mol * K_O * (-R_d + lambda_c)
-            + g_bl_mol_co2 * (g_sto_0_mol * K_C * (K_O + (1000 * O2 / P)) - K_O * R_d + K_O * lambda_c)
+            + g_bl_mol_co2
+            * (g_sto_0_mol * K_C * (K_O + (1000 * O2 / P)) - K_O * R_d + K_O * lambda_c)
         )
     )
     d_with_comp_point = (
@@ -203,7 +205,7 @@ def calc_A_n_rubisco_limited(
     ) / K_O
 
     # Define Cubic Equation Coefficients
-    if negative_A_n == False:
+    if negative_A_n is False:
         a = beta - g_bl_mol_co2
         b = (
             (g_sto_0_mol * alpha)
@@ -219,17 +221,15 @@ def calc_A_n_rubisco_limited(
             + c_with_comp_point
         )
         d = g_sto_0_mol * alpha * eta_c + d_with_comp_point
-    elif negative_A_n == True:
+    elif negative_A_n is True:
         a = 0
         b = g_sto_0_mol + g_bl_mol_co2
         c = (g_sto_0_mol * xi_c) + (g_bl_mol_co2 * zeta_c)
         d = g_sto_0_mol * eta_c
 
     # Solve Cubic Equation
-    # roots = np.roots([a, b, c, d])[np.isreal(np.roots([a, b, c, d]))]
-    # roots = [np.real(x) for x in roots]
     roots = np.roots([a, b, c, d])
-    roots = [np.real(x) for x in roots if (abs(x.imag)<1e-10)]
+    roots = [np.real(x) for x in roots if (abs(x.imag) < 1e-10)]
     return roots
 
 
@@ -304,12 +304,11 @@ def calc_A_n_rubp_limited(
     # Converts Pressure from kPa (in DO3SE code) to Pa (in this code)
     P = 1000 * P
 
+    # Convert gsto0 from micro moles m-2 PLA s-1 of H2O to moles m-2 PLA s-1 of CO2
+    g_bl_mol_co2 = g_bl * 1e-6 / 1.37
 
-    #Convert gsto0 from micro moles m-2 PLA s-1 of H2O to moles m-2 PLA s-1 of CO2
-    g_bl_mol_co2=g_bl*1e-6/1.37
-
-    #Convert gsto0 from micro moles m-2 PLA s-1 of CO2 to moles m-2 PLA s-1 of CO2
-    g_sto_0_mol=g_sto_0*1e-6
+    # Convert gsto0 from micro moles m-2 PLA s-1 of CO2 to moles m-2 PLA s-1 of CO2
+    g_sto_0_mol = g_sto_0 * 1e-6
 
     # Define Factors for cubic Equations
     alpha = g_bl_mol_co2 * c_a
@@ -338,7 +337,7 @@ def calc_A_n_rubp_limited(
     )
 
     # Define Cubic Equation Coefficients
-    if negative_A_n == False:
+    if negative_A_n is False:
         a = A_j_a * (beta - g_bl_mol_co2)
         b = (
             (A_j_a * g_sto_0_mol * alpha)
@@ -354,7 +353,7 @@ def calc_A_n_rubp_limited(
             + c_with_comp_point
         )
         d = g_sto_0_mol * alpha * eta_j + d_with_comp_point
-    elif negative_A_n == True:
+    elif negative_A_n is True:
         a = 0
         b = A_j_a * (g_sto_0_mol + g_bl_mol_co2)
         c = (g_sto_0_mol * xi_j) + (g_bl_mol_co2 * zeta_j)
@@ -364,7 +363,7 @@ def calc_A_n_rubp_limited(
     # roots = np.roots([a, b, c, d])[np.isreal(np.roots([a, b, c, d]))]
     # roots = [np.real(x) for x in roots]
     roots = np.roots([a, b, c, d])
-    roots = [np.real(x) for x in roots if (abs(x.imag)<1e-10)]
+    roots = [np.real(x) for x in roots if (abs(x.imag) < 1e-10)]
     return roots
 
 
@@ -452,9 +451,7 @@ def calc_input_factors(
     K_O = temp_dep(K_O_25, deg_to_kel(25), E_K_O, Tleaf_K, R)
 
     # [umol/m^2/s]
-    J_max = temp_dep_inhibit(
-        J_max_25, deg_to_kel(25), H_a_jmax, H_d_jmax, S_V_jmax, Tleaf_K, R
-    )
+    J_max = temp_dep_inhibit(J_max_25, deg_to_kel(25), H_a_jmax, H_d_jmax, S_V_jmax, Tleaf_K, R)
 
     # [umol/m^2/s]
     V_cmax = temp_dep_inhibit(
@@ -469,20 +466,16 @@ def calc_input_factors(
     #  Electron transport rate
     # Equation 4 in Ewert Paper
     # [mol electron?]
-    J = (
-        J_max
-        + alpha * Q
-        - sqrt((J_max + alpha * Q) ** 2 - 4 * alpha * Q * Teta * J_max)
-    ) / (2 * Teta)  # noqa: 501
+    J = (J_max + alpha * Q - sqrt((J_max + alpha * Q) ** 2 - 4 * alpha * Q * Teta * J_max)) / (
+        2 * Teta
+    )  # noqa: 501
 
     # [Pa]
     e_sat_i = 1000 * saturated_vapour_pressure(Tleaf_C)
 
     # TODO: Handle V_cmax being 0
     # [mmol/mol]
-    Gamma = (Gamma_star + (K_C * R_d * (1 + (O_i / K_O)) / V_cmax)) / (
-        1 - (R_d / V_cmax)
-    )
+    Gamma = (Gamma_star + (K_C * R_d * (1 + (O_i / K_O)) / V_cmax)) / (1 - (R_d / V_cmax))
 
     return Ewert_Input_Factors(
         Tleaf_K=Tleaf_K,
@@ -723,8 +716,8 @@ def calc_ozone_damage_factors(
         rO3=rO3,
         # NOTE: These are calculated elsewhere
         f_LS=None,  # TODO: Remove this # type: ignore
-        t_lep_limited=None, # type: ignore
-        t_lse_limited=None, # type: ignore
+        t_lep_limited=None,  # type: ignore
+        t_lse_limited=None,  # type: ignore
     )
 
 
@@ -1068,21 +1061,16 @@ def calc_CO2_assimilation_rate(
     - Ewert, F., Porter, J.R., 2000 - Eq8
 
     """
-    A_c = (
-        V_cmax
-        * ((c_i_in - Gamma_star) / (c_i_in + (K_C * (1 + (O_i / K_O)))))
-        * fO3_d
-        * f_LS
-    )
+    A_c = V_cmax * ((c_i_in - Gamma_star) / (c_i_in + (K_C * (1 + (O_i / K_O))))) * fO3_d * f_LS
     A_j = J * ((c_i_in - Gamma_star) / ((A_j_a * c_i_in) + (A_j_b * Gamma_star)))
 
     A_p = 0.5 * V_cmax
 
     A_n = min(A_c, A_j, A_p) - R_d
 
-    A_n_limit_factor = sorted(
-        zip(["A_c", "A_j", "A_p"], [A_c, A_j, A_p]), key=lambda tup: tup[1]
-    )[0][0]
+    A_n_limit_factor = sorted(zip(["A_c", "A_j", "A_p"], [A_c, A_j, A_p]), key=lambda tup: tup[1])[
+        0
+    ][0]
 
     return CO2_assimilation_rate_factors(
         A_c=A_c,
@@ -1096,17 +1084,13 @@ def calc_CO2_assimilation_rate(
 def does_A_n_solve_requirements(
     A_n: float,
     g_sto_0: float,
-    g_sto_prev: float,
-    e_a: float,
     g_bl: float,
-    e_sat_i: float,
-    D_0: float,
     f_VPD: float,
     m: float,
     Gamma: float,
     c_a: float,
     f_SW: float,
-    f_VPD_method: FVPDMethods,
+    R_d: float,
     negative_A_n: bool,
 ):
     """Determines if a suitable solution to the cubic equation satisfies the requirements to be the A_n value
@@ -1122,16 +1106,8 @@ def does_A_n_solve_requirements(
         CO2 Assimilation Rate [umol m-2 s-1 CO2]
     g_sto_0: float
         Closed stomata conductance [umol/m^2/s CO2]
-    g_sto_prev: float
-        g_sto from previous hour [umol/m^2/s CO2]
-    e_a: float
-        Ambient vapour pressure [Pa]
     g_bl: float
         Boundary layer conductance to H2O vapour [umol m-2 PLA s-1 H2O]
-    e_sat_i: float
-        Internal saturation vapour pressure [Pa]
-    D_0: float
-        The VPD at which g_sto is reduced by a factor of 2 [kPa]
     f_VPD: float
         Humidity Function (Leuning 1995)
     m: float
@@ -1161,19 +1137,7 @@ def does_A_n_solve_requirements(
     """
 
     # TODO: We are calculating these multiple times. There may be a more efficient way to do this
-    f_VPD = (
-        calc_humidity_defecit_fVPD(
-            # TODO: We should use prev hour gsto here instead of gsto_0
-            g_sto_in=g_sto_prev,
-            e_a=e_a,
-            g_bl=g_bl,
-            e_sat_i=e_sat_i,
-            D_0=D_0,
-            f_VPD_method=f_VPD_method,
-        )
-        if f_VPD_method in [FVPDMethods.LEUNING, FVPDMethods.DANIELSSON]
-        else f_VPD
-    )
+    # NOTE: We cannot calculate f_VPD without g_sto and vice versa. So we use the previous value
 
     g_sto = calc_stomatal_conductance(
         g_sto_0=g_sto_0,
@@ -1185,6 +1149,7 @@ def does_A_n_solve_requirements(
         f_SW=f_SW,
         f_VPD=f_VPD,
     )
+
     c_i = calc_CO2_supply(
         A_n=A_n,
         c_a=c_a,
@@ -1197,7 +1162,7 @@ def does_A_n_solve_requirements(
     if abs(A_n) > 100:
         return False
     if not negative_A_n:
-        if A_n < 0:
+        if A_n < -R_d:  # TODO: Check if this is ok
             return False
 
     if (g_sto >= 0) and (c_i >= 0):
@@ -1215,9 +1180,7 @@ def calc_CO2_assimilation_rate_cubic(
     f_LS: float,
     J: float,
     R_d: float,
-    G_1c: float,
     c_a: float,
-    RH: float,
     Gamma: float,
     P: float,
     g_sto_0: float,
@@ -1226,10 +1189,12 @@ def calc_CO2_assimilation_rate_cubic(
     g_bl: float,
     e_sat_i: float,
     D_0: float,
-    f_VPD: float,
+    fmin: float,
+    f_VPD: float | None,
     m: float,
     f_SW: float,
     f_VPD_method: FVPDMethods,
+    adjust_negative_A_n: AdjustNegativeAnMethods = AdjustNegativeAnMethods.FALSE,
 ) -> CO2_assimilation_rate_factors:
     """Calculate the assimilation rates.
 
@@ -1257,8 +1222,6 @@ def calc_CO2_assimilation_rate_cubic(
         Rate of electron transport [micro mol/(m^2*s)]
     R_d: float
         Day respiration rate [micro mol/(m^2*s)]
-    G_1c: float
-        Model parameter [mol/m^2/s]
     c_a: float
         Atmospheric CO2 concentration [ppm]
     RH: float
@@ -1279,6 +1242,8 @@ def calc_CO2_assimilation_rate_cubic(
         Internal saturation vapour pressure [Pa]
     D_0: float
         The VPD at which g_sto is reduced by a factor of 2 [kPa]
+    fmin: float
+        Minimum value of f_VPD [fraction]
     f_VPD: float
         Humidity Function (Leuning 1995)
     m: float
@@ -1287,6 +1252,10 @@ def calc_CO2_assimilation_rate_cubic(
         Soil water stress factor [dimensionless]
     f_VPD_method: FVPDMethods
         Method to calculate f_VPD
+    adjust_negative_A_n: AdjustNegativeAnMethods = AdjustNegativeAnMethods.FALSE,
+        If True then allow negative A_n values, else return NaN
+        If "last_resort" then allow negative A_n values if no other solution is found
+        If "clip" then clip negative A_n values to -R_d
 
     Returns
     -------
@@ -1311,7 +1280,24 @@ def calc_CO2_assimilation_rate_cubic(
 
     O2 = 20900  # Partial pressure of atmospheric Oxygen
 
-    negative_A_n = False
+    negative_A_n = adjust_negative_A_n == AdjustNegativeAnMethods.ALLOW
+
+    f_VPD = (
+        calc_humidity_defecit_fVPD(
+            # TODO: We should use prev hour gsto here instead of gsto_0
+            g_sto_in=g_sto_prev,
+            e_a=e_a,
+            g_bl=g_bl,
+            e_sat_i=e_sat_i,
+            D_0=D_0,
+            fmin=fmin,
+            f_VPD_method=f_VPD_method,
+        )
+        if f_VPD_method in [FVPDMethods.LEUNING, FVPDMethods.DANIELSSON]
+        else f_VPD
+    )
+    assert f_VPD is not None, "Must supply f_VPD or use LEUNING or DANIELSSON methods"
+
     A_p = calc_A_n_product_limited(V_cmax, R_d)
     A_c_roots = calc_A_n_rubisco_limited(
         O2,
@@ -1320,10 +1306,10 @@ def calc_CO2_assimilation_rate_cubic(
         V_cmax,
         R_d,
         g_sto_0,
-        G_1c,
-        g_bl,
+        m,
+        g_bl,  # H2O
         c_a,
-        RH,
+        f_VPD,
         Gamma,
         Gamma_star,
         K_C,
@@ -1339,55 +1325,51 @@ def calc_CO2_assimilation_rate_cubic(
             if does_A_n_solve_requirements(
                 root,
                 g_sto_0,
-                g_sto_prev,
-                e_a,
                 g_bl,
-                e_sat_i,
-                D_0,
                 f_VPD,
                 m,
                 Gamma,
                 c_a,
                 f_SW,
-                f_VPD_method,
+                R_d,
                 negative_A_n,
             )
         ),
         np.nan,
     )
-    # if np.isnan(A_c_root):
-    #     A_c_root = next(
-    #     (
-    #         root
-    #         for root in A_c_roots
-    #         if does_A_n_solve_requirements(
-    #             root,
-    #             g_sto_0,
-    #             g_sto_prev,
-    #             e_a,
-    #             g_bl,
-    #             e_sat_i,
-    #             D_0,
-    #             f_VPD,
-    #             m,
-    #             Gamma,
-    #             c_a,
-    #             f_SW,
-    #             f_VPD_method,
-    #             True,
-    #         )
-    #     ),
-    #     np.nan,
-    #     )
-    A_c = ((A_c_root + R_d) * fO3_d * f_LS) - R_d
+    # TODO: May be able to remove this once negative A_n issue resolved
+    if adjust_negative_A_n == AdjustNegativeAnMethods.LAST_RESORT and np.isnan(A_c_root):
+        A_c_root = next(
+            (
+                root
+                for root in A_c_roots
+                if does_A_n_solve_requirements(
+                    root,
+                    g_sto_0,
+                    g_bl,
+                    f_VPD,
+                    m,
+                    Gamma,
+                    c_a,
+                    f_SW,
+                    R_d,
+                    True,
+                )
+            ),
+            np.nan,
+        )
+    if adjust_negative_A_n == AdjustNegativeAnMethods.CLIP and np.isnan(A_c_root):
+        A_c_root = -R_d
+    # A_c = ((A_c_root + R_d) * fO3_d * f_LS) - R_d  # TODO: Check this not needed
+    A_c = A_c_root
     A_j_roots = calc_A_n_rubp_limited(
         P,
         R_d,
         g_sto_0,
-        G_1c,
+        m,
         g_bl,
         c_a,
-        RH,
+        f_VPD,
         Gamma,
         Gamma_star,
         J,
@@ -1400,27 +1382,24 @@ def calc_CO2_assimilation_rate_cubic(
             if does_A_n_solve_requirements(
                 root,
                 g_sto_0,
-                g_sto_prev,
-                e_a,
                 g_bl,
-                e_sat_i,
-                D_0,
                 f_VPD,
                 m,
                 Gamma,
                 c_a,
                 f_SW,
-                f_VPD_method,
+                R_d,
                 negative_A_n,
             )
         ),
         np.nan,
     )
-    if any(a is None for a in [A_c, A_j, A_p]):
-        raise ValueError(
-            f"One of the assimilation rates is None A_c={A_c}, A_j={A_j}, A_p={A_p}"
-        )
+    # TODO: We could catch NaN values here when they are resolved
+    if any(np.isnan(a) for a in [A_c, A_j, A_p]):
+        warn(f"One of the assimilation rates is NaN A_c={A_c}, A_j={A_j}, A_p={A_p}")
     A_n = np.nanmin([A_p, A_c, A_j])
+    if adjust_negative_A_n == AdjustNegativeAnMethods.CLIP and np.isnan(A_n) or A_n < -R_d:
+        A_n = -R_d
 
     A_n_limit_factor = sorted(
         zip(["A_c", "A_j", "A_p"], [A_c, A_j, A_p]),
@@ -1442,7 +1421,8 @@ def calc_humidity_defecit_fVPD(
     g_bl: float,
     e_sat_i: float,
     D_0: float,
-    f_VPD_method,
+    fmin: float,
+    f_VPD_method: FVPDMethods,
 ) -> float:
     """Calculate the humidity defecit from the gsto.
 
@@ -1458,8 +1438,12 @@ def calc_humidity_defecit_fVPD(
         Boundary layer conductance to H2O vapour ([umol m-2 PLA s-1 H2O])
     e_sat_i: float
         internal saturation vapour pressure[Pa]
+    fmin: float
+        Minimum stomatal conductance [fraction]
     D_0: float
         "The VPD at which g_sto is reduced by a factor of 2" [kPa] (Leuning et al. 1998)
+    f_VPD_method: FVPDMethods
+        Method to calculate f_VPD
 
     Returns
     -------
@@ -1494,7 +1478,7 @@ def calc_humidity_defecit_fVPD(
         f_VPD = 1 / (1 + (d_s / D_0) ** 8)  # Leuning 1995
     else:
         raise ConfigError(f"Invalid f_VPD_method {f_VPD_method}")
-
+    f_VPD = max(fmin, f_VPD)
     return f_VPD
 
 
@@ -1588,7 +1572,7 @@ def calc_CO2_supply(
     g_sto: float
         Stomatal Conductance [umol/m^2/s CO2]
     g_bl: float
-        Boundary layer conductance to CO2 vapour ([umol m-2 PLA s-1 CO2])
+        Boundary layer conductance to H2O vapour ([umol m-2 PLA s-1 H2O])
 
     Returns
     -------
@@ -1617,7 +1601,6 @@ def calc_mean_gsto(
 ) -> List[float]:
     """Calculate the mean gsto per layer given percent of each leaf population at each layer.
 
-
     Parameters
     ----------
     leaf_gsto_list : List[List[float]]
@@ -1629,6 +1612,5 @@ def calc_mean_gsto(
         mean_gsto per layer
     """
     return [
-        sum((g * L) for g, L in zip(leaf_gsto_list[iL], leaf_fLAI_list[iL]))
-        for iL in range(nL)
+        sum((g * L) for g, L in zip(leaf_gsto_list[iL], leaf_fLAI_list[iL])) for iL in range(nL)
     ]

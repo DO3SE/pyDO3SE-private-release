@@ -127,6 +127,9 @@ def single(
     required=False,
     type=click.Path(),
 )
+@click.argument(
+    'overrides', nargs=-1,
+)
 def batch(
     project_directory: str = None,
     config_dir: str = None,
@@ -141,6 +144,7 @@ def batch(
     default_paths: bool = True,
     parallel: bool = True,
     runid: str = None,
+    overrides: Tuple[str, str] = (),
 ):
     """Run the model with provided config and input data.
 
@@ -165,6 +169,7 @@ def batch(
         parallel=parallel,
         runid=runid,
         logger=logger,
+        overrides=overrides,
     )
 
 

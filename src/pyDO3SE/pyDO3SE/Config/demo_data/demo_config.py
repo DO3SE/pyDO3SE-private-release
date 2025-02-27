@@ -1,7 +1,8 @@
 import json
 from pyDO3SE.plugins.soil_moisture.config import SOIL_SANDY_LOAM, Soil_Moisture_Config
 from pyDO3SE.plugins.soil_moisture.enums import SoilMoistureSource
-from pyDO3SE.Config.Config_Shape import Config_Land_Cover, Config_Land_Cover_Parameters, Config_Shape, Config_Location
+from pyDO3SE.Config.Config_Shape import Config_Land_Cover, Config_Land_Cover_Parameters, Config_Shape, Config_Location, OutputConfig
+from pyDO3SE.Output.Output_Shape import default_output_fields
 
 
 DEMO_CONFIG_INPUT = {
@@ -54,5 +55,8 @@ DEMO_CONFIG = Config_Shape(
         source=SoilMoistureSource.P_M,
         soil_config=SOIL_SANDY_LOAM,
         initial_SWC=SOIL_SANDY_LOAM.FC,
+    ),
+    output=OutputConfig(
+        fields=default_output_fields
     )
 )

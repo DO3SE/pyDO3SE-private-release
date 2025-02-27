@@ -496,76 +496,6 @@ wheels = [
 ]
 
 [[package]]
-name = "do3se-met"
-version = "0.3.5"
-source = { editable = "../do3se_met" }
-dependencies = [
-    { name = "click" },
-    { name = "deprecated" },
-    { name = "numpy" },
-    { name = "scipy" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "click", specifier = ">=7.1.2" },
-    { name = "deprecated", specifier = ">=1.2.12" },
-    { name = "numpy", specifier = ">=1.18.3" },
-    { name = "scipy", specifier = ">=1.5.2" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "bump2version", specifier = ">=1.0.1" },
-    { name = "pre-commit", specifier = ">=2.7.1" },
-    { name = "pytest", specifier = ">=8.3.3" },
-    { name = "pytest-cov", specifier = ">=5.0.0" },
-    { name = "pytest-mock", specifier = ">=3.14.0" },
-    { name = "pytest-snapshot", specifier = ">=0.9.0" },
-    { name = "ruff", specifier = ">=0.7.0" },
-]
-
-[[package]]
-name = "do3se-phenology"
-version = "4.40.6"
-source = { editable = "../do3se_phenology" }
-dependencies = [
-    { name = "click" },
-    { name = "data-helpers" },
-    { name = "deprecated" },
-    { name = "do3se-met" },
-    { name = "matplotlib" },
-    { name = "numpy" },
-    { name = "pandas" },
-    { name = "scipy" },
-    { name = "thermal-time" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "click", specifier = ">=7.1.2" },
-    { name = "data-helpers", specifier = ">=0.1.29" },
-    { name = "deprecated", specifier = ">=1.2.12" },
-    { name = "do3se-met", editable = "../do3se_met" },
-    { name = "matplotlib", specifier = ">=3.2.1" },
-    { name = "numpy", specifier = ">=1.18.3" },
-    { name = "pandas", specifier = ">=1.0.3" },
-    { name = "scipy", specifier = ">=1.5.2" },
-    { name = "thermal-time", editable = "../thermal_time" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "bump2version", specifier = ">=1.0.1" },
-    { name = "pre-commit", specifier = ">=2.7.1" },
-    { name = "pytest", specifier = ">=8.3.3" },
-    { name = "pytest-cov", specifier = ">=5.0.0" },
-    { name = "pytest-mock", specifier = ">=3.14.0" },
-    { name = "pytest-snapshot", specifier = ">=0.9.0" },
-    { name = "ruff", specifier = ">=0.7.0" },
-]
-
-[[package]]
 name = "docutils"
 version = "0.21.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1660,8 +1590,6 @@ dependencies = [
     { name = "data-helpers" },
     { name = "deprecated" },
     { name = "dill" },
-    { name = "do3se-met" },
-    { name = "do3se-phenology" },
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "pandas" },
@@ -1671,7 +1599,18 @@ dependencies = [
     { name = "wheel" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
+dev = [
+    { name = "bump2version" },
+    { name = "decorator" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-benchmark" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+    { name = "pytest-snapshot" },
+    { name = "ruff" },
+]
 doc = [
     { name = "pandocfilters" },
     { name = "pypandoc" },
@@ -1700,53 +1639,19 @@ test = [
     { name = "pytest-snapshot" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "bump2version" },
-    { name = "decorator" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-benchmark" },
-    { name = "pytest-cov" },
-    { name = "pytest-mock" },
-    { name = "pytest-snapshot" },
-    { name = "ruff" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=7.1.2" },
-    { name = "dask", marker = "extra == 'grid'" },
     { name = "data-helpers", specifier = ">=0.1.29" },
     { name = "deprecated", specifier = ">=1.2.12" },
     { name = "dill", specifier = ">=0.3.8" },
-    { name = "do3se-met", editable = "../do3se_met" },
-    { name = "do3se-phenology", editable = "../do3se_phenology" },
-    { name = "ipycanvas", marker = "extra == 'interactive'" },
-    { name = "ipython", marker = "extra == 'interactive'" },
-    { name = "ipywidgets", marker = "extra == 'interactive'" },
-    { name = "jupyter", marker = "extra == 'interactive'" },
-    { name = "jupyterlab", marker = "extra == 'interactive'" },
     { name = "matplotlib", specifier = ">=3.2.1" },
-    { name = "netcdf4", marker = "extra == 'grid'" },
     { name = "numpy", specifier = ">=1.18.3" },
     { name = "pandas", specifier = ">=1.0.3" },
-    { name = "pandocfilters", marker = "extra == 'doc'" },
     { name = "pre-commit" },
     { name = "proflow", specifier = ">=0.3.9" },
-    { name = "pypandoc", marker = "extra == 'doc'" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.3.3" },
-    { name = "pytest-benchmark", marker = "extra == 'test'", specifier = ">=3.4.1" },
-    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=5.0.0" },
-    { name = "pytest-mock", marker = "extra == 'test'", specifier = ">=3.14.0" },
-    { name = "pytest-snapshot", marker = "extra == 'test'", specifier = ">=0.9.0" },
-    { name = "rst2pdf", marker = "extra == 'doc'" },
     { name = "scipy", specifier = ">=1.5.2" },
-    { name = "sphinx", marker = "extra == 'doc'" },
-    { name = "sphinx-click", marker = "extra == 'doc'" },
-    { name = "sphinx-rtd-theme", marker = "extra == 'doc'" },
     { name = "wheel", specifier = ">=0.36.2" },
-    { name = "xarray", marker = "extra == 'grid'" },
 ]
 
 [package.metadata.requires-dev]
@@ -1760,6 +1665,33 @@ dev = [
     { name = "pytest-mock", specifier = ">=3.14.0" },
     { name = "pytest-snapshot", specifier = ">=0.9.0" },
     { name = "ruff", specifier = ">=0.7.0" },
+]
+doc = [
+    { name = "pandocfilters" },
+    { name = "pypandoc" },
+    { name = "rst2pdf" },
+    { name = "sphinx" },
+    { name = "sphinx-click" },
+    { name = "sphinx-rtd-theme" },
+]
+grid = [
+    { name = "dask" },
+    { name = "netcdf4" },
+    { name = "xarray" },
+]
+interactive = [
+    { name = "ipycanvas" },
+    { name = "ipython" },
+    { name = "ipywidgets" },
+    { name = "jupyter" },
+    { name = "jupyterlab" },
+]
+test = [
+    { name = "pytest", specifier = ">=8.3.3" },
+    { name = "pytest-benchmark", specifier = ">=3.4.1" },
+    { name = "pytest-cov", specifier = ">=5.0.0" },
+    { name = "pytest-mock", specifier = ">=3.14.0" },
+    { name = "pytest-snapshot", specifier = ">=0.9.0" },
 ]
 
 [[package]]
@@ -2366,34 +2298,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/8a/11/965c6fd8e5cc254f1fe142d547387da17a8ebfd75a3455f637c663fb38a0/terminado-0.18.1.tar.gz", hash = "sha256:de09f2c4b85de4765f7714688fff57d3e75bad1f909b589fde880460c753fd2e", size = 32701 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6a/9e/2064975477fdc887e47ad42157e214526dcad8f317a948dee17e1659a62f/terminado-0.18.1-py3-none-any.whl", hash = "sha256:a4468e1b37bb318f8a86514f65814e1afc977cf29b3992a4500d9dd305dcceb0", size = 14154 },
-]
-
-[[package]]
-name = "thermal-time"
-version = "0.0.16"
-source = { editable = "../thermal_time" }
-dependencies = [
-    { name = "deprecated" },
-    { name = "numpy" },
-    { name = "pandas" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "deprecated", specifier = ">=1.2.12" },
-    { name = "numpy", specifier = ">=1.18.3" },
-    { name = "pandas", specifier = ">=1.0.3" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "bump2version", specifier = ">=1.0.1" },
-    { name = "pre-commit", specifier = ">=2.7.1" },
-    { name = "pytest", specifier = ">=8.3.3" },
-    { name = "pytest-cov", specifier = ">=5.0.0" },
-    { name = "pytest-mock", specifier = ">=3.14.0" },
-    { name = "pytest-snapshot", specifier = ">=0.9.0" },
-    { name = "ruff", specifier = ">=0.7.0" },
 ]
 
 [[package]]

@@ -1,6 +1,6 @@
 [project]
 name = "pyDO3SE"
-version = "4.40.9"
+version = "4.41.2"
 description = "DO3SE model python API"
 authors = [{ "email" = "sam.bland@york.ac.uk", "name" = "Sam Bland" }]
 readme = "README.md"
@@ -18,9 +18,10 @@ dependencies = [
   "data-helpers>=0.1.29",
   "dill>=0.3.8",
   # Additional private dependencies
-  # 'thermal_time @ git+ssh://git@github.com/SEI-DO3SE/thermal_time@RELEASE',
-  # 'do3se_phenology @ git+ssh://git@github.com/SEI-DO3SE/do3se_phenology@RELEASE',
-  # 'do3se_met @ git+ssh://git@github.com/SEI-DO3SE/do3se_met@RELEASE',
+  # Install these manually with uv pip install -e ../do3se_met etc after uv sync
+  # 'thermal_time@git+ssh://git@github.com/SEI-DO3SE/thermal_time@RELEASE',
+  # 'do3se_phenology@git+ssh://git@github.com/SEI-DO3SE/do3se_phenology@RELEASE',
+  # 'do3se_met@git+ssh://git@github.com/SEI-DO3SE/do3se_met@RELEASE',
 ]
 [dependency-groups]
 dev = [
@@ -32,10 +33,9 @@ dev = [
   "pre-commit>=2.7.1",
   "bump2version>=1.0.1",
   "pytest-benchmark>=3.4.1",
-  "decorator>=5.0.0"
+  "decorator>=5.0.0",
 ]
 
-[project.optional-dependencies]
 
 doc = [
   "sphinx",
@@ -71,6 +71,6 @@ line-length = 100
 "_test.py" = ["D100", "D101", "D102", "D103", "D107"]
 "test_*.py" = ["D100", "D101", "D102", "D103", "D107"]
 
-[tool.uv.sources]
-do3se-met = { path = "../do3se_met", editable = true }
-do3se-phenology = { path = "../do3se_phenology", editable = true }
+# [tool.uv.sources]
+# do3se-met = { path = "../do3se_met", editable = true }
+# thermal-time = { path = "../thermal_time", editable = true }

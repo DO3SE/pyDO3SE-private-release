@@ -7,12 +7,11 @@ irrigated maize from Mead, Nebraska
 
 """
 
-
 from math import exp
 from collections import namedtuple
 
 
-RespirationValues = namedtuple('RespirationValues', ['NPP', 'GPP', 'R_pm', 'R_pg'])
+RespirationValues = namedtuple("RespirationValues", ["NPP", "GPP", "R_pm", "R_pg"])
 
 
 def calc_net_prod(
@@ -121,7 +120,7 @@ def calc_net_prod(
 
     """
     if c_leaf <= 0:
-        return RespirationValues(0,0,0,0)
+        return RespirationValues(0, 0, 0, 0)
     GPP = canopy_An + beta * R_dc
 
     # TODO: Below carbon ratio should be Nitrogen
@@ -134,7 +133,8 @@ def calc_net_prod(
 
 
 CarbonPoolChange = namedtuple(
-    'CarbonPools', 'c_root_diff c_leaf_diff c_stem_diff c_harv_diff c_resv_diff')
+    "CarbonPools", "c_root_diff c_leaf_diff c_stem_diff c_harv_diff c_resv_diff"
+)
 
 
 def calc_carbon_pool_change(
@@ -196,7 +196,8 @@ def calc_carbon_pool_change(
 
 
 CarbonPartitionCoefficients = namedtuple(
-    'CarbonPartitionCoefficients', 'p_root p_leaf p_stem p_harv')
+    "CarbonPartitionCoefficients", "p_root p_leaf p_stem p_harv"
+)
 
 
 def calc_partition_coefficients(
@@ -245,8 +246,12 @@ def calc_partition_coefficients(
         p_root p_leaf p_stem p_harv
 
     """
-    bottom_of_eq = exp(a_root + (b_root * DVI)) + exp(a_stem +
-                                                      (b_stem * DVI)) + exp(a_leaf + (b_leaf * DVI)) + 1
+    bottom_of_eq = (
+        exp(a_root + (b_root * DVI))
+        + exp(a_stem + (b_stem * DVI))
+        + exp(a_leaf + (b_leaf * DVI))
+        + 1
+    )
     p_root = (exp(a_root + (b_root * DVI))) / bottom_of_eq
     p_leaf = (exp(a_leaf + (b_leaf * DVI))) / bottom_of_eq
     p_stem = (exp(a_stem + (b_stem * DVI))) / bottom_of_eq
@@ -254,7 +259,7 @@ def calc_partition_coefficients(
     return CarbonPartitionCoefficients(p_root, p_leaf, p_stem, p_harv)
 
 
-AdjustedCarbonPools = namedtuple('AdjustedCarbonPools', 'c_leaf c_harv c_resv')
+AdjustedCarbonPools = namedtuple("AdjustedCarbonPools", "c_leaf c_harv c_resv")
 
 
 def adjust_c_pools_at_eol(
@@ -449,18 +454,21 @@ def calc_root_fraction_from_carbon(
     return f
 
 
-CarbonPools = namedtuple('CarbonPools', [
-    'c_root',  #: Root Carbon
-    'c_stem',  #: Stem Carbon
-    'c_leaf',  #: Green Leaf Carbon
-    'c_harv',  #: Harvest/Grain Carbon
-    'c_resv',  #: Stem Reserve Carbon
-    'c_lbrn',  #: Brown leaf carbon
-    'p_root',  #: Fraction of npp going to root
-    'p_leaf',  #: Fraction of npp going to green leaf
-    'p_stem',  #: Fraction of npp going to stem
-    'p_harv',  #: Fraction of npp going to harvest/grain
-])
+CarbonPools = namedtuple(
+    "CarbonPools",
+    [
+        "c_root",  #: Root Carbon
+        "c_stem",  #: Stem Carbon
+        "c_leaf",  #: Green Leaf Carbon
+        "c_harv",  #: Harvest/Grain Carbon
+        "c_resv",  #: Stem Reserve Carbon
+        "c_lbrn",  #: Brown leaf carbon
+        "p_root",  #: Fraction of npp going to root
+        "p_leaf",  #: Fraction of npp going to green leaf
+        "p_stem",  #: Fraction of npp going to stem
+        "p_harv",  #: Fraction of npp going to harvest/grain
+    ],
+)
 
 
 def daily_carbon_allocation(
@@ -480,7 +488,7 @@ def daily_carbon_allocation(
     b_stem: float,
     theta: float,
     c_init: float = 8e-4,
-    plant_is_senescing: bool = None,
+    plant_is_senescing: bool | None = None,
     f_green_leaf: float = 0.95,
     f_brown_leaf: float = 0.85,
 ) -> CarbonPools:
@@ -554,13 +562,7 @@ def daily_carbon_allocation(
         b_stem,
     )
 
-    (
-        c_root_diff,
-        c_leaf_diff,
-        c_stem_diff,
-        c_harv_diff,
-        c_resv_diff
-    ) = calc_carbon_pool_change(
+    (c_root_diff, c_leaf_diff, c_stem_diff, c_harv_diff, c_resv_diff) = calc_carbon_pool_change(
         net_prod_acc if DVI > 0 else c_init,  # acumulated net productivity
         p_root,  # partition coefficient for root
         p_leaf,  # partition coefficient for leaf
@@ -625,19 +627,22 @@ def daily_carbon_allocation(
     )
 
 
-YieldOutputs = namedtuple('YieldOutputs', [
-    'stem_dm',
-    'leaf_dm',
-    'lbrn_dm',
-    'total_leaf_dm',
-    'straw_dm',
-    'ear_dm',
-    'aboveground_dm',
-    'belowground_dm',
-    'grain_dm',
-    'harvest_index',
-    'yield_ha',
-])
+YieldOutputs = namedtuple(
+    "YieldOutputs",
+    [
+        "stem_dm",
+        "leaf_dm",
+        "lbrn_dm",
+        "total_leaf_dm",
+        "straw_dm",
+        "ear_dm",
+        "aboveground_dm",
+        "belowground_dm",
+        "grain_dm",
+        "harvest_index",
+        "yield_ha",
+    ],
+)
 
 
 def calculate_yield(
@@ -648,7 +653,7 @@ def calculate_yield(
     c_resv: float,
     c_lbrn: float,
     dry_to_wet_biomass: float = 1 / 0.84,
-    grain_to_ear: float = 0.75
+    grain_to_ear: float = 0.75,
 ) -> YieldOutputs:
     """Calculate the yield values from the carbon pools.
 

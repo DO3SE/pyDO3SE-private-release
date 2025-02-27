@@ -102,6 +102,8 @@ class Multip_Gsto_params:
     leaf_f_light: float = 1.0  #: Irradiance effect on leaf gsto [fraction]
     f_temp: float = 1.0        #: Temperature effect on gsto [fraction]
     f_VPD: float = 1.0         #: VPD effect on gsto [fraction]
+        # TODO: Delete this when negative A_n resolved
+    f_VPD_alt: float = 1.0         #: VPD effect on gsto [fraction]
     f_SW: float = 1.0          #: Soil water effect on gsto [fraction]
     f_O3: float = 1.0          #: O3 effect on gsto [fraction]
 
@@ -159,6 +161,7 @@ class Canopy_Population_State:
     A_p: float = None  #: Triose phosphate utilisation limited assimilation rate [umol m-2 s-1 CO2]
     R_d: float = None  #: day respiration rate [micro mol/(m^2*s) CO2]
     c_i: float = None  #: CO2 concentration inside stomata   [micromol/mol]
+    c_i_sunlit: float = None  #: CO2 concentration inside stomata for top layer sunlit [micromol/mol]
 
     #: g_sv and leaf_gsto are average per m^2 (Not upscaled)
     g_sv_per_layer: List[float] = None  #: gsto for CO2 from Ewert model
@@ -173,8 +176,8 @@ class Canopy_Population_State:
     bulk_gsto_per_layer: List[float] = field(
         default_factory=lambda: [None for _ in range(settings.global_settings.MAX_NUM_OF_CANOPY_LAYERS)])
 
-    #: TODO: This is from gsto_params
-    f_VPD: float = 1.0         #: VPD effect on gsto [fraction]
+    #: TODO: This is from gsto_params Is it still used?!
+    # f_VPD: float = 1.0         #: VPD effect on gsto [fraction]
 
     #: Photosynthetic stomatal conductance parameters/results
     #: Moved to Canopy_Component_population
@@ -303,7 +306,6 @@ class Canopy_Component_State:
 
     #: D_0 "The VPD at which g_sto is reduced by a factor of 2" [kPa] (Leuning et al. 1998)
     D_0: float = None
-    g_bv_H2O: float = None  #: boundary layer conductance for forced convection [umol m-2 s-1 H2O]
 
     #: Carbon state ==
     #: Carbon Pools
@@ -390,6 +392,8 @@ class Canopy_Layer_Component_State:
     #: Gsto values are stored centrally as O3 then converted where needed
     mean_gsto: float = None        #: layer mean stomatal conductance [mmol O3 m-2 PLA s-1]
     bulk_gsto: float = None        #: layer total stomatal conductance [mmol O3 m-2 PLA s-1]
+
+    g_bv_H2O: float = None  #: boundary layer conductance for forced convection [umol m-2 s-1 H2O]
 
     #: Fraction of each population that makes up the layer
     fLAI_layer: List[float] = field(default_factory=lambda: np.zeros(

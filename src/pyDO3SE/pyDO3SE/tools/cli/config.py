@@ -79,14 +79,18 @@ def migrate(config_location: str, override: bool):
 
 
 @click.command()
-def available_outputs():
+@click.option('--detailed/--short', default=False)
+def available_outputs(
+    detailed: bool = False,
+):
     """Print available outputs for output data and graphs.
-
-    NOTE: This is not fully implemented and only a subset are
-    outputed to the output file.
     """
-    print("WARNING: Only a subset of these fields are actually available currently")
-    pprint(output_fields_map)
+    if(detailed):
+        pprint(output_fields_map)
+    else:
+        print("ID\tShort\tType")
+        print("------\t------")
+        print('\n'.join([f"{o.id}\t{o.short}\t{o.type}" for o in output_fields_map.values()]))
 
 
 @click.command()

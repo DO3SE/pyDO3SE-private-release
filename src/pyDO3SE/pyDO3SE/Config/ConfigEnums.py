@@ -3,7 +3,6 @@ from deprecated import deprecated
 
 
 class LandCoverType(Enum):
-
     CROP = "CROP"
     FOREST = "FOREST"
 
@@ -22,6 +21,7 @@ class LeafFPhenAnetInfluence(Enum):
         Apply multiplicative leaf_f_phen to leaf_gsto
 
     """
+
     DISABLED = "disabled"
     V_C_MAX = "v_c_max"
     G_STO = "g_sto"
@@ -44,6 +44,7 @@ class LifeSpanMethods(Enum):
         Estimate the life stages when given growing season
 
     """
+
     CONSTANT = "constant"
     JULES = "JULES"
     LEAF_F_PHEN = "leaf_f_phen"
@@ -121,6 +122,7 @@ class CanopyHeightMethods(Enum):
 
 
     """
+
     CONSTANT = "constant"
     INPUT = "input"
     CARBON = "carbon"
@@ -211,14 +213,14 @@ class LAIMethods(Enum):
 class DVIMethods(Enum):
     """DVI methods
 
-     DISABLED = "disabled"
-        Not calculated
-     JULES = "JULES"
-        Use JULES thermal time method
-     THERMAL TIME = "THERMAL TIME"
-        Use THERMAL TIME PLF method
-     INPUT = "INPUT"
-        Use external input (NOT IMPLEMENTED)
+    DISABLED = "disabled"
+       Not calculated
+    JULES = "JULES"
+       Use JULES thermal time method
+    THERMAL TIME = "THERMAL TIME"
+       Use THERMAL TIME PLF method
+    INPUT = "INPUT"
+       Use external input (NOT IMPLEMENTED)
 
     """
 
@@ -281,6 +283,7 @@ class OzoneDepositionMethods(Enum):
     SINGLE_LAYER = "single layer"
     MULTI_LAYER = "multi layer"
 
+
 class GstoMethods(Enum):
-    MULTIPLICATIVE="multiplicative"
-    PHOTOSYNTHESIS="photosynthesis"
+    MULTIPLICATIVE = "multiplicative"
+    PHOTOSYNTHESIS = "photosynthesis"

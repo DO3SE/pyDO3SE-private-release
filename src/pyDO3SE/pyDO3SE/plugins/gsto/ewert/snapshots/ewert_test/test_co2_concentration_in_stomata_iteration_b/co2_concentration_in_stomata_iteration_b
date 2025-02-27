@@ -7,4 +7,5 @@ CO2_loop_State(c_i=366.3646469481298,
                A_j=59.67014221159362,
                A_n_limit_factor='A_c',
                f_VPD=0.9996640316746571,
+               f_VPD_alt=None,
                iterations=5)

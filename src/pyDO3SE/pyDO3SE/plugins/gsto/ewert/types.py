@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import NamedTuple, List
 from pyDO3SE.Config.ConfigEnums import FVPDMethods
-
+from .enums import AdjustNegativeAnMethods
 
 @dataclass
 class Output_Shape:
@@ -34,6 +34,8 @@ class Output_Shape:
         day respiration rate [micro mol/(m^2*s) CO2]
     c_i: float
         CO2 concentration inside stomata [ppm]
+    c_i_sunlit: float
+        CO2 concentration inside stomata for top sunlit part of the canopy [ppm]
     fVPD: float
         Humidity Function (Leuning 1995)
     v_cmax: float
@@ -42,7 +44,6 @@ class Output_Shape:
         rate of electron transport [umol m-2 s-1]
     loop_iterations: int
         Number of iterations in convergence loop. Useful for debugging
-
 
     """
 
@@ -56,10 +57,13 @@ class Output_Shape:
     A_n_limit_factor: List[str | None]
     R_d: float
     c_i: float
-    f_VPD: float
+    c_i_sunlit: float
+    f_VPD: list[float]
     v_cmax: float
     j_max: float
-    loop_iterations: int
+    # TODO: Delete this when negative A_n resolved
+    f_VPD_alt: list[float]=None
+    loop_iterations: int=None
 
 
 @dataclass
@@ -72,12 +76,18 @@ class ModelOptions:
         Threshold (from 0) to consider co2 concentration equation as "balanced"
     co2_concentration_max_iterations: int = 50
         Maximum number of iterations to find co2 concentration solution
+    adjust_negative_A_n: AdjustNegativeAnMethods = AdjustNegativeAnMethods.FALSE,
+        If True then allow negative A_n values, else return NaN
+        If "last_resort" then allow negative A_n values if no other solution is found
+        If "clip" then clip negative A_n values to -R_d
+
 
     """
 
     f_VPD_method: FVPDMethods = FVPDMethods.LEUNING
     co2_concentration_balance_threshold: float = 0.001
     co2_concentration_max_iterations: int = 50
+    adjust_negative_A_n: AdjustNegativeAnMethods = AdjustNegativeAnMethods.FALSE
 
 
 @dataclass
@@ -105,7 +115,7 @@ class CO2_loop_State:
         The factor that has limited CO2 assimilation (A_c/A_j/A_p)
     iterations: float
         Number of iterations in convergence loop
-    f_VPD: float
+    f_VPD: list[float]
         Humidity Function (Leuning 1995)
 
     """
@@ -119,6 +129,8 @@ class CO2_loop_State:
     A_j: float = 0.0
     A_n_limit_factor: str | None = None
     f_VPD: float | None = None
+    # TODO: Delete this when negative A_n resolved
+    f_VPD_alt: float | None = None
     iterations: int = 0
 
 
@@ -130,6 +142,8 @@ class CO2_Constant_Loop_Inputs:
     ------
     D_0: float
         "The VPD at which g_sto is reduced by a factor of 2" [Pa] (Leuning et al. 1998)
+    fmin: float
+        Minimum fVPD [fraction]
     c_a: float
         CO2 concentration [ppm]
     e_a: float
@@ -177,6 +191,7 @@ class CO2_Constant_Loop_Inputs:
     g_sto_0: float
     m: float
     D_0: float
+    fmin: float
     Gamma: float
     Gamma_star: float
     V_cmax: float
@@ -201,6 +216,8 @@ class CO2_Concentration_Args:
     ------
     D_0: float
         "The VPD at which g_sto is reduced by a factor of 2" [Pa] (Leuning et al. 1998)
+    fmin: float
+        Minimum fVPD [fraction]
     c_a: float
         CO2 concentration [ppm]
     e_a: float
@@ -237,8 +254,6 @@ class CO2_Concentration_Args:
         Hourly accumulated ozone impace factor [dimensionless][0-1]
     f_VPD: float
         VPD effect on gsto [fraction] (Optional if pre-calculated)
-    RH: float
-        Relative humidity [%] Only needed for cubic method
     P: float
         Air pressure [kPa]
 
@@ -251,6 +266,7 @@ class CO2_Concentration_Args:
     g_sto_prev: float
     m: float
     D_0: float
+    fmin: float
     Gamma: float
     Gamma_star: float
     V_cmax: float
@@ -263,7 +279,6 @@ class CO2_Concentration_Args:
     f_LS: float
     fO3_d: float
     f_VPD: float
-    RH: float
     P: float
 
 

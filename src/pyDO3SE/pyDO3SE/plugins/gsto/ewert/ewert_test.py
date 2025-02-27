@@ -1,7 +1,6 @@
 """Ewert model tests."""
 
 import os
-import pytest
 from dataclasses import asdict
 from math import isclose
 from pyDO3SE.Config.ConfigEnums import FVPDMethods
@@ -76,6 +75,7 @@ def test_co2_concentration_in_stomata_iteration(snapshot):
             fO3_d=1.0,
             f_LS=1.0,
             f_VPD=1.0,
+            fmin=0.1,
         ),
         CO2_loop_State(
             c_i=0.0,
@@ -116,6 +116,7 @@ def test_co2_concentration_in_stomata_iteration_b(snapshot):
             fO3_d=0.8,
             f_LS=0.91,
             f_VPD=1.0,
+            fmin=0.1,
         ),
         ModelOptions(
             f_VPD_method=FVPDMethods.LEUNING,
@@ -655,13 +656,14 @@ class TestEwertLeafPop:
             PARshade=[800 for _ in range(nL)],
             LAIsunfrac=[0.9, 0.8, 0.7],
             D_0=2.27,
-            g_bv=1469999.0,
+            fmin=0.1,
+            g_bv=[1469999.0 for _ in range(nL)],
             # leaf_pop_distribution=[LAI * 0.33, LAI * 0.33, LAI * 0.33],
             layer_lai_frac=[0.33, 0.33, 0.33],
             layer_lai=[LAI * 0.33, LAI * 0.33, LAI * 0.33],
             Tleaf_C=[20.0 for _ in range(nL)],
             f_SW=1,
-            f_VPD=1.0,
+            f_VPD=[1.0 for _ in range(nL)],
             f_LS=0.89,
             fO3_d=0.89,
             eact=1.0,
@@ -684,7 +686,7 @@ class TestEwertLeafPop:
         assert type(out.A_n_limit_factor[0]) == str
         assert type(out.R_d) == float
         assert type(out.c_i) == float
-        assert type(out.f_VPD) == float
+        assert type(out.f_VPD) == list
         assert type(out.v_cmax) == float
         assert type(out.j_max) == float
 
@@ -697,16 +699,16 @@ class TestEwertLeafPop:
         # import data
         df = pd.read_csv(DEMO_DATA_LOCATION)
         data = {}
-        data["Ts_C"] = df["Ts_C"].values.reshape((365, 24))
-        data["u"] = df["u"].values.reshape((365, 24))
-        data["VPD"] = df["VPD"].values.reshape((365, 24))
-        data["PAR"] = df["PAR, W m-2"].values.reshape((365, 24))
-        data["P"] = df["P, kPa"].values.reshape((365, 24))
-        data["O3"] = df["O3, ppb"].values.reshape((365, 24))
-        data["fst"] = df["Fst (nmol/m^2/s)"].values.reshape((365, 24))
-        data["Lai"] = df["LAI"].values.reshape((365, 24))
+        data["Ts_C"] = df["Ts_C"].values.reshape((365, 24))  # type: ignore
+        data["u"] = df["u"].values.reshape((365, 24))  # type: ignore
+        data["VPD"] = df["VPD"].values.reshape((365, 24))  # type: ignore
+        data["PAR"] = df["PAR, W m-2"].values.reshape((365, 24))  # type: ignore
+        data["P"] = df["P, kPa"].values.reshape((365, 24))  # type: ignore
+        data["O3"] = df["O3, ppb"].values.reshape((365, 24))  # type: ignore
+        data["fst"] = df["Fst (nmol/m^2/s)"].values.reshape((365, 24))  # type: ignore
+        data["Lai"] = df["LAI"].values.reshape((365, 24))  # type: ignore
 
-        td_data = np.array(td_functions.calc_thermal_time_range(df["Ts_C"].values))
+        td_data = np.array(td_functions.calc_thermal_time_range(df["Ts_C"].values))  # type: ignore
 
         # previous_day_output = None
         output_data = []
@@ -715,9 +717,6 @@ class TestEwertLeafPop:
         day_count = 365
         # config
         season_Astart = 153
-        season_Astart_temp = td_functions.get_thermal_time_at_day(
-            season_Astart, td_data, 0
-        )
 
         ewert_constant_inputs = {
             "nL": nL,
@@ -734,7 +733,7 @@ class TestEwertLeafPop:
                 # O3_nmol = O3_ppb_to_nmol(data["Ts_C"][dd][hr], data["P"][dd][hr], data["O3"][dd][hr])
                 fO3_d = 1.0  # Get from data
                 f_LS = 1.0  # Get from data
-                g_bv = calc_g_bv(0.02, data["u"][dd][hr], GAS.H2O)
+                g_bv = [calc_g_bv(0.02, data["u"][dd][hr], GAS.H2O) for _ in range(nL)]
                 LAI = [data["Lai"][dd][hr] * iL for iL in range(nL)]
                 sinB = calc_solar_elevation(40.43, -3.7, dd, hr)
                 LAIsunfrac = MLMC_sunlit_LAI(nL, 1, [[L] for L in LAI], sinB)
@@ -744,24 +743,24 @@ class TestEwertLeafPop:
                 Idrctt, Idfuse, _ = calc_Idrctt_Idfuse(sinB, P, PAR=PAR)
                 cosA = 0.5
                 PARsun, PARshade = list(
-                    zip(
-                        *[
-                            calc_PAR_sun_shade(Idrctt, Idfuse, sinB, cosA, L)
-                            for L in LAI
-                        ]
-                    )
+                    zip(*[calc_PAR_sun_shade(Idrctt, Idfuse, sinB, cosA, L) for L in LAI])
                 )
-                gsto_prev = [DRATIO_O3_CO2 * (max(0.0, output_data[-1].g_sv_per_layer[iL]) / 1000) if len(output_data) > 0 else ewert_constant_inputs['g_sto_0'] for iL in range(nL)]
+                gsto_prev = [
+                    DRATIO_O3_CO2 * (max(0.0, output_data[-1].g_sv_per_layer[iL]) / 1000)
+                    if len(output_data) > 0
+                    else ewert_constant_inputs["g_sto_0"]
+                    for iL in range(nL)
+                ]
                 ewert_inputs = {
                     **ewert_constant_inputs,
                     "PARsun": PARsun,
                     "PARshade": PARshade,
                     "LAIsunfrac": LAIsunfrac,
-                    "layer_lai_frac": LAI / sum(LAI),
+                    # "layer_lai_frac": np.mean(LAI, axis=0),
+                    "layer_lai_frac": [lai/sum(LAI) for lai in LAI],
                     "layer_lai": LAI,
                     "D_0": D_0,
                     "g_bv": g_bv,
-                    "RH": 0.5,
                     "P": data["P"][dd][hr],
                     "g_sto_prev": gsto_prev,
                     "Tleaf_C": [data["Ts_C"][dd][hr] for _ in range(nL)],
@@ -770,7 +769,8 @@ class TestEwertLeafPop:
                     "fO3_d": fO3_d,
                     "f_LS": f_LS,
                     "f_SW": 1,
-                    "f_VPD": 1,
+                    "f_VPD": [1 for _ in range(nL)],
+                    "fmin": 0.1,
                 }
                 hr_output = ewert_leaf_pop_cubic(**ewert_inputs)
 
@@ -784,30 +784,22 @@ class TestEwertLeafPop:
         A_p_full = np.array([i.A_p for i in output_data])
         R_d_full = np.array([i.R_d for i in output_data])
         g_sto_full = np.array(
-            [
-                DRATIO_O3_CO2 * (max(0.0, i.g_sv_per_layer[0]) / 1000)
-                for i in output_data
-            ]
+            [DRATIO_O3_CO2 * (max(0.0, i.g_sv_per_layer[0]) / 1000) for i in output_data]
         )
         g_sv_full = np.array([i.g_sv_per_layer[0] for i in output_data])
 
         df_out = pd.DataFrame([asdict(i) for i in output_data])
-        # .drop([
-        #     'Tleaf_C'
-        # ], axis=1)
+
         df_in = pd.DataFrame(input_data)
 
         # export data
+        os.makedirs(SAVE_OUTPUTS_LOCATION, exist_ok=True)
         df_out.to_csv(SAVE_OUTPUTS_LOCATION + "gsto_output_full_year.csv")
         df_in.to_csv(SAVE_OUTPUTS_LOCATION + "gsto_output_full_year_inputs.csv")
 
         # plots
-        x = np.array(
-            [[k for k in range(24)] for j in [i for i in range(day_count)]]
-        ).flatten()
-        y = np.array(
-            [[j for k in range(24)] for j in [i for i in range(day_count)]]
-        ).flatten()
+        x = np.array([[k for k in range(24)] for j in [i for i in range(day_count)]]).flatten()
+        y = np.array([[j for k in range(24)] for j in [i for i in range(day_count)]]).flatten()
 
         fig = plt.figure()
         fig = plt.figure(figsize=(18, 16), dpi=80, facecolor="w", edgecolor="k")
@@ -815,17 +807,17 @@ class TestEwertLeafPop:
 
         z = g_sv_full
         ax.scatter(x, y, z, c=z)
-        ax.figure.savefig(SAVE_OUTPUTS_LOCATION + "g_sv.png")
+        ax.figure.savefig(SAVE_OUTPUTS_LOCATION + "g_sv.png")  # type: ignore
 
         ax.clear()
         z = g_sto_full
         ax.scatter(x, y, z, c=z)
-        ax.figure.savefig(SAVE_OUTPUTS_LOCATION + "g_sto.png")
+        ax.figure.savefig(SAVE_OUTPUTS_LOCATION + "g_sto.png")  # type: ignore
 
         ax.clear()
         z = A_n_full
         ax.scatter(x, y, z, c=z)
-        ax.figure.savefig(SAVE_OUTPUTS_LOCATION + "A_n.png")
+        ax.figure.savefig(SAVE_OUTPUTS_LOCATION + "A_n.png")  # type: ignore
 
         ax.clear()
         z = A_n_full
@@ -841,12 +833,12 @@ class TestEwertLeafPop:
             for i in A_n_limit_factor_full
         ]
         ax.scatter(x, y, z, c=c)
-        ax.figure.savefig(SAVE_OUTPUTS_LOCATION + "A_n_limit.png")
+        ax.figure.savefig(SAVE_OUTPUTS_LOCATION + "A_n_limit.png")  # type: ignore
 
         ax.clear()
         z = A_c_full
         ax.scatter(x, y, z, c=z)
-        ax.figure.savefig(SAVE_OUTPUTS_LOCATION + "A_c.png")
+        ax.figure.savefig(SAVE_OUTPUTS_LOCATION + "A_c.png")  # type: ignore
 
         # print max and min
         snapshot.assert_match(
@@ -881,7 +873,7 @@ class TestEwertLeafPop:
                 np.random.choice(A_n_full, 30, replace=False),
                 precision=5,
                 separator=",",
-                threshold=np.inf,
+                threshold=np.inf,  # type: ignore
             ),
             "A_n",
         )  # noqa: E501
@@ -890,7 +882,7 @@ class TestEwertLeafPop:
                 np.random.choice(A_c_full, 30, replace=False),
                 precision=5,
                 separator=",",
-                threshold=np.inf,
+                threshold=np.inf,  # type: ignore
             ),
             "A_c",
         )  # noqa: E501
@@ -899,7 +891,7 @@ class TestEwertLeafPop:
                 np.random.choice(A_j_full, 30, replace=False),
                 precision=5,
                 separator=",",
-                threshold=np.inf,
+                threshold=np.inf,  # type: ignore
             ),
             "A_j",
         )  # noqa: E501
@@ -908,7 +900,7 @@ class TestEwertLeafPop:
                 np.random.choice(A_p_full, 30, replace=False),
                 precision=5,
                 separator=",",
-                threshold=np.inf,
+                threshold=np.inf,  # type: ignore
             ),
             "A_p",
         )  # noqa: E501
@@ -917,7 +909,7 @@ class TestEwertLeafPop:
                 np.random.choice(R_d_full, 30, replace=False),
                 precision=5,
                 separator=",",
-                threshold=np.inf,
+                threshold=np.inf,  # type: ignore
             ),
             "R_d",
         )  # noqa: E501
@@ -926,7 +918,7 @@ class TestEwertLeafPop:
                 np.random.choice(g_sto_full, 30, replace=False),
                 precision=5,
                 separator=",",
-                threshold=np.inf,
+                threshold=np.inf,  # type: ignore
             ),
             "g_sto",
         )  # noqa: E501
@@ -935,7 +927,7 @@ class TestEwertLeafPop:
                 np.random.choice(g_sv_full, 30, replace=False),
                 precision=5,
                 separator=",",
-                threshold=np.inf,
+                threshold=np.inf,  # type: ignore
             ),
             "g_sv",
         )  # noqa: E501
@@ -963,6 +955,7 @@ def test_negative_A_n_values():
         f_LS=0,
         fO3_d=1.0,
         f_VPD=1.0,
+        fmin=0.1,
     )
     model_options = ModelOptions(
         f_VPD_method=FVPDMethods.DISABLED,
@@ -985,7 +978,7 @@ def test_negative_A_n_values_using_cubic_method():
         g_sto_0=20000.0,
         g_sto_prev=20000.0,
         P=101.325,
-        RH=0.5,
+        f_VPD=0.5,
         m=6,
         D_0=2.7,
         Gamma=14.333665361703794,
@@ -999,7 +992,7 @@ def test_negative_A_n_values_using_cubic_method():
         f_SW=1.0,
         f_LS=0,
         fO3_d=1.0,
-        f_VPD=1.0,
+        fmin=0.1,
     )
 
     model_options = ModelOptions(
@@ -1026,7 +1019,7 @@ def test_negative_A_n_values_compare_methods():
         D_0=2.7,
         Gamma=14.333665361703794,
         Gamma_star=12.52438053902872,
-        V_cmax=12.882285347707354,
+        V_cmax=82.882285347707354,
         K_C=30.750578109134757,
         K_O=85.49206630570801,
         J=40.30643977341539,
@@ -1036,6 +1029,7 @@ def test_negative_A_n_values_compare_methods():
         f_LS=1.0,
         fO3_d=1.0,
         f_VPD=1.0,
+        fmin=0.1,
     )
 
     cubic_inputs = CO2_Concentration_Args(
@@ -1043,14 +1037,14 @@ def test_negative_A_n_values_compare_methods():
         e_a=3000.2238437279115,
         g_bl=1478654.912462574,
         g_sto_0=10000.0,
-        g_sto_prev=10000.0,
+        g_sto_prev=40000.0,
         P=101.325,
-        RH=0.5,
+        f_VPD=0.5,
         m=6,
         D_0=2.7,
         Gamma=14.333665361703794,
         Gamma_star=12.52438053902872,
-        V_cmax=12.882285347707354,
+        V_cmax=82.882285347707354,
         K_C=30.750578109134757,
         K_O=85.49206630570801,
         J=40.30643977341539,
@@ -1059,10 +1053,10 @@ def test_negative_A_n_values_compare_methods():
         f_SW=1.0,
         f_LS=1.0,
         fO3_d=1.0,
-        f_VPD=1.0,
+        fmin=0.1,
     )
     model_options = ModelOptions(
-        f_VPD_method=FVPDMethods.DISABLED,
+        f_VPD_method=FVPDMethods.DANIELSSON,
         co2_concentration_balance_threshold=0.001,
         co2_concentration_max_iterations=50,
     )
@@ -1078,12 +1072,59 @@ def test_negative_A_n_values_compare_methods():
     )
 
     assert final_state_cubic.A_n > -R_d
-
-    assert final_state_cubic.iterations != final_state.iterations
-    # assert final_state_cubic.A_n == final_state.A_n
-    # assert final_state_cubic.A_c - R_d == final_state.A_c
-    # assert final_state_cubic.A_j == final_state.A_j # Not equal
-    # assert final_state_cubic.A_p == final_state.A_p # Not equal
+    print(final_state_cubic)
+    print(final_state)
+    # assert final_state_cubic.iterations != final_state.iterations
+    assert isclose(final_state_cubic.A_p, final_state.A_p, rel_tol=0.1)
+    assert isclose(final_state_cubic.A_c, final_state.A_c, rel_tol=0.1)
+    assert isclose(final_state_cubic.A_j, final_state.A_j, rel_tol=0.1)
+    assert isclose(final_state_cubic.A_n, final_state.A_n, rel_tol=0.1)
+    assert final_state_cubic.A_n_limit_factor == final_state.A_n_limit_factor
     # assert isclose(final_state_cubic.A_p, final_state.A_p, abs_tol=1e-1)  False = isclose(6.441142673853677, 6.247908393638067, abs_tol=0.1)
-    assert isclose(final_state_cubic.g_sto, final_state.g_sto, rel_tol=5)
-    assert isclose(final_state_cubic.c_i, final_state.c_i, rel_tol=5)
+    assert isclose(final_state_cubic.g_sto, final_state.g_sto, rel_tol=0.1)
+    assert isclose(final_state_cubic.c_i, final_state.c_i, rel_tol=0.1)
+    print("iterations", final_state.iterations, final_state_cubic.iterations)
+    print("A_n_limiting_factor", final_state.A_n_limit_factor, final_state_cubic.A_n_limit_factor)
+    print("A_n", final_state.A_n, final_state_cubic.A_n)
+    print("A_j", final_state.A_j, final_state_cubic.A_j)
+    print("A_p", final_state.A_p, final_state_cubic.A_p)
+    print("A_c", final_state.A_c, final_state_cubic.A_c)
+    print("cubic", final_state_cubic)
+    print("iterative", final_state)
+
+
+class TestEwertCubic:
+    def test_outputs_f_vpd(self):
+        nL = 3
+        out = ewert_leaf_pop_cubic(
+            nL=nL,
+            g_sto_0=20000,
+            m=8.12,
+            V_cmax_25=[180.0 for _ in range(3)],
+            J_max_25=[400.0 for _ in range(3)],
+            R_d_coeff=0.015,
+            PARsun=[800 for _ in range(3)],
+            PARshade=[800 for _ in range(3)],
+            LAIsunfrac=[0.9, 0.8, 0.7],
+            layer_lai_frac=[0.33, 0.33, 0.33],
+            layer_lai=[0.01 * 0.33, 0.01 * 0.33, 0.01 * 0.33],
+            Tleaf_C=[20.0 for _ in range(3)],
+            g_sto_prev=[20000.0 for _ in range(3)],
+            f_VPD=[0.5 for _ in range(nL)],
+            P=101.325,
+            D_0=2.27,
+            fmin=0.1,
+            g_bv=[1469999.0 for _ in range(nL)],
+            f_SW=1,
+            f_LS=0.89,
+            fO3_d=0.89,
+            eact=1.0,
+            c_a=391.0,
+            f_VPD_method=FVPDMethods.LEUNING,
+            co2_concentration_balance_threshold=0.001,
+            co2_concentration_max_iterations=50,
+        )
+        assert len(out.f_VPD) == nL
+        assert 0 < out.f_VPD[0] < 1
+        assert 0 < out.f_VPD[1] < 1
+        assert 0 < out.f_VPD[2] < 1

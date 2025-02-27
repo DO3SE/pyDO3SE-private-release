@@ -14,7 +14,7 @@ from pyDO3SE.Config.config_loader import config_loader
 from pyDO3SE.Pipelines.es_init_processes import external_state_init_processes
 from pyDO3SE.Pipelines.config_init_processes import config_init_processes
 
-DEMO_START_DAY = 0
+DEMO_START_DAY = 1
 DEMO_END_DAY = 40
 HOURS_IN_DAY = 24
 DAYS_IN_YEAR = 365
@@ -78,7 +78,7 @@ def test_init_external_state(snapshot):
     external_state_data = next(load_external_state(data_location, file_type=FileTypes.CSV))
     process_runner.external_state = external_state_data
     external_state = process_runner.run_processes(
-        external_state_init_processes(start_day * 24, end_day * 24, config.Met),
+        external_state_init_processes(start_day, end_day, config_met=config.Met),
         external_state_data)
 
     assert external_state.sinB and sum(external_state.sinB) > 0

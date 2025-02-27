@@ -54,7 +54,6 @@
                   "fSWP_exp_curve": "temperate",
                   "f_SW_method": "disabled",
                   "f_VPD_method": "danielsson",
-                  "fmin": 0.01,
                   "method": "photosynthesis"
               },
               "height": null,
@@ -332,7 +331,8 @@
                   "tt_emr": null,
                   "tt_rep": null,
                   "tt_veg": null,
-                  "use_O3_damage": true
+                  "use_O3_damage": true,
+                  "ewert_loop_method": "cubic"
               }
           }
       ],
@@ -631,6 +631,8 @@
           "A_p",
           "A_n_sunlit",
           "A_n_limit_factor",
+          "g_bv",
+          "c_i_sunlit",
           "fst",
           "fst_sun",
           "fst_canopy",

@@ -1,7 +1,18 @@
 import numpy as np
 from math import isclose
+from collections import namedtuple
 import pytest
-from .calculations import *
+from .calculations import (
+    calc_root_fraction_from_carbon,
+    get_plant_height_from_carbon,
+    calc_LAI_from_DVI_and_carbon,
+    adjust_c_pools_at_eol,
+    calc_partition_coefficients,
+    calc_carbon_pool_change,
+    daily_carbon_allocation,
+    calc_net_prod,
+)
+from pyDO3SE.util.test_utils import process_snapshot
 
 
 class TestCalcNetProd:
@@ -14,11 +25,11 @@ class TestCalcNetProd:
             c_leaf=0.2,
             R_dc=0.32,
             r_g=0.25,
-        )
+        ).NPP
 
         assert isclose(out, 14.52, abs_tol=1e-3)
 
-    def test_should_be_less_0_when_stem_root_leaf_ratio_high(self):
+    def test_should_be_0_when_stem_root_leaf_ratio_high(self):
         c_root = 3
         c_stem = 3
         c_leaf = 0.01
@@ -30,10 +41,9 @@ class TestCalcNetProd:
             c_leaf=c_leaf,
             R_dc=0.32,
             r_g=0.25,
-        )
+        ).NPP
 
-        assert out < 0
-        assert isclose(out, -129.0, abs_tol=1e-3)
+        assert out == 0
 
     def test_should_be_less_near_acan_in_when_stem_root_leaf_ratio_low(self):
         c_root = 0.1
@@ -48,8 +58,8 @@ class TestCalcNetProd:
             r_g=0.25,
         )
 
-        assert out > 0
-        assert isclose(out, 14.9952, abs_tol=1e-3)
+        assert out.NPP > 0
+        assert isclose(out.NPP, 14.9952, abs_tol=1e-3)
 
 
 class TestCalcCarbonPoolChange:
@@ -83,10 +93,10 @@ class TestCalcPartitionCoefficients:
             b_leaf=-18.5,
         ) for DVI in [-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0]]
 
-        snapshot.assert_match([o.p_root for o in out], 'p_root')
-        snapshot.assert_match([o.p_leaf for o in out], 'p_leaf')
-        snapshot.assert_match([o.p_stem for o in out], 'p_stem')
-        snapshot.assert_match([o.p_harv for o in out], 'p_harv')
+        snapshot.assert_match(process_snapshot([o.p_root for o in out]), 'p_root')
+        snapshot.assert_match(process_snapshot([o.p_leaf for o in out]), 'p_leaf')
+        snapshot.assert_match(process_snapshot([o.p_stem for o in out]), 'p_stem')
+        snapshot.assert_match(process_snapshot([o.p_harv for o in out]), 'p_harv')
 
     @pytest.mark.parametrize('DVI', [-1, 0, 1, 2])
     def test_fractions_add_to_1(self, DVI):
@@ -170,7 +180,7 @@ class TestCalcLAIFromDVIAndCarbon:
             emerged_leaf_count=2,
         )
 
-        snapshot.assert_match(out, f"DVI {DVI} c_leaf {c_leaf}")
+        snapshot.assert_match(process_snapshot(out), f"DVI {DVI} c_leaf {c_leaf}")
 
 
 class TestGetPlantHeightFromCarbon:
@@ -183,7 +193,7 @@ class TestGetPlantHeightFromCarbon:
             lambdav=0.4,
             f_c=0.5,
         )
-        snapshot.assert_match(out, f"c_stem {c_stem}")
+        snapshot.assert_match(process_snapshot(out), f"c_stem {c_stem}")
 
 
 class TestCalcRootFractionFromCarbon:
@@ -197,14 +207,14 @@ class TestCalcRootFractionFromCarbon:
             z=0.5,
             f_c=0.5,
         )
-        snapshot.assert_match(out, f"c_root {c_root}")
+        snapshot.assert_match(process_snapshot(out), f"c_root {c_root}")
 
 
 class TestDailyCarbonAllocation:
 
     def test_single_day(self):
 
-        c_root, c_stem, c_leaf, c_harv, c_resv = daily_carbon_allocation(
+        c_root, c_stem, c_leaf, c_harv, c_resv, c_lbrn, *fractions = daily_carbon_allocation(
             net_prod_acc=20,
             DVI=1.3,
             c_root=0.2,
@@ -212,6 +222,7 @@ class TestDailyCarbonAllocation:
             c_leaf=0.2,
             c_harv=0.2,
             c_resv=0.2,
+            c_lbrn=0.2,
             a_root=18.5,
             a_stem=16.0,
             a_leaf=18.0,
@@ -250,6 +261,7 @@ class TestDailyCarbonAllocation:
             "c_leaf",
             "c_harv",
             "c_resv",
+            "c_lbrn",
             "net_prod_acc",
             "lai",
             "plant_height",
@@ -263,6 +275,7 @@ class TestDailyCarbonAllocation:
             c_leaf=0.01,
             c_harv=0,
             c_resv=0,
+            c_lbrn=0,
             net_prod_acc=0,
             lai=0,
             plant_height=0,
@@ -302,26 +315,27 @@ class TestDailyCarbonAllocation:
                     model_state.c_leaf,
                     cparams["r_g"],
                     cparams["R_dc"],
-                )
+                ).NPP
             net_prod_acc = max(0, net_prod_acc)
 
             DVI = dvi_hourly[row_index]
 
-            c_root, c_stem, c_leaf, c_harv, c_resv = daily_carbon_allocation(
-                net_prod_acc,
-                DVI,
-                model_state.c_root,
-                model_state.c_stem,
-                model_state.c_leaf,
-                model_state.c_harv,
-                model_state.c_resv,
-                cparams["a_root"],
-                cparams["a_leaf"],
-                cparams["a_stem"],
-                cparams["b_root"],
-                cparams["b_leaf"],
-                cparams["b_stem"],
-                cparams["theta"],
+            c_root, c_stem, c_leaf, c_harv, c_resv, c_lbrn, *fractions = daily_carbon_allocation(
+                net_prod_acc=net_prod_acc,
+                DVI=DVI,
+                c_root=model_state.c_root,
+                c_stem=model_state.c_stem,
+                c_leaf=model_state.c_leaf,
+                c_harv=model_state.c_harv,
+                c_resv=model_state.c_resv,
+                c_lbrn=model_state.c_lbrn,
+                a_root=cparams["a_root"],
+                a_leaf=cparams["a_leaf"],
+                a_stem=cparams["a_stem"],
+                b_root=cparams["b_root"],
+                b_leaf=cparams["b_leaf"],
+                b_stem=cparams["b_stem"],
+                theta=cparams["theta"],
             )
             lai = calc_LAI_from_DVI_and_carbon(
                 DVI,
@@ -341,9 +355,51 @@ class TestDailyCarbonAllocation:
                 c_leaf=c_leaf,
                 c_harv=c_harv,
                 c_resv=c_resv,
+                c_lbrn=c_lbrn,
                 net_prod_acc=net_prod_acc,
                 lai=lai,
                 plant_height=plant_height,
             )
 
-        snapshot.assert_match(model_state._asdict())
+        snapshot.assert_match(process_snapshot(model_state), "growing season carbon allocation")
+
+    def test_reducing_green_leaf_fraction(self):
+        common_args = dict(
+            net_prod_acc=20,
+            DVI=1.8,
+            c_root=0.2,
+            c_stem=0.2,
+            c_leaf=0.2,
+            c_harv=0.2,
+            c_resv=0.2,
+            c_lbrn=0.2,
+            a_root=18.5,
+            a_stem=16.0,
+            a_leaf=18.0,
+            b_root=-20.0,
+            b_stem=-15.0,
+            b_leaf=-18.5,
+            theta=0.4,
+            plant_is_senescing=True,
+        )
+        out_default = daily_carbon_allocation(
+            **common_args,
+            f_green_leaf = 0.95, # Defaults
+            f_brown_leaf = 0.85, # Defaults
+        )
+
+        assert out_default.c_harv > 0.2
+
+        out_decrease_green_f = daily_carbon_allocation(
+            **common_args,
+            f_green_leaf=0.5,
+        )
+
+        assert out_decrease_green_f.c_harv > out_default.c_harv
+
+        out_decrease_brown_f = daily_carbon_allocation(
+            **common_args,
+            f_brown_leaf = 0.55, # Defaults
+        )
+
+        assert out_decrease_brown_f.c_harv > out_default.c_harv

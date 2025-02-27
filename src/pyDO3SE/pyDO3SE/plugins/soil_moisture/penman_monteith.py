@@ -13,6 +13,7 @@ P. Büker et al. 2012
 from collections import namedtuple
 from typing import NamedTuple
 from math import exp, inf
+from warnings import warn
 
 from do3se_met.resistance import calc_Rb, calc_Rsto, calc_Rsur
 from do3se_met.resistance.model import Resistance_Model
@@ -473,6 +474,10 @@ def multi_layer_r_model_to_single_H20(
     total_SAI: float,
 ) -> Resistance_Model:
     """Adapt multi-layer O3 resistance model to single-layer H2O resistance."""
+    warn("Multi layer resistance model to single layer H2O resistance not fully tested")
+    # This changed when we updated the multilayer model Jan 2025.
+    # TODO: Investigate this further to check it still works as expected.
+
     # Below only needed to be called once in model?
     Ra: float = rmodel.Ra_canopy_to_izr
     Rb: float = calc_Rb(ustar, DIFF_H2O)

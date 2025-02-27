@@ -105,6 +105,7 @@ output_fields: list[Field] = [
           'Net CO2 assimilation rate limiting factor'),
     #     Field('A_n_acc', float, 'A_n_acc', 'umol CO2 m-2 PLA s-1', 'Accumulated Net CO2 assimilation'),
     Field('c_i', float, 'c_i', 'micromol/mol', 'CO2 concentration inside stomata'),
+    Field('c_i_sunlit', float, 'c_i_sunlit', 'micromol/mol', 'CO2 concentration inside stomata at top layer sunlit'),
     Field('gpp', float, 'GPP', 'kg C m^-2 hr^-1', 'Gross primary productivity'),
     Field('npp', float, 'NPP', 'kg C m^-2 hr^-1', 'Net primary productivity'),
     Field('npp_acc', float, 'NPP_Acc', 'kg C m^-2 day^-1',
@@ -136,6 +137,7 @@ output_fields: list[Field] = [
     Field('yield_ha', float, 'yield_ha', 'g/m^2', 'yield_ha'),
     Field('rsto_l', float, 'Rsto_l', 's/m', 'Leaf stomatal resistance (Rsto_l, s/m)'),
     Field('rb_l', float, 'Rb_l', 's/m', 'Leaf Boundary layer resistance (Rb, s/m)'),
+    Field('g_bv', float, 'g_bv', 'umol m-2 s-1 H2O', 'boundary layer conductance for forced convection [umol m-2 s-1 H2O]'),
     Field('gsto_l', float, 'Gsto_l', 'mmol/m^2/s',
           u'Leaf stomatal conductance (Gsto_l, mmol/m\u00b2/s)'),
     Field('gsto_l_sunlit', float, 'Gsto_l_sunlit', 'mmol/m^2/s',
@@ -229,6 +231,8 @@ output_fields: list[Field] = [
           'Temperature effect on stomatal conductance (f_temp, fraction)'),
     Field('f_VPD', float, 'f_VPD', '',
           'VPD effect on stomatal conductance (f_VPD, fraction)'),
+    Field('g_bv', float, 'g_bv', '',
+          'boundary layer conductance for H2O'),
     Field('f_SW', float, 'f_SW', '',
           'Soil water effect on stomatal conductance (f_SW, fraction)'),
     Field('f_O3', float, 'f_O3', '',
@@ -266,9 +270,6 @@ output_fields: list[Field] = [
     Field('fO3_l', float, 'fO3_l', '', 'Ozone damage'),
     Field('t_lep_limited', float, 't_lep_limited', '', 't_lep with ozone impact'),
     Field('t_lse_limited', float, 't_lse_limited', '', 't_lse with ozone impact'),
-
-    # Debug variables
-
     Field('photoperiod', float, 'photoperiod',
           '', 'The day length (Weir et al 1984)'),
     Field('photoperiod_factor', float, 'photoperiod_factor',
@@ -277,16 +278,6 @@ output_fields: list[Field] = [
           '', 'Development Index [Dimensionless] (Osborne 2015)'),
     Field('t_eff', float, 't_eff',
           'DegC', 'Effective Temperature for td calcs'),
-    #     Field('gsto_final', float, 'gsto_final',
-    #           '', '[DEBUG] Photosynthetic Gsto (base)'),
-    #     Field('pngsto_l', float, 'Pn Gsto_l',
-    #           '', '[DEBUG] Photosynthetic Gsto (leaf)'),
-    #     Field('pngsto', float, 'Pn Gsto', '', '[DEBUG] Photosynthetic Gsto (mean)'),
-    #     Field('pngsto_c', float, 'Pn Gsto_c',
-    #           '', '[DEBUG] Photosynthetic Gsto (canopy)'),
-    #     Field('pngsto_pet', float, 'Pn Gsto_PEt',
-    #           '', '[DEBUG] Photosynthetic Gsto (PEt)'),
-    #     Field('pngsto_an', float, 'Pn_Gsto_An', '', '[DEBUG] Net assimilation'),
     Field('LAIsunfrac', float, 'LAIsunfrac', '',
           'Fraction of sunlit/shaded leaves. 1.0 is fully sunlit'),
     Field('total_emerged_leaves', float, 'iP_emerged', '',
@@ -295,8 +286,7 @@ output_fields: list[Field] = [
           'boolean matrix of each leaf population where true if growing'),
     Field('leaf_pop_distribution', float, 'iP_distribution', '%',
           'LAI in each leaf population per layer (nL, nP)'),
-
-      #     Debug fields
+    #     Debug variables
     Field('ewert_loop_iterations', float, 'lbrn_dm', None, 'lbrn_dm'),
 
 ]
@@ -362,6 +352,7 @@ default_grid_output_fields = [
     'rext',
     'rsto_l',
     'rb_l',
+    'g_bv',
     'gsto_l',
     'gsto_l_sunlit',
     'gsto_l_bulk',
@@ -494,6 +485,7 @@ default_output_fields = [
     'rext',
     'rsto_l',
     'rb_l',
+    'g_bv',
     'gsto_l',
     'gsto_l_sunlit',
     'gsto_l_bulk',
@@ -583,6 +575,7 @@ default_output_fields = [
     'layer_lai_brown',
     'fLAI',
     't_eff',
+    'g_bv',
 ]
 
 if __name__ == "__main__":

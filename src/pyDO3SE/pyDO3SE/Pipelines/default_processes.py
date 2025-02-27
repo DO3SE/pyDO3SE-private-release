@@ -773,7 +773,6 @@ def calc_canopy_LAI_processes(nLC: int, LAI_method: LAIMethods) -> List[Process]
                         I(config.Land_Cover.parameters[0].phenology.LAI_a, as_='LAI_a'),
                         I(config.Land_Cover.parameters[0].phenology.LAI_b, as_='LAI_b'),
                         I(config.Land_Cover.parameters[0].phenology.LAI_c, as_='LAI_c'),
-                        I(config.Land_Cover.parameters[0].phenology.LAI_1, as_='LAI_1'),
                         I(config.Land_Cover.parameters[0].phenology.LAI_d, as_='LAI_d'),
                         #   TODO: Check that sowing date is SGS
                         I(config.Land_Cover.parameters[0]
@@ -1467,12 +1466,9 @@ def calc_layer_windspeed_process(iL: int) -> Process:
         state_inputs=lambda state, iL=iL: [
             I(state.canopy.canopy_height, as_='h'),
             I(state.canopy.Lm_LAI, as_='w'),
-            # TODO: Why is SAI different
             I(state.canopy.SAI_total, as_='SAI'),
             I(state.canopy.met.micro_u, as_='u_at_canopy_top'),
-            # TODO: Check layer height not layer depth
             I(state.canopy_layers[iL].layer_height, as_='z'),
-            # TODO: Calculate layer depth
             # I(state.canopy_layers[iL].layer_depth, as_='layer_depth'),
             I(0, as_='layer_depth'),
         ],
@@ -2462,7 +2458,7 @@ def calc_td_dd_per_leaf_pop_process(iLC: int) -> Process:
     )
 
 
-def calc_g_bv_process(iLC: int) -> Process:
+def calc_g_bv_process(iLC: int, iL: int) -> Process:
     """Calculate g_bv_H2O for photosynthesis."""
     return Process(
         func=pn_helpers.calc_g_bv,
@@ -2470,15 +2466,14 @@ def calc_g_bv_process(iLC: int) -> Process:
         config_inputs=lambda config, iLC=iLC: [
             I(config.Land_Cover.parameters[iLC].Lm, as_='Lm'),
         ],
-        # TODO: Should this be per layer?
-        external_state_inputs=lambda e_state, row_index: [
-            I(lget(e_state.u, row_index), as_='u'),
+        state_inputs=lambda state, iL=iL: [
+            I(state.canopy_layers[iL].micro_met.micro_u, as_='u'),
         ],
         additional_inputs=lambda: [
             I(GAS.H2O, as_='gas'),
         ],
-        state_outputs=lambda result, iLC=iLC: [
-            (result, f'canopy_component.{iLC}.g_bv_H2O'),
+        state_outputs=lambda result, iL=iL, iLC=iLC: [
+            (result, f'canopy_layer_component.{iL}.{iLC}.g_bv_H2O'),
         ],
     )
 
@@ -2576,10 +2571,13 @@ def ewert_leaf_process(iLC: int, iP: int, nL: int, ewert_loop_method: EwertLoopM
             I(config.Land_Cover.parameters[iLC].pn_gsto.g_sto_0, as_='g_sto_0'),
             I(config.Land_Cover.parameters[iLC].pn_gsto.m, as_='m'),
             I(config.Land_Cover.parameters[iLC].gsto.f_VPD_method, as_='f_VPD_method'),
+            I(config.Land_Cover.parameters[iLC].gsto.fmin, as_='fmin'),
             I(config.Land_Cover.parameters[iLC].pn_gsto.co2_concentration_balance_threshold,
               as_='co2_concentration_balance_threshold'),
             I(config.Land_Cover.parameters[iLC].pn_gsto.co2_concentration_max_iterations,
               as_='co2_concentration_max_iterations'),
+            I(config.Land_Cover.parameters[iLC].pn_gsto.adjust_negative_A_n,
+              as_='adjust_negative_A_n'),
             I(config.Land_Cover.parameters[iLC].pn_gsto.R_d_coeff, as_="R_d_coeff"),
         ],
         state_inputs=lambda state, iLC=iLC, iP=iP: [
@@ -2593,7 +2591,7 @@ def ewert_leaf_process(iLC: int, iP: int, nL: int, ewert_loop_method: EwertLoopM
             I([state.canopy_layers[iL].micro_met.PARshade for iL in range(nL)], as_='PARshade'),
             I([state.canopy_layer_component[iL][iLC].LAIsunfrac for iL in range(nL)], as_='LAIsunfrac'),
             I(state.canopy_component[iLC].D_0, as_='D_0'),
-            I(state.canopy_component[iLC].g_bv_H2O, as_='g_bv'),
+            I([state.canopy_layer_component[iL][iLC].g_bv_H2O for iL in range(nL)], as_='g_bv'),
             I(state.canopy_component_population[iLC][iP].fLAI_layer, as_='layer_lai_frac'),
             I([state.canopy_component[iLC].leaf_pop_distribution[iL][iP]
                for iL in range(nL)], as_='layer_lai'),
@@ -2602,12 +2600,11 @@ def ewert_leaf_process(iLC: int, iP: int, nL: int, ewert_loop_method: EwertLoopM
             I([state.canopy_layer_component[iL][iLC].mean_gsto for iL in range(nL)], as_='g_sto_prev'),
             # NOTE: Below should all be same for all layers and populations
             I(state.canopy_layer_component[0][iLC].gsto_params.f_SW, as_='f_SW'),
-            I(state.canopy_layer_component[0][iLC].gsto_params.f_VPD, as_='f_VPD'),
+            I([state.canopy_layer_component[iL][iLC].gsto_params.f_VPD for iL in range(nL)], as_='f_VPD'),
         ],
         external_state_inputs=lambda e_state, row_index: [
             I(lget(e_state.eact, row_index), as_='eact'),
             I(lget(e_state.CO2, row_index), as_='c_a'),
-            I(lget(e_state.RH, row_index), as_='RH'),
             I(lget(e_state.P, row_index), as_='P'),
         ],
         state_outputs=lambda result, iLC=iLC, iP=iP: [
@@ -2623,8 +2620,10 @@ def ewert_leaf_process(iLC: int, iP: int, nL: int, ewert_loop_method: EwertLoopM
                 f'canopy_component_population.{iLC}.{iP}.A_n_limit_factor'),
             (result.R_d, f'canopy_component_population.{iLC}.{iP}.R_d'),
             (result.c_i, f'canopy_component_population.{iLC}.{iP}.c_i'),
-            # TODO: Output f_VPD
-            # (result.f_VPD, f'canopy_component_population.{iLC}.{iP}.gsto_params.f_VPD'),
+            (result.c_i_sunlit, f'canopy_component_population.{iLC}.{iP}.c_i_sunlit'),
+            *[(result.f_VPD[iL], f'canopy_layer_component.{iL}.{iLC}.gsto_params.f_VPD') for iL in range(nL)],
+            # TODO: Delete this when negative A_n resolved
+            *[(result.f_VPD_alt[iL], f'canopy_layer_component.{iL}.{iLC}.gsto_params.f_VPD_alt') for iL in range(nL)],
             (result.v_cmax, f'canopy_component_population.{iLC}.{iP}.V_cmax'),
             (result.j_max, f'canopy_component_population.{iLC}.{iP}.J_max'),
             (result.loop_iterations, 'debug.ewert_loop_iterations'),
@@ -4002,6 +4001,7 @@ def save_state(run_dir: Path, dump_state_n: int) -> Process:
 
     def _save_process(state: Model_State_Shape, run_dir: Path, n: int):
         row_index = state.temporal.row_index
+        # NOTE: row_index will always be a multiple of 24
         if row_index >= int(n) and int(row_index) % int(n) == 0:
             out_path = f"{run_dir}/running_state/dump_state_{row_index}.json"
             print("Saving dumped state to", out_path)
@@ -4020,7 +4020,7 @@ def save_state(run_dir: Path, dump_state_n: int) -> Process:
     )
 
 
-def daily_start_processes(config: Config_Shape, run_dir: Path, dump_state_n: int) -> List[Process]:
+def daily_start_processes(config: Config_Shape, run_dir: Path) -> List[Process]:
     """Get processes to be ran at start of day."""
     nL = config.Land_Cover.nL
     nLC = config.Land_Cover.nLC
@@ -4054,7 +4054,6 @@ def daily_start_processes(config: Config_Shape, run_dir: Path, dump_state_n: int
         set_day_offset(multi_season),
         reset_model() if multi_season else [],
         set_day(),
-        save_state(run_dir, dump_state_n) if dump_state_n is not None else [],
 
         # MET
         tag_process("== Met Processes =="),
@@ -4267,6 +4266,7 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
               as_='o3_nmol_m3') if 'o3_nmol_m3' in fields else None,
             I(state.canopy_layers[top_layer_index].layer_height,
               as_='layer_height') if 'layer_height' in fields else None,
+            # I(state.canopy_component[component_index].g_bv_H2O, as_='g_bv') if 'g_bv' in fields else None,
             I(state.canopy_layer_component[top_layer_index][component_index].mean_gsto,
               as_='gsto') if 'gsto' in fields else None,
             I(state.canopy_layer_component[top_layer_index][component_index].bulk_gsto,
@@ -4403,6 +4403,9 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
             I(state.canopy_component_population[component_index]
               [flag_index].c_i, as_='c_i') if 'c_i' in fields else None,
 
+            I(state.canopy_component_population[component_index]
+              [flag_index].c_i_sunlit, as_='c_i_sunlit') if 'c_i_sunlit' in fields else None,
+
             __SPACER__("Soil Moisture Canopy >"),
             I(state.canopy.PM.precip_acc_prev_day, as_='precip_acc') if 'precip_acc' in fields else None,
             I(state.canopy.SMD.SWP, as_='swp') if 'swp' in fields else None,
@@ -4434,6 +4437,8 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
               [component_index].gsto_params.f_temp, as_='f_temp') if 'f_temp' in fields else None,
             I(state.canopy_layer_component[top_layer_index]
               [component_index].gsto_params.f_VPD, as_='f_VPD') if 'f_VPD' in fields else None,
+            I(state.canopy_layer_component[top_layer_index]
+              [component_index].gsto_params.f_VPD_alt, as_='f_VPD_alt') if 'f_VPD' in fields else None,
             I(state.canopy_layer_component[top_layer_index]
               [component_index].gsto_params.f_SW, as_='f_SW') if 'f_SW' in fields else None,
             I(state.canopy_layer_component[top_layer_index]
@@ -4475,6 +4480,8 @@ def log_processes(nL: int, nLC: int, nP: int, fields: List[str], log_multilayer:
               [component_index].LAIsunfrac, as_='LAIsunfrac_top') if 'LAIsunfrac' in fields else None,
             I(state.canopy_component[component_index].LAI,
               as_='component_LAI') if 'component_LAI' in fields else None,
+            I(state.canopy_layer_component[top_layer_index][component_index].g_bv_H2O,
+              as_='g_bv') if 'g_bv' in fields else None,
         ]))),
         # Multi layer/ Multi population outputs
         log_values(lambda state: flatten_list(list(filter(lambda f: f, [
@@ -4602,7 +4609,7 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
         if thermal_time_method == ThermalTimeMethods.EXTERNAL else [],
 
         # TODO: It would be great to not rely on knowing the hour here.
-        daily_start_processes(config, run_dir, dump_state_n) if (
+        daily_start_processes(config, run_dir) if (
             hr == 0 or sparse_data) else [],
 
         [
@@ -4630,7 +4637,6 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
         # Wind
         calc_ustar_ref_process(have_Hd_data, have_ustar_ref_data, have_ustar_data, is_OTC),
         calc_windspeed_parameters_process(have_ustar_data),
-        # TODO: below resets windspeed. Check this is correct
         [calc_layer_windspeed_process(iL) for iL in range(nL)],
 
 
@@ -4655,7 +4661,7 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
             calc_f_VPD_process(iL, iLC, f_VPD_method[iLC]),
             f_SW_process(iL, iLC, f_SW_method[iLC]),
             f_O3_process(iL, iLC, f_O3_method[iLC], nP=nP),
-            calc_g_bv_process(iLC),
+            calc_g_bv_process(iLC, iL),
         ]for iL in range(nL) for iLC in range(nLC)],
 
         # GSTO CALC
@@ -4731,6 +4737,7 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
         # LOGGING
         tag_process("== Hourly Logging Processes =="),
         log_processes(nL, nLC, nP, output_fields, log_multilayer),
+        save_state(run_dir, dump_state_n) if dump_state_n is not None else [],
         store_prev_state(),  # Used when we require the data from previous hour.
         # At end of hour advance time step
         advance_time_step_process(),
