@@ -3,7 +3,7 @@
 import numpy as np
 from typing import List, Tuple
 from collections import namedtuple
-from scipy.linalg.lapack import sgesv
+from scipy.linalg.lapack import sgesv # type: ignore
 
 from do3se_met.resistance import (
     calc_Ra_simple,
@@ -13,11 +13,7 @@ from do3se_met.resistance import (
 from do3se_met.model_constants import izR
 
 
-def O3_transfer_up(
-    Ra: float,
-    O3: float,
-    Vd: float
-) -> float:
+def O3_transfer_up(Ra: float, O3: float, Vd: float) -> float:
     """Scale O3 concentration up from the resistance model's reference height.
 
     to 50m.
@@ -54,7 +50,7 @@ def O3_transfer_down(Ra: float, O3_i: float, Vd: float) -> float:
     return O3_transfered
 
 
-OzoneConcentrationOutput = namedtuple('OzoneConcentrationOutput', 'O3_i micro_O3 Vd_i Vd')
+OzoneConcentrationOutput = namedtuple("OzoneConcentrationOutput", "O3_i micro_O3 Vd_i Vd")
 
 
 def calc_canopy_ozone_concentration(
@@ -180,10 +176,10 @@ def calc_canopy_ozone_concentration_alt(
     O3_d: float,
     O3_z0: float,
     L: float,
-    h_O3_in: float = None,
+    h_O3_in: float | None = None,
     izr=izR,
     # TODO: Check ra method strings
-    ra_method: str = "simple"
+    ra_method: str = "simple",
 ) -> Tuple[float, float]:
     """Calculate the ozone concentration at the canopy.
 
@@ -228,7 +224,7 @@ def calc_canopy_ozone_concentration_alt(
     assert u_i is not None
     assert z_O3 is not None
     assert Rtotal_top_layer is not None
-    Output = namedtuple('Output', 'O3_i micro_O3')
+    Output = namedtuple("Output", "O3_i micro_O3")
     # h_o3 is the assumed canopy height
     h_O3 = h_O3_in if h_O3_in is not None else canopy_height
     assert h_O3 is not None
@@ -243,12 +239,18 @@ def calc_canopy_ozone_concentration_alt(
 
     # TODO: Should input ra method option here
     # 2. Get ra between canopy and 50m
-    rmodel_Ra_c_i = calc_Ra_simple(ustar_ref, O3_z0, izr, O3_d) if ra_method == "simple" \
+    rmodel_Ra_c_i = (
+        calc_Ra_simple(ustar_ref, O3_z0, izr, O3_d)
+        if ra_method == "simple"
         else calc_Ra_with_heat_flux(ustar_ref, O3_z0 + O3_d, izr, L)
+    )
 
     # 3. Get ra between measured height and 50m
-    rmodel_Ra_i = calc_Ra_simple(ustar_ref, z_O3, izr, O3_d) if ra_method == "simple" \
+    rmodel_Ra_i = (
+        calc_Ra_simple(ustar_ref, z_O3, izr, O3_d)
+        if ra_method == "simple"
         else calc_Ra_with_heat_flux(ustar_ref, z_O3, izr, L)
+    )
 
     # rmodel_Rb_i = calc_Rb(ustar_ref, DIFF_O3)
 
@@ -354,49 +356,12 @@ def calc_multi_layer_O3_ozone_concentration(
     # LDB = nL + 1
 
     # call SGESV(nL + 1, 1, X, nL + 1, ipiv_, C, nL + 1, info)
-    out = sgesv(X, C)
+    # NOTE: sgesv modifies X and C
+    out = sgesv(X, C)  # noqa: F841
     lu, IPIV, C_out, info = sgesv(X, C)
 
     if info != 0:
-        raise Exception('SGESV Failed')
+        raise Exception("SGESV Failed")
     C_final = smallR * C_out
-    O3_out = C_final[0: nL]
+    O3_out = C_final[0:nL]
     return O3_out
-
-
-def calc_multi_layer_O3_ozone_concentration_simple(
-    nL: int,
-    O3_in: float,
-    rm_Ra: float,
-    rm_Rb: float,
-    rm_Rinc: List[float],
-    rm_Rsur: List[float],
-    rm_Rgs: float,
-) -> List[float]:
-    """Calculate O3 concentration for all layers.
-
-    Requires that the value for the top layer (umet(1)%O3) is already known.
-
-    Assumes layer 0 is top layer.
-
-    Parameters
-    ----------
-    nL: float
-        number of model layers
-    O3_in: float
-        O3 for top layer micromet
-    rm_Ra: float
-        rmodel_O3 Ra
-    rm_Ra: float
-        rmodel_O3 Rb
-    rm_Rinc: List[float]
-        rmodel_O3 Rinc per layer
-    rm_Rsur: List[float]
-        rmodel_O3 Rsur per layer
-    rm_Rgs: float
-        rmodel_O3 Rgs
-
-    Output
-        O3 per layer
-    """
-    total_resistance_per_layer = [sum([rm_Ra, rm_Rb] + rm_Rinc[0:iL]) for iL in range(nL)]
