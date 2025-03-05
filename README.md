@@ -6,6 +6,10 @@ It uses a Git SubTree workflow to pull the release version of the sub repositori
 
 DO NOT MODIFY THE CONTENTS OF THE 'src' DIRECTORY DIRECTLY.
 
+## End user Documentation
+
+If you wish to just use the DO3SE model to run simulations, please see the [DO3SE documentation](https://do3se.readthedocs.io/en/latest/).
+
 ## Updating versions
 
 To pull changes to the sub repositories, use the following command:
