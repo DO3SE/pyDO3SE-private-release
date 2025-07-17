@@ -143,7 +143,6 @@ def setup_test_run_and_compare(request):
             )
 
 
-@pytest.mark.skip(reason="Not ready to run")
 @pytest.mark.usefixtures('setup_test_run_and_compare')
 class TestRunAndCompare:
 

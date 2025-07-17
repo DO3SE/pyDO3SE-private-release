@@ -1,5 +1,5 @@
-from dataclasses import dataclass, field
 from typing import List
+from dataclasses import dataclass, field
 import numpy as np
 
 from data_helpers.fill_np_array import fill_np_array_with_cls
@@ -9,23 +9,8 @@ from do3se_phenology.config import ModelConfig as PhenologyModelConfig
 from do3se_phenology.config import SpeciesConfig as PhenologySpeciesConfig
 
 from pyDO3SE.constants.model_constants import DEFAULT_LAYERS, DEFAULT_LC
-from pyDO3SE.plugins.gsto.ewert.enums import EwertLoopMethods, AdjustNegativeAnMethods
 
-from .ConfigEnums import (
-    GstoMethods,
-    TLeafMethods,
-    FVPDMethods,
-    CanopyHeightMethods,
-    DVIMethods,
-    LAIMethods,
-    LayerLAIDistributionMethods,
-    LandCoverType,
-    EnabledOrDisabled,
-    FO3_methods,
-    FTempMethods,
-    SenescenceFunctionMethods,
-    LeafFPhenAnetInfluence,
-)
+from .ConfigEnums import *
 
 
 @dataclass(frozen=False)
@@ -121,12 +106,6 @@ class Config_PnGsto:
     #: Method for defining f_LS and fO3d
     senescence_method: SenescenceFunctionMethods = SenescenceFunctionMethods.DISABLED
 
-    #: Ewert loop method
-    #:
-    #: "iterative"
-    #: "cubic"
-    ewert_loop_method: EwertLoopMethods = EwertLoopMethods.CUBIC
-
     #: V/J max method:
     #:   - "input":      V_cmax_25 and J_max_25 supplied as hourly inputs
     #:   - "constant":   Use constant V_cmax_25 and J_max_25 values (below)
@@ -153,12 +132,6 @@ class Config_PnGsto:
     co2_concentration_balance_threshold: float = 0.001
     #: Maximum number of iterations to find co2 concentration solution
     co2_concentration_max_iterations: int = 50
-
-    #:     If True then allow negative A_n values, else return NaN
-    #:     If "last_resort" then allow negative A_n values if no other solution is found
-    #:     If "clip" then clip negative A_n values to -R_d
-    adjust_negative_A_n: AdjustNegativeAnMethods = AdjustNegativeAnMethods.FALSE
-
 
     # #: TODO: This is not currently implemented
     # #: Threshold (from 0) to consider leaf energy balance equation as "balanced"
@@ -281,3 +254,4 @@ class Config_Land_Cover:
         default_factory=lambda: PhenologyModelConfig(),
     )
 
+    ozone_deposition_method: OzoneDepositionMethods = OzoneDepositionMethods.SINGLE_LAYER

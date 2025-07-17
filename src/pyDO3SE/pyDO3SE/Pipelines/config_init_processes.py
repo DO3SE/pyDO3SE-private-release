@@ -100,7 +100,6 @@ def init_soil_config(config: Config_Shape):
         Process(
             func=calc_ASW,
             comment="Calculate available soil water at field capacity",
-            gate=config.soil_moisture.ASW_FC is None, # Only run if not already set
             state_inputs=lambda state: [
                 I(state.soil_moisture.soil_config, as_='soil_config'),
                 I(state.soil_moisture.PWP, as_='PWP'),

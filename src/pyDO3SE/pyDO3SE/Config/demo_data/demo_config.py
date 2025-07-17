@@ -54,8 +54,5 @@ DEMO_CONFIG = Config_Shape(
         source=SoilMoistureSource.P_M,
         soil_config=SOIL_SANDY_LOAM,
         initial_SWC=SOIL_SANDY_LOAM.FC,
-    ),
-    output=OutputConfig(
-        fields=default_output_fields
     )
 )

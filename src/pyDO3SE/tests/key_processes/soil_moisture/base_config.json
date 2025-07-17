@@ -42,8 +42,8 @@
     "soil_moisture": {
         "soil_texture": "loam",
         "root": 1,
-        "PWP": -1.3,
-        "ASW_FC": null,
+        "pwp": -1.3,
+        "asw_fc": null,
         "source": "disabled",
         "initial_swc": null
     },

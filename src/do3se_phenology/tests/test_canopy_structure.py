@@ -89,13 +89,6 @@ def test_calc_distribution_of_LAI_between_lcs():
     assert LC_dist == [1.0]
     assert len(LC_dist) == nLC
 
-    nL = 3
-    nLC = 1
-    lai_values = [[1, 2, 3]]
-    LC_dist = calc_distribution_of_LAI_between_lcs(lai_values, nL, nLC)
-    assert LC_dist == [1.0]
-    assert len(LC_dist) == nLC
-
 
 
 def test_LAI_method_estimate_total():

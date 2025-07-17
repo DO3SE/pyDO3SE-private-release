@@ -167,10 +167,7 @@ def dump_output_to_netcdf_grid(
         )
     except KeyError as e:
         print(e)
-        raise OutputError(f"Error saving to netcdf. Check output shape: {output_shape}, lon_shape: {lon_data.shape}, lat_shape: {lat_data.shape}") from e
-    except ValueError as e:
-        raise OutputError(f"Error saving to netcdf. Check output shape: {output_shape}, lon_shape: {lon_data.shape}, lat_shape: {lat_data.shape}") from e
-
+        raise OutputError(f"Error saving to netcdf. Check output shape: {output_shape}")
 
 
 def dump_output_to_file_netcdf_grid(

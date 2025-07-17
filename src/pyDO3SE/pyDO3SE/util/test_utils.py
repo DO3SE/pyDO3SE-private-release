@@ -3,8 +3,6 @@ from unittest.mock import MagicMock
 from unittest import mock as umock
 from enum import Enum
 import decorator
-import json
-from data_helpers.encoders import AdvancedJsonEncoder
 
 from pytest_mock import MockerFixture
 
@@ -87,7 +85,4 @@ def mock_funcs(
 def mock_funcs_teardown(self):
     for k, v in self.mocked_funcs.items():
         v.stop()
-
-def process_snapshot(data):
-    return json.dumps(data, cls=AdvancedJsonEncoder, indent=4, sort_keys=True)
 

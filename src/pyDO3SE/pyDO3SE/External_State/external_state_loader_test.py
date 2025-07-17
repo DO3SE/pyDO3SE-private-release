@@ -22,11 +22,11 @@ from .external_state_loader import (
 )
 
 DEMO_FIELDS = [
-    InputField('dd', 'Day of Year', int, 'index'),
-    InputField('hr', 'Day of Year', int, 'index'),
-    InputField('P', 'Day of Year', float, 'kPa'),
-    InputField('temperature', 'Temperature in degrees C', float, 'C'),
-    InputField('temperature', 'Temperature in degrees K', float, 'K'),
+    InputField('dd', True, int, (), 'index', 'Day of Year'),
+    InputField('hr', True, int, (), 'index', 'Day of Year'),
+    InputField('P', True, float, (), 'kPa', 'Day of Year'),
+    InputField('temperature', True, float, (), 'C', 'Temperature in degrees C'),
+    InputField('temperature', True, float, (), 'K', 'Temperature in degrees K'),
 ]
 
 EXTERNAL_DATA_DEMO_PATH = 'examples/spanish_wheat/spanish_wheat_data_sample.csv'
@@ -36,12 +36,12 @@ class TestMatchHeadingToField:
 
     def test_match_heading_to_field(self):
         field, ignore_field = match_heading_to_field('dd', DEMO_FIELDS)
-        assert field == DEMO_FIELDS[0].label
+        assert field == DEMO_FIELDS[0].name
         assert ignore_field is None
 
     def test_match_heading_to_field_with_unit(self):
         field, ignore_field = match_heading_to_field('P, kPa', DEMO_FIELDS)
-        assert field == DEMO_FIELDS[2].label
+        assert field == DEMO_FIELDS[2].name
         assert ignore_field is None
 
     def test_match_heading_to_field_with_no_match(self):
@@ -51,7 +51,7 @@ class TestMatchHeadingToField:
 
     def test_match_heading_to_field_with_multi_match(self):
         field, ignore_field = match_heading_to_field('temperature, C', DEMO_FIELDS)
-        assert field == DEMO_FIELDS[3].label
+        assert field == DEMO_FIELDS[3].name
         assert ignore_field is None
 
 
@@ -142,7 +142,6 @@ class TestProcessCsvData:
             process_csv_data(StringIO(data), has_header_row=False)
 
 
-@pytest.mark.skip(reason="Old Test Failing")
 class TestExternalStateLoader():
 
     def test_external_state_loader_invalid_type(self):
@@ -355,7 +354,6 @@ class TestExternalStateLoader():
                 self.T = 4 * 24
 
 
-@pytest.mark.skip(reason="Old Test Failing")
 class TestExtractCellDataFromNetcdf:
 
     def _default_run(self):

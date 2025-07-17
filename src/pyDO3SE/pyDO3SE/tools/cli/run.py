@@ -127,9 +127,6 @@ def single(
     required=False,
     type=click.Path(),
 )
-@click.argument(
-    'overrides', nargs=-1,
-)
 def batch(
     project_directory: str = None,
     config_dir: str = None,
@@ -144,7 +141,6 @@ def batch(
     default_paths: bool = True,
     parallel: bool = True,
     runid: str = None,
-    overrides: Tuple[str, str] = (),
 ):
     """Run the model with provided config and input data.
 
@@ -169,7 +165,6 @@ def batch(
         parallel=parallel,
         runid=runid,
         logger=logger,
-        overrides=overrides,
     )
 
 
@@ -257,8 +252,8 @@ def grid_run(
     project_paths = setup_grid_model.get_grid_project_paths(project_dir, runid)
     if not output_fields:
         raise ValueError("--output-fields must be set")
-    _output_fields = default_grid_output_fields if output_fields == "_all" \
-          else output_fields.split(',')
+    _output_fields = default_grid_output_fields if output_fields == "_all" else output_fields.split(
+        ',')
 
     logger_main = Logger(loglevel, project_paths.log_path, set_as_default=True,
                          write_mode='w', flush_per_log=loglevel >= 2)

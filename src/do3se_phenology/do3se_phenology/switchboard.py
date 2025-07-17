@@ -800,10 +800,10 @@ def validate_config(
     # TODO: Assert values add up correctly
     # TODO: Should these be warnings?
     try:
-        if model_config.sowing_day_method == SowingDateMethods.SKIP:
+        if model_config.sowing_day_method == SowingDateMethods.SKIP :
             # Sowing day not required
             pass
-        elif model_config.phenology_method == PhenologyMethods.LEAF_FPHEN_DATA:
+        elif  model_config.phenology_method == PhenologyMethods.LEAF_FPHEN_DATA:
             # Sowing day not required
             pass
         elif type(species_config.key_dates.sowing) != int and type(species_config.key_dates.sowing) != float:
@@ -971,8 +971,6 @@ def process_phenology_config(
         raise NotImplementedError(f"Phenology method not implemented: {phenology_method}")
 
     generated_model_config, generated_species_config = generated_configs
-
-    # Add the per leaf population phenology
     if time_type == TimeTypes.THERMAL_TIME:
         if nP > 1:
             leaf_pop_phenology_t = get_leaf_pop_phenology(generated_species_config, nP)

@@ -1,4 +1,4 @@
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Union
 from data_helpers.dictionary_helpers import ListMergeMethods, merge_dictionaries
 from pathlib import Path
 import json
@@ -14,59 +14,56 @@ from pyDO3SE.util.error_handling import ConfigError
 
 def process_json_config(json_config_data: dict) -> Config_Shape:
     config: Union[Config_Shape, None] = dict_to_cls(json_config_data, Config_Shape)
-    if not config:
-        raise ConfigError("Failed to convert config to Config_Shape")
+    if (not config):
+        raise ConfigError('Failed to convert config to Config_Shape')
     # TODO: Should move these to config validation
-    assert isclose(np.sum(config.Land_Cover.fLAI), 1, abs_tol=1e-5), (
-        "fLAI must sum to 1 but got " + str(np.sum(config.Land_Cover.fLAI))
-    )
-    assert isclose(sum(config.Land_Cover.layer_height_frac), 1, abs_tol=1e-5), (
-        "layer_height_frac must sum to 1 but got " + str(sum(config.Land_Cover.layer_height_frac))
-    )
+    assert isclose(np.sum(config.Land_Cover.fLAI), 1, abs_tol=1e-5), \
+        'fLAI must sum to 1 but got ' + \
+        str(np.sum(config.Land_Cover.fLAI))
+    assert isclose(sum(config.Land_Cover.layer_height_frac), 1, abs_tol=1e-5), \
+        'layer_height_frac must sum to 1 but got ' + \
+        str(sum(config.Land_Cover.layer_height_frac))
     assert config.Land_Cover.parameters is not None
     check_types(config)
     return config
 
 
 def config_loader(
-    config_location: Path | str,
-    base_config_file: Path | str | None = None,
-    config_type: str = "json",
+    config_location: Path,
+    base_config_file: Path = None,
+    config_type: str = 'json',
     logger: Callable[[str], None] = print,
 ) -> Config_Shape:
-    """loads a datafile into a config object"""
-    logger("Loading config:", str(config_location))
-    logger("Loading base config:", str(base_config_file))
+    '''loads a datafile into a config object'''
+    logger('Loading config:', config_location)
+    logger('Loading base config:', base_config_file)
     with open(config_location) as config_file:
         read_data = config_file.read()
-        if config_type == "json":
+        if config_type == 'json':
             try:
                 config_data = json.loads(read_data)
             except:
-                raise ConfigError(f"Failed to load config from {config_location}")
+                raise ConfigError(f'Failed to load config from {config_location}')
         else:
-            raise Exception("Invalid config file type")
+            raise Exception('Invalid config file type')
     if base_config_file:
         with open(base_config_file) as config_file:
             read_data = config_file.read()
-            if config_type == "json":
+            if config_type == 'json':
                 try:
                     base_config_data = json.loads(read_data)
                 except Exception:
-                    raise ConfigError(f"Failed to load base config from{base_config_file}")
+                    raise ConfigError(f'Failed to load base config from{base_config_file}')
             else:
-                raise Exception("Invalid config file type")
-    merged_config_data = (
-        base_config_file
-        and merge_dictionaries(base_config_data, config_data, ListMergeMethods.ZIP)
-        or config_data
-    )
+                raise Exception('Invalid config file type')
+    merged_config_data = base_config_file and merge_dictionaries(
+        base_config_data, config_data, ListMergeMethods.ZIP) or config_data
     config_object = process_json_config(merged_config_data)
     return config_object
 
 
 def config_loader_pickled(
-    config_location: Path | str,
+    config_location: Path,
 ) -> Config_Shape:
     """Load binary config file.
 
@@ -84,7 +81,7 @@ def config_loader_pickled(
         Config Shape Object
 
     """
-    with open(config_location, "rb") as f:
+    with open(config_location, 'rb') as f:
         config_loaded = pickle.load(f)
     return config_loaded
 
@@ -111,12 +108,12 @@ def grid_config_loader(
     try:
         configs_loaded = [
             config_loader_pickled(
-                f"{processed_config_dir}/{x}_{y}.config",
-            )
-            for x, y in grid_coords
+                f'{processed_config_dir}/{x}_{y}.config',
+            ) for x, y in grid_coords
         ]
     except FileNotFoundError:
         raise ConfigError(
-            f"Could not find config for grid cells: {grid_coords}. Please run grid init first."
+            f'Could not find config for grid cells: {grid_coords}. '
+            f'Please run grid init first.'
         )
     return configs_loaded

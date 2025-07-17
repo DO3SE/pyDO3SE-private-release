@@ -156,7 +156,6 @@ def test_should_not_change_pody_if_lai_changes():
     )
 
     # Run with LAI 3
-    # Run with LAI 3
     processed_config.Land_Cover.LAI_method = LAIMethods.CONSTANT
     processed_config.Land_Cover.LAI = 3
     initial_state = main.model_state_loader(
