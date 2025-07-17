@@ -3,8 +3,11 @@ set -e
 
 MAIN_BRANCH="main"
 
+echo python -V
+which python
+
 [ -z "$1" ] && echo "make sure to input [patch|minor|major]" && exit 1;
-source venv/bin/activate
+# source .venv/bin/activate
 if [ -z "$(git status --porcelain)" ]; then
   echo "Working directory clean"
 else
