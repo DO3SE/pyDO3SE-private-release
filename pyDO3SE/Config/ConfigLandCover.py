@@ -3,6 +3,7 @@ from typing import List
 import numpy as np
 
 from data_helpers.fill_np_array import fill_np_array_with_cls
+from do3se_met.soil_moisture.enums import FSW_Methods
 
 from do3se_phenology.config import ModelConfig as PhenologyModelConfig
 from do3se_phenology.config import SpeciesConfig as PhenologySpeciesConfig
@@ -10,7 +11,21 @@ from do3se_phenology.config import SpeciesConfig as PhenologySpeciesConfig
 from pyDO3SE.constants.model_constants import DEFAULT_LAYERS, DEFAULT_LC
 from pyDO3SE.plugins.gsto.ewert.enums import EwertLoopMethods, AdjustNegativeAnMethods
 
-from .ConfigEnums import *
+from .ConfigEnums import (
+    GstoMethods,
+    TLeafMethods,
+    FVPDMethods,
+    CanopyHeightMethods,
+    DVIMethods,
+    LAIMethods,
+    LayerLAIDistributionMethods,
+    LandCoverType,
+    EnabledOrDisabled,
+    FO3_methods,
+    FTempMethods,
+    SenescenceFunctionMethods,
+    LeafFPhenAnetInfluence,
+)
 
 
 @dataclass(frozen=False)
@@ -20,7 +35,7 @@ class Config_Gsto:
     #:   - "multiplicative":   Use DO3SE multiplicative model
     #:   - "photosynthesis":   Use Farquar-based photosynthesis model (hybrid
     #:                         with some multiplicative components)
-    method: str = "multiplicative"
+    method: GstoMethods = GstoMethods.MULTIPLICATIVE
 
     #: Tleaf method:
     Tleaf_method: TLeafMethods = TLeafMethods.AMBIENT
@@ -43,7 +58,8 @@ class Config_Gsto:
     #:   - "fSWP linear":  Use linear fSWP function (see SWP_min and SWP_max)
     #:   - "fLWP exp":     Use fSWP exponential curve, but with LWP instead of SWP
     #:   - "fPAW":         Use fPAW relationship
-    f_SW_method: str = "disabled"
+    #: This was previously fxwp_method
+    f_SW_method: FSW_Methods = FSW_Methods.DISABLED
 
     #: fSWP linear parameters:
     SWP_min: float = None   #: SWP for minimum gsto [MPa]
@@ -71,7 +87,7 @@ class Config_Multip_Gsto:
     #:   - "disabled":   f_light and leaf_f_light supplied (or left at default
     #:                   value of 1.0)
     #:   - "enabled":    f_light and leaf_f_light calculated
-    f_light_method: str = "disabled"
+    f_light_method: EnabledOrDisabled = EnabledOrDisabled.DISABLED
     f_lightfac: float = 0.006  #: Single leaf f_light coefficient
 
     #: f_temp method:
@@ -79,7 +95,7 @@ class Config_Multip_Gsto:
     #:   - "default":        Normal bell-shaped function over T_min -> T_opt -> T_max
     #:   - "square high":    Same as "default", but straight lines from
     #:                       (T_opt, 1.0) -> (T_max, 1.0) -> (T_max, 0.0)
-    f_temp_method: str = "disabled"
+    f_temp_method: FTempMethods = FTempMethods.DISABLED
     T_min: float = None     #: Minimum temperature [degrees C]
     T_opt: float = None     #: Optimum temperature, for max. gsto [degrees C]
     T_max: float = None     #: Maximum temperature [degrees C]
@@ -91,7 +107,7 @@ class Config_Multip_Gsto:
     #:   - "disabled":   f_O3 supplied (or left at default value of 1.0)
     #:   - "wheat":      Wheat f_O3 method
     #:   - "potato":     Potato f_O3 method
-    f_O3_method: str = "disabled"
+    f_O3_method: FO3_methods = FO3_methods.DISABLED
 
 
 @dataclass(frozen=False)
@@ -265,4 +281,3 @@ class Config_Land_Cover:
         default_factory=lambda: PhenologyModelConfig(),
     )
 
-    ozone_deposition_method: OzoneDepositionMethods = OzoneDepositionMethods.SINGLE_LAYER

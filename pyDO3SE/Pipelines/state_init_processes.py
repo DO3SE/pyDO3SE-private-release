@@ -4,7 +4,6 @@ initialized state
 
 """
 from dataclasses import replace
-from pyDO3SE import settings
 from typing import List
 from proflow.Objects.Process import Process
 from proflow.Objects.Interface import I
@@ -12,13 +11,12 @@ from proflow.helpers import set_value
 from data_helpers.list_helpers import flatten_list
 from do3se_phenology.config import ZeroDayOptions
 from do3se_met.resistance.model import Resistance_Model
+from do3se_met.soil_moisture.enums import SoilMoistureSource
+from do3se_met.soil_moisture import penman_monteith as SMD_PM_helpers
+from pyDO3SE import settings
 from pyDO3SE.External_State.External_State_Config import ThermalTimeMethods
-from pyDO3SE.plugins.soil_moisture.enums import SoilMoistureSource
-from pyDO3SE.Model_State.Model_State import (
-    Model_State_Shape,
-)
+from pyDO3SE.Model_State.Model_State import Model_State_Shape
 from pyDO3SE.Config import Config_Shape
-from pyDO3SE.plugins.soil_moisture import penman_monteith as SMD_PM_helpers
 
 
 def calculate_phenology_stages_process(config: Config_Shape, iLC: int):
@@ -195,11 +193,11 @@ def layer_pop_trim(config: Config_Shape) -> List[Process]:
 
     def trim_state(state, nLC, nL, nP):
         assert nP <= settings.global_settings.MAX_NUM_OF_LEAF_POPULATIONS, \
-        f"Must set environment variable MAX_NUM_OF_LEAF_POPULATIONS={nP}. Currently: {settings.global_settings.MAX_NUM_OF_LEAF_POPULATIONS}"
+            f"Must set environment variable MAX_NUM_OF_LEAF_POPULATIONS={nP}. Currently: {settings.global_settings.MAX_NUM_OF_LEAF_POPULATIONS}"
         assert nL <= settings.global_settings.MAX_NUM_OF_CANOPY_LAYERS, \
-        f"Must set environment variable MAX_NUM_OF_CANOPY_LAYERS={nL}. Currently: {settings.global_settings.MAX_NUM_OF_CANOPY_LAYERS}"
+            f"Must set environment variable MAX_NUM_OF_CANOPY_LAYERS={nL}. Currently: {settings.global_settings.MAX_NUM_OF_CANOPY_LAYERS}"
         assert nLC <= settings.global_settings.MAX_NUM_OF_CANOPY_COMPONENTS, \
-        f"Must set environment variable MAX_NUM_OF_CANOPY_COMPONENTS={nLC}. Currently: {settings.global_settings.MAX_NUM_OF_CANOPY_COMPONENTS}"
+            f"Must set environment variable MAX_NUM_OF_CANOPY_COMPONENTS={nLC}. Currently: {settings.global_settings.MAX_NUM_OF_CANOPY_COMPONENTS}"
 
         return replace(
             state,
