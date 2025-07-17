@@ -9,6 +9,8 @@ ThermalTime = float
 TimeUnit = Union[JulianDay, ThermalTime]
 # PiecewiseFunction = List[Tuple[UX, UY]]
 PiecewiseFunction = Tuple[List[UX], List[UY]]
+
+ThermalTime = float
 Fraction = float
 
 
