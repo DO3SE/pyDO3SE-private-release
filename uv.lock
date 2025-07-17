@@ -1691,7 +1691,7 @@ wheels = [
 
 [[package]]
 name = "pydo3se"
-version = "4.42.4"
+version = "4.42.5"
 source = { editable = "src/pyDO3SE" }
 dependencies = [
     { name = "click" },
