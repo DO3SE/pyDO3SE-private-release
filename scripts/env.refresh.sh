@@ -3,8 +3,7 @@ set -e
 
 source .venv/bin/activate
 
-uv sync --extra dev
-uv sync --extra grid
+uv sync --all-groups
 
 # Copy integration tests from pyDO3SE
 rm -R tests/key_processes
