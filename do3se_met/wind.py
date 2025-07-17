@@ -125,22 +125,22 @@ def calc_ustar_and_L(
                 Tk: {Tk}, ustar_ref_in: {ustar_ref_in}, Hd: {Hd}, P: {P} \
                 ")
         return ustar_ref_in, L
+    else:
+        # Set initial state
+        ustar_ref = min_ustar
+        L = initial_L
 
-    # Set initial state
-    ustar_ref = min_ustar
-    L = initial_L
-
-    for _ in range(MAX_ITERATIONS):
-        # ! Find ustar over reference canopy
-        ustar_ref_next = max(min_ustar, ustar_from_velocity(
-            max(min_windspeed, u), (z_u - u_d), u_z0, L))
-        L = calc_monin_obukhov_length(Tk, ustar_ref_next, Hd, P)
-        if isclose(ustar_ref_next, ustar_ref, abs_tol=TOLERANCE):
-            ustar_ref = ustar_ref_next
+        for _ in range(MAX_ITERATIONS):
+            # ! Find ustar over reference canopy
+            ustar_ref_next = max(min_ustar, ustar_from_velocity(
+                max(min_windspeed, u), (z_u - u_d), u_z0, L))
             L = calc_monin_obukhov_length(Tk, ustar_ref_next, Hd, P)
-            break
-        ustar_ref = ustar_ref_next
-    return ustar_ref, L
+            if isclose(ustar_ref_next, ustar_ref, abs_tol=TOLERANCE):
+                ustar_ref = ustar_ref_next
+                L = calc_monin_obukhov_length(Tk, ustar_ref_next, Hd, P)
+                break
+            ustar_ref = ustar_ref_next
+        return ustar_ref, L
 
 
 def calc_windspeed(
@@ -357,6 +357,8 @@ def ustar_from_velocity_simple(
         Output: friction velocity, ustar [m/s]
 
     """
+    if z == z0:
+        return MIN_USTAR
     ustar = (u * K) / log(z / z0)
     ustar_lim = max(MIN_USTAR, ustar)
     return ustar_lim
@@ -482,9 +484,9 @@ def calc_layer_windspeed(
     h: float
         Canopy height[m]
     w: float
-        Leaf width[m]
+        LAI Weighted Leaf width[m]
     SAI: float
-        Stand area index [m2 m-2]
+        Total Canopy Stand area index [m2 m-2]
     u_at_canopy_top: float
         Wind speed at canopy height [m/s]
     z: float
