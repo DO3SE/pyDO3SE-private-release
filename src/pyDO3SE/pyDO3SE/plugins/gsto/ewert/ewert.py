@@ -276,6 +276,12 @@ def co2_concentration_in_stomata_loop(
 ) -> CO2_loop_State:
     """Run an iterative loop to find cO2 concentration by allowing CO2 to converge.
 
+    This works by calculating the stomatal conductance (g_sto) and CO2 assimilation rate (A_n)
+    using the current c_i and g_sto values. It then calculates the new c_i based on the
+    CO2 assimilation rate and g_sto. The new c_i is then used to calculate the new g_sto and
+    CO2 assimilation rate. This process is repeated until the difference between the new and
+    old c_i is less than the tolerance. The final state is returned.
+
     This should be ran iteratively until the c_i from both methods converge
 
     Parameters

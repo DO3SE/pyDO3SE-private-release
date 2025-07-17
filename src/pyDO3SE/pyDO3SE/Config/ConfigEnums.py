@@ -268,22 +268,28 @@ class SenescenceFunctionMethods(Enum):
     EWERT = "ewert"
 
 
-class OzoneDepositionMethods(Enum):
-    """Methods for calculating ozone at top of canopy.
-
-    Options
-    -------
-    SINGLE_LAYER = "single layer"
-        Use big leaf method
-    MULTI_LAYER = "multi layer"
-        Use multilayer method
-
-    """
-
-    SINGLE_LAYER = "single layer"
-    MULTI_LAYER = "multi layer"
-
-
 class GstoMethods(Enum):
     MULTIPLICATIVE = "multiplicative"
     PHOTOSYNTHESIS = "photosynthesis"
+
+
+class FO3_methods(Enum):
+    DISABLED = "disabled"
+    WHEAT = "wheat"
+    POTATO = "potato"
+    STEPH_WHEAT = "steph_wheat"
+
+
+class EnabledOrDisabled(Enum):
+    ENABLED = "enabled"
+    DISABLED = "disabled"
+
+
+class FTempMethods(Enum):
+    DISABLED = "disabled"
+    DEFAULT = "default"
+    SQUARE_HIGH = "square high"
+
+
+ENABLED = EnabledOrDisabled.ENABLED
+DISABLED = EnabledOrDisabled.DISABLED
