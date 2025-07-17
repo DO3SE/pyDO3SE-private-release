@@ -144,3 +144,6 @@ dmypy.json
 
 #
 .idea/
+
+# Apptainer (Singularity) container
+*.sif
