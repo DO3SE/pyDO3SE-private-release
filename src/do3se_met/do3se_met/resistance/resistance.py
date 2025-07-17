@@ -731,14 +731,17 @@ def calc_resistance_model(
     L: Optional[float] = None,
     ra_calc_method: str = "simple",
     rb_calc_method: str = "single_layer",
+    rb_calc_method: str = "single_layer",
     rsur_calc_method: str = "single_layer",
     Ts_C: Optional[float] = None,
     snow_depth: Optional[float] = None,
     Rext_base: float = 2500.0,
     Rb_diff: float = 0.000015,
     Rinc_b: float = 14,
+    Rinc_b: float = 14,
     izr: float = izR,
     measured_height: float = 10,
+    layer_depths: List[float] | None = None,
     layer_depths: List[float] | None = None,
     MIN_CANOPY_HEIGHT: float = 0.01,
     CANOPY_D: float = 0.7,
@@ -807,13 +810,8 @@ def calc_resistance_model(
         A new instance of the Resistance Model
 
     """
-    if nL > 1:
-        if rsur_calc_method == "single_layer":
-            raise ValueError("Cannot use single layer rsur calc for multilayer model")
-        if layer_depths is None or len(layer_depths) != nL:
-            raise ValueError(
-                f"Invalid layer depths {layer_depths} should be an array with length nL: {nL}"
-            )
+    if nL > 1 and rsur_calc_method == "single_layer":
+        raise ValueError("Cannot use single layer rsur calc for multilayer model")
 
     if rb_calc_method == "multi_layer" and ustar_per_layer is None:
         raise ValueError("Cannot use multi layer rb calc without ustar_per_layer")
@@ -821,11 +819,6 @@ def calc_resistance_model(
     TOP_LAYER = -1
     LAI_sum_per_layer = [sum(LAI_values[iL]) for iL in range(nL)]
     SAI_sum_per_layer = [sum(SAI_values[iL]) for iL in range(nL)]
-    ustar_per_layer_c = (
-        [ustar_above_canopy for _ in range(nL)]
-        if ustar_per_layer is None
-        else ustar_per_layer
-    )
     # bulk_gsto_sum_per_layer = [sum([mean_gsto_values[iL][iLC] * LAI_values[iL][iLC]
     #                                for iLC in range(nLC)]) for iL in range(nL)]
 
@@ -976,12 +969,7 @@ def calc_resistance_model(
             for _ in range(nL)
         ]
     elif rsur_calc_method == "multi_layer":
-        Rsur: List = calc_Rsur_multilayer(
-            nL, Rb, Rsto, Rext, LAI_sum_per_layer, SAI_sum_per_layer
-        )
-        Rsur_c: List = calc_Rsur_multilayer(
-            nL, Rb, Rsto_c, Rext, LAI_sum_per_layer, SAI_sum_per_layer
-        )
+        Rsur: List = calc_Rsur_multilayer(nL, Rb, Rsto, Rext, LAI_sum_per_layer, SAI_sum_per_layer)
     else:
         raise ValueError("Invalid Rsur calc method")
 

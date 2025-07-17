@@ -338,6 +338,7 @@ def calc_multi_layer_O3_ozone_concentration(
 
     if info != 0:
         raise Exception("SGESV Failed")
+        raise Exception("SGESV Failed")
     C_final = smallR * C_out
     return C_final
 

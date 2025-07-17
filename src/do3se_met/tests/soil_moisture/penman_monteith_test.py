@@ -9,9 +9,14 @@ import pytest
 from do3se_met.resistance.model import Resistance_Model
 from do3se_met.soil_moisture.enums import FSW_Methods
 from do3se_met.soil_moisture.config import Soil_t
-from do3se_met.soil_moisture.penman_monteith import PM_soil_moisture_calc, check_soil_evaporation_blocked, \
-    multi_layer_r_model_to_single_H20, penman_monteith_daily, penman_monteith_hourly, \
-    penman_monteith_reset
+from do3se_met.soil_moisture.penman_monteith import (
+    PM_soil_moisture_calc,
+    check_soil_evaporation_blocked,
+    multi_layer_r_model_to_single_H20,
+    penman_monteith_daily,
+    penman_monteith_hourly,
+    penman_monteith_reset,
+)
 
 
 demo_rmodel_O3 = Resistance_Model(
@@ -29,7 +34,8 @@ demo_rmodel_O3 = Resistance_Model(
 def test_PM_soil_moisture_calc():
     soil_config = Soil_t(0.2, 0.3, 0.4, 0.5)
     soil_moisture = PM_soil_moisture_calc(
-        soil_config, PWP=0.3, root_depth=0.3, Sn_in=0.3, Sn_diff=0.1)
+        soil_config, PWP=0.3, root_depth=0.3, Sn_in=0.3, Sn_diff=0.1
+    )
     assert isclose(soil_moisture.Sn, 1.6855, abs_tol=1e-3)
     assert isclose(soil_moisture.SWP, 0.3, abs_tol=1e-3)
     assert isclose(soil_moisture.ASW, 0.0, abs_tol=1e-3)
@@ -89,6 +95,10 @@ def test_multilayer_r_model_to_single_H20_when_rinc_is_0():
     assert isclose(rmodel_H20.Rgs, 102.0, abs_tol=1e-3)
     assert isclose(rmodel_H20.Rsur[0], 102.0, abs_tol=1e-3)
 
+    # This changed when we updated the multilayer model Jan 2025.
+    # TODO: Investigate this further to check it still works as expected.
+    # assert isclose(rmodel_H20.Rsur[0], 10.763110043, abs_tol=1e-4)
+
 
 def test_check_soil_evaporation_blocked():
     """Test that the soil evaporation function returns the correct bool."""
@@ -122,7 +132,7 @@ def test_check_soil_evaporation_blocked():
 
     with pytest.raises(ValueError):
         check_soil_evaporation_blocked(
-            f_SW_method='None',
+            f_SW_method="None",
         )
 
 
@@ -261,7 +271,10 @@ def test_penman_monteith_daily_dd_62_hr_0():
         pm_state_run_off_acc=0.0,
         pm_state_Ei_acc=0.010254495916419309,
         pm_state_Eat_acc=0.0019107638798741059,
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7aa3811e3c61482c39c63e5d7a57f2b53cd61328
         # pm_state_Ei_acc=0.00849898696512993,
         # pm_state_Eat_acc=0.0017408117923096824,
         pm_state_percolated_acc=0.0,
