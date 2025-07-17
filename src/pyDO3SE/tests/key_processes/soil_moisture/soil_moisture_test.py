@@ -7,9 +7,9 @@ from pyDO3SE.Config.Config_Shape import Config_Shape
 from pyDO3SE.Output.OutputConfig import (
     output_results_only_options,
 )
+from do3se_met.soil_moisture.helpers import SWP_to_SWC
+from do3se_met.soil_moisture.enums import SoilMoistureSource
 from pyDO3SE import main
-from pyDO3SE.plugins.soil_moisture.helpers import SWP_to_SWC
-from pyDO3SE.plugins.soil_moisture.enums import SoilMoistureSource
 from pyDO3SE.External_State.External_State_Shape import External_State_Shape
 
 project_dir = "tests/key_processes/soil_moisture"

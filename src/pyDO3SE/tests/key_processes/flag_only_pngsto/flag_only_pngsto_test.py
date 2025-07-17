@@ -172,7 +172,6 @@ def test_should_not_change_pody_if_lai_changes():
         model_processes,
     )
     lai_3_pody = final_state.canopy_component_population[0][0].POD_Y
-    # assert isclose(final_state.canopy_component_population[0][0].POD_Y, 0.227126866, abs_tol=1e-4)
     assert final_state.canopy.LAI_total == 3
     assert final_state.canopy_component[0].LAI == 3
     assert output_logs[0]['pody'] < output_logs[-1]['pody']

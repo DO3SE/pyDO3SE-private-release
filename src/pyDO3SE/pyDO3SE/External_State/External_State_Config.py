@@ -428,3 +428,5 @@ class Config_Met:
     #: This should be set if there are hours missing in the data or it doesnt start
     #: and finish at the end of the day (Hour 0 or 23)
     sparse_data: bool = False #: run in sparse data mode
+
+    calculate_met_at_ground_layer: bool = False  #: Calculate meteorological variables at ground layera

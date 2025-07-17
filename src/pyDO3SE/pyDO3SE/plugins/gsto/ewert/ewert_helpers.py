@@ -19,352 +19,19 @@ References
 - Feng, Y. et al. (2022) ‘Identifying and modelling key physiological traits that confer tolerance or sensitivity to ozone in winter wheat’, Environmental Pollution. Elsevier Ltd, 304(April), p. 119251. doi: 10.1016/j.envpol.2022.119251.
 
 """
-
 from typing import NamedTuple, List
 from math import sqrt
-import numpy as np
-from warnings import warn
+
 from pyDO3SE.constants.physical_constants import R
 from pyDO3SE.util.error_handling import ConfigError
 from pyDO3SE.Config.ConfigEnums import FVPDMethods
 from do3se_met.conversion import deg_to_kel
 from do3se_met.helpers import saturated_vapour_pressure
 from pyDO3SE.plugins.gsto.helpers import temp_dep_inhibit, temp_dep
-from pyDO3SE.plugins.gsto.constants import (
-    A_j_a,
-    A_j_b,
-    Gamma_star_25,
-    E_Gamma_star,
-    E_K_C,
-    K_C_25,
-    K_O_25,
-    E_K_O,
-    H_a_jmax,
-    H_d_jmax,
-    S_V_jmax,
-    H_a_vcmax,
-    H_d_vcmax,
-    S_V_vcmax,
-    alpha,
-    Teta,
-    O_i,
-)
-from .enums import AdjustNegativeAnMethods
 
-
-def calc_A_n_product_limited(V_cmax: float, R_d: float) -> float:
-    """Calculate the product-limited photosynthesis rate
-
-    Parameters
-    ----------
-    V_cmax: float
-        Maximum carboxylation rate [umol/m^2/s]
-    R_d: float
-        Dark respiration rate [umol/m^2/s CO2]
-
-    Returns
-    -------
-    A_p
-        Product-limited Photosythesis Rate [umol/m^2/s]
-
-    References
-    ----------
-    - Ewert, F., Porter, J.R., 2000 - Eq8
-
-
-    """
-    return (0.5 * V_cmax) - R_d
-
-
-def calc_A_n_rubisco_limited(
-    O2: float,
-    P: float,
-    K_O: float,
-    V_cmax: float,
-    R_d: float,
-    g_sto_0: float,
-    G_1c: float,
-    g_bl: float,
-    c_a: float,
-    f_VPD: float,
-    Gamma: float,
-    Gamma_star: float,
-    K_C: float,
-    fO3_d: float,  # we need to include the ozone factors
-    f_LS: float,  # need the senescene factor for Ac aswell
-    f_SW: float,  # need the soil water factor to calculate Ac
-    negative_A_n: bool,
-):
-    """Calculate the rubisco-limited photosynthesis rate
-
-    Based on the following papers:
-    (Masutomi, Y., 2023)
-
-    With the following modifications:
-    - The equation has been modified to include the CO2 compensation point using
-
-
-    Parameters
-    ----------
-    O2: float
-        Partial pressure of atmospheric O2 [Pa]
-    P: float
-        Surface Air Pressure [kPa]
-    K_O: float
-        Michaelis-Menten constant for O2 [mmol/mol]
-    V_cmax: float
-        Maximum carboxylation rate [umol/m^2/s]
-    R_d: float
-        Dark respiration rate [umol/m^2/s CO2]
-    g_sto_0: float
-        See gsto_0 [umol/m^2/s CO2]
-    G_1c(m): 5.625
-        the species specific sensitivity of stomatal conductance to VPD and stomatal conductance [dimensionless]
-    g_bl: float
-        Boundary Layer Conductance [mmol/m^2/s H2O]
-    c_a: float
-        Atmospheric CO2 concentration [ppm]
-    RH: float
-        Relative Humidity []
-    Gamma: float
-        CO2 compensation point [umol/mol CO2]
-    Gamma_star: float
-        CO2 compensation point in the absence of respiration [umol/mol CO2]
-    K_C: float
-        Michaelis constant CO2 [ppm]
-    C_s: float
-        CO2 concentration at leaf surface [ppm]
-    J: float
-        Rate of electron transport [umol/m^2/s]
-    fO3_d: float
-        Hourly accumulated ozone impact factor [dimensionless][0-1]
-        Cumulative ozone effect [dimensionless]
-    f_LS: float
-        factor effect of leaf senescence on A_c [Dimensionless][0-1]
-    f_SW: float
-        soil water effect on gsto [dimenstionless] [0-1]
-    negative_A_n: boolean
-        Boolean variable to select a negative A_n
-
-    Returns
-    -------
-    A_c
-        Rubisco-Limited Photosythesis Rate [umol/m^2/s]
-
-
-    References
-    ----------
-
-    - Masutomi, Y., 2023. The appropriate analytical solution for coupled leaf photosynthesis
-    - Baldocchi D. An analytical solution for coupled leaf photosynthesis and stomatal conductance models. Tree Physiol. 1994;14(7_9):1069-1079. doi:10.1093/treephys/14.7-8-9.1069
-    and stomatal conductance models for C3 plants. Ecological Modelling, 481, p.110306.
-
-    """
-    # Converts Pressure from kPa (in DO3SE code) to Pa (in this code)
-    P = 1000 * P
-
-    # Convert gsto0 from micro moles m-2 PLA s-1 of H2O to moles m-2 PLA s-1 of CO2
-    g_bl_mol_co2 = g_bl * 1e-6 / 1.37
-
-    # Convert gsto0 from micro moles m-2 PLA s-1 of CO2 to moles m-2 PLA s-1 of CO2
-    g_sto_0_mol = g_sto_0 * 1e-6
-
-    # Define Factors for cubic Equations
-    alpha = g_bl_mol_co2 * c_a
-    beta = (g_bl_mol_co2 * G_1c * f_VPD) - g_sto_0_mol
-    gamma_c = (V_cmax * fO3_d * f_LS * f_SW * Gamma_star) + (
-        K_C * (1 + ((1000 * O2 / P) / K_O)) * R_d
-    )  # in our Ac and Aj we use compensation point in the absence of respiration so need Gamma_star
-    zeta_c = V_cmax * fO3_d * f_LS * f_SW - R_d
-    eta_c = (alpha * zeta_c) - (g_bl_mol_co2 * gamma_c)
-    xi_c = alpha + zeta_c + (K_C * (1 + (1000 * O2 / P) / K_O) * g_bl_mol_co2)
-
-    lambda_c = f_LS * f_SW * fO3_d * V_cmax
-    b_with_comp_point = -g_bl_mol_co2 * (g_sto_0_mol + g_bl_mol_co2) * Gamma
-    c_with_comp_point = (
-        (1 / K_O)
-        * g_bl_mol_co2
-        * Gamma
-        * (
-            c_a * g_sto_0_mol * g_bl_mol_co2 * K_O
-            + g_sto_0_mol * K_O * (-R_d + lambda_c)
-            + g_bl_mol_co2
-            * (g_sto_0_mol * K_C * (K_O + (1000 * O2 / P)) - K_O * R_d + K_O * lambda_c)
-        )
-    )
-    d_with_comp_point = (
-        g_sto_0_mol
-        * (g_bl_mol_co2**2)
-        * Gamma
-        * (
-            K_O * K_C * R_d
-            + K_C * (1000 * O2 / P) * R_d
-            + lambda_c * K_O * Gamma_star
-            + c_a * K_O * (R_d - lambda_c)
-        )
-    ) / K_O
-
-    # Define Cubic Equation Coefficients
-    if negative_A_n is False:
-        a = beta - g_bl_mol_co2
-        b = (
-            (g_sto_0_mol * alpha)
-            - (beta * xi_c)
-            + (g_bl_mol_co2 * alpha)
-            + (g_bl_mol_co2 * zeta_c)
-            + b_with_comp_point
-        )
-        c = (
-            -(g_sto_0_mol * alpha * xi_c)
-            + (beta * eta_c)
-            - (g_bl_mol_co2 * alpha * zeta_c)
-            + c_with_comp_point
-        )
-        d = g_sto_0_mol * alpha * eta_c + d_with_comp_point
-    elif negative_A_n is True:
-        a = 0
-        b = g_sto_0_mol + g_bl_mol_co2
-        c = (g_sto_0_mol * xi_c) + (g_bl_mol_co2 * zeta_c)
-        d = g_sto_0_mol * eta_c
-
-    # Solve Cubic Equation
-    roots = np.roots([a, b, c, d])
-    roots = [np.real(x) for x in roots if (abs(x.imag) < 1e-10)]
-    return roots
-
-
-def calc_A_n_rubp_limited(
-    P: float,
-    R_d: float,
-    g_sto_0: float,
-    G_1c: float,
-    g_bl: float,
-    c_a: float,
-    RH: float,
-    Gamma: float,
-    Gamma_star: float,
-    J: float,
-    negative_A_n: bool,
-):
-    """Calculate the RuBP-limited photosynthesis rate
-
-
-    Based on the following papers:
-    (Masutomi, Y., 2023)
-
-    With the following modifications:
-    - The equation has been modified to include the CO2 compensation point using
-
-
-    Parameters
-    ----------
-    O2: float
-        Partial pressure of atmospheric O2 [Pa]
-    P: float
-        Surface Air Pressure [kPa]
-    K_O: float
-        Michaelis-Menten constant for O2 [mmol/mol]
-    V_cmax: float
-        Maximum carboxylation rate [umol/m^2/s]
-    R_d: float
-        Dark respiration rate [umol/m^2/s CO2]
-    g_sto_0: float
-        the minimum stomatal conductance [umol m-2 s-1 CO2]
-    G_1c: float
-       the species specific sensitivity of stomatal conductance to VPD and stomatal conductance [dimensionless]
-    g_bl: float
-        Boundary Layer Conductance [mmol/m^2/s H2O]
-    c_a: float
-        Atmospheric CO2 concentration [ppm]
-    RH: float
-        Relative Humidity []
-    Gamma: float
-        CO2 compensation point [umol/mol CO2]
-    K_C: float
-        Michaelis constant CO2 [ppm]
-    C_s: float
-        CO2 concentration at leaf surface [ppm]
-    J: float
-        Rate of electron transport [umol/m^2/s]
-    negative_A_n: boolean
-        Boolean variable to select a negative A_n
-
-    Returns
-    -------
-    A_j
-        RuBP-Limited Photosythesis Rate [umol/m^2/s]
-
-    References
-    ----------
-    - Masutomi, Y., 2023. The appropriate analytical solution for coupled leaf photosynthesis
-    - Baldocchi D. An analytical solution for coupled leaf photosynthesis and stomatal conductance models. Tree Physiol. 1994;14(7_9):1069-1079. doi:10.1093/treephys/14.7-8-9.1069
-    and stomatal conductance models for C3 plants. Ecological Modelling, 481, p.110306.
-
-    """
-    # Converts Pressure from kPa (in DO3SE code) to Pa (in this code)
-    P = 1000 * P
-
-    # Convert gsto0 from micro moles m-2 PLA s-1 of H2O to moles m-2 PLA s-1 of CO2
-    g_bl_mol_co2 = g_bl * 1e-6 / 1.37
-
-    # Convert gsto0 from micro moles m-2 PLA s-1 of CO2 to moles m-2 PLA s-1 of CO2
-    g_sto_0_mol = g_sto_0 * 1e-6
-
-    # Define Factors for cubic Equations
-    alpha = g_bl_mol_co2 * c_a
-    beta = (g_bl_mol_co2 * G_1c * RH) - g_sto_0_mol
-    gamma_j = (J * Gamma_star) + (8 * Gamma_star * R_d)
-    zeta_j = J - (A_j_a * R_d)
-    eta_j = (alpha * zeta_j) - (g_bl_mol_co2 * gamma_j)
-    xi_j = (A_j_a * alpha) + zeta_j + (A_j_b * Gamma_star * g_bl_mol_co2)
-
-    # define extra terms for cubic coefficients
-    b_with_comp_point = -A_j_a * g_bl_mol_co2 * (g_sto_0_mol + g_bl_mol_co2) * Gamma
-    c_with_comp_point = (
-        g_bl_mol_co2
-        * Gamma
-        * (
-            A_j_a * c_a * g_sto_0_mol * g_bl_mol_co2
-            + g_sto_0_mol * (J - A_j_a * R_d)
-            + g_bl_mol_co2 * (J - A_j_a * R_d + A_j_b * g_sto_0_mol * Gamma_star)
-        )
-    )
-    d_with_comp_point = (
-        g_sto_0_mol
-        * (g_bl_mol_co2**2)
-        * Gamma
-        * (-c_a * J + A_j_a * c_a * R_d + J * Gamma_star + A_j_b * R_d * Gamma_star)
-    )
-
-    # Define Cubic Equation Coefficients
-    if negative_A_n is False:
-        a = A_j_a * (beta - g_bl_mol_co2)
-        b = (
-            (A_j_a * g_sto_0_mol * alpha)
-            - (beta * xi_j)
-            + (A_j_a * g_bl_mol_co2 * alpha)
-            + (g_bl_mol_co2 * zeta_j)
-            + b_with_comp_point
-        )
-        c = (
-            -(g_sto_0_mol * alpha * xi_j)
-            + (beta * eta_j)
-            - (g_bl_mol_co2 * alpha * zeta_j)
-            + c_with_comp_point
-        )
-        d = g_sto_0_mol * alpha * eta_j + d_with_comp_point
-    elif negative_A_n is True:
-        a = 0
-        b = A_j_a * (g_sto_0_mol + g_bl_mol_co2)
-        c = (g_sto_0_mol * xi_j) + (g_bl_mol_co2 * zeta_j)
-        d = g_sto_0_mol * eta_j
-
-    # Solve Cubic Equation
-    # roots = np.roots([a, b, c, d])[np.isreal(np.roots([a, b, c, d]))]
-    # roots = [np.real(x) for x in roots]
-    roots = np.roots([a, b, c, d])
-    roots = [np.real(x) for x in roots if (abs(x.imag) < 1e-10)]
-    return roots
+from pyDO3SE.plugins.gsto.constants import \
+    A_j_a, A_j_b, Gamma_star_25, E_Gamma_star, E_K_C, K_C_25, K_O_25, E_K_O, E_R_d, R_d_20, \
+    H_a_jmax, H_d_jmax, S_V_jmax, H_a_vcmax, H_d_vcmax, S_V_vcmax, alpha, Teta, O_i
 
 
 class Ewert_Input_Factors(NamedTuple):
@@ -386,11 +53,11 @@ class Ewert_Input_Factors(NamedTuple):
 
 
 def calc_input_factors(
-    Tleaf_C: float,  # < Leaf temperature [degrees C]
-    Q: float,  # < PPFD [umol/m^2/s] e.g. PARsun data converted to umol
-    V_cmax_25: float,  # < Maximum catalytic rate at 25 degrees [umol/m^2/s]
-    J_max_25: float,  # < Maximum rate of electron transport at 25 degrees [umol/m^2/s]
-    R_d_coeff: float,  # < Dark respiration coefficient
+    Tleaf_C: float,       # < Leaf temperature [degrees C]
+    Q: float,             # < PPFD [umol/m^2/s] e.g. PARsun data converted to umol
+    V_cmax_25: float,     # < Maximum catalytic rate at 25 degrees [umol/m^2/s]
+    J_max_25: float,      # < Maximum rate of electron transport at 25 degrees [umol/m^2/s]
+    R_d_coeff: float,     # < Dark respiration coefficient
 ) -> Ewert_Input_Factors:
     """Calculate input parameters to ewert pass.
 
@@ -454,9 +121,8 @@ def calc_input_factors(
     J_max = temp_dep_inhibit(J_max_25, deg_to_kel(25), H_a_jmax, H_d_jmax, S_V_jmax, Tleaf_K, R)
 
     # [umol/m^2/s]
-    V_cmax = temp_dep_inhibit(
-        V_cmax_25, deg_to_kel(25), H_a_vcmax, H_d_vcmax, S_V_vcmax, Tleaf_K, R
-    )
+    V_cmax = temp_dep_inhibit(V_cmax_25, deg_to_kel(25), H_a_vcmax,
+                              H_d_vcmax, S_V_vcmax, Tleaf_K, R)
 
     # [micro mol/(m^2*s)]
     # R_d = temp_dep(R_d_20, deg_to_kel(20), E_R_d, Tleaf_K, R)
@@ -466,9 +132,7 @@ def calc_input_factors(
     #  Electron transport rate
     # Equation 4 in Ewert Paper
     # [mol electron?]
-    J = (J_max + alpha * Q - sqrt((J_max + alpha * Q) ** 2 - 4 * alpha * Q * Teta * J_max)) / (
-        2 * Teta
-    )  # noqa: 501
+    J = (J_max + alpha * Q - sqrt((J_max + alpha * Q)**2 - 4 * alpha * Q * Teta * J_max)) / (2 * Teta)  # noqa: 501
 
     # [Pa]
     e_sat_i = 1000 * saturated_vapour_pressure(Tleaf_C)
@@ -492,9 +156,9 @@ def calc_input_factors(
 
 
 def calc_fO3_h(
-    O3up: float,
-    gamma_1: float = 0.060,
-    gamma_2: float = 0.0045,
+        O3up: float,
+        gamma_1: float = 0.060,
+        gamma_2: float = 0.0045,
 ) -> float:
     """Calculate f03 as per Ewert & Porter(2000) equation 10.
 
@@ -572,6 +236,19 @@ def calc_f_LA(t_lem: float, t_lma: float, td_dd: float) -> float:
     return f_LA
 
 
+class Damage_Factors(NamedTuple):
+    """Ozone damage factors."""
+
+    fO3_h: float
+    fO3_d: float
+    fO3_l: float
+    f_LA: float
+    f_LS: float
+    rO3: float
+    t_lep_limited: float
+    t_lse_limited: float
+
+
 def calc_fo3_l(
     O3up_acc: float,
     gamma_3: float,
@@ -606,19 +283,6 @@ def calc_fo3_l(
     """
     # eq 17 # note conversion to umol
     return min(1, max(0, 1 - (gamma_3 * ((O3up_acc / 1000) - cL3))))
-
-
-class Damage_Factors(NamedTuple):
-    """Ozone damage factors."""
-
-    fO3_h: float
-    fO3_d: float
-    fO3_l: float
-    f_LA: float
-    f_LS: float
-    rO3: float
-    t_lep_limited: float
-    t_lse_limited: float
 
 
 def calc_ozone_damage_factors(
@@ -715,9 +379,9 @@ def calc_ozone_damage_factors(
         f_LA=f_LA,
         rO3=rO3,
         # NOTE: These are calculated elsewhere
-        f_LS=None,  # TODO: Remove this # type: ignore
-        t_lep_limited=None,  # type: ignore
-        t_lse_limited=None,  # type: ignore
+        f_LS=None,  # TODO: Remove this
+        t_lep_limited=None,
+        t_lse_limited=None,
     )
 
 
@@ -1061,350 +725,16 @@ def calc_CO2_assimilation_rate(
     - Ewert, F., Porter, J.R., 2000 - Eq8
 
     """
-    A_c = V_cmax * ((c_i_in - Gamma_star) / (c_i_in + (K_C * (1 + (O_i / K_O))))) * fO3_d * f_LS
+    A_c = V_cmax * ((c_i_in - Gamma_star) /  # noqa: W504
+                    (c_i_in + (K_C * (1 + (O_i / K_O))))) * fO3_d * f_LS
     A_j = J * ((c_i_in - Gamma_star) / ((A_j_a * c_i_in) + (A_j_b * Gamma_star)))
 
     A_p = 0.5 * V_cmax
 
     A_n = min(A_c, A_j, A_p) - R_d
 
-    A_n_limit_factor = sorted(zip(["A_c", "A_j", "A_p"], [A_c, A_j, A_p]), key=lambda tup: tup[1])[
-        0
-    ][0]
-
-    return CO2_assimilation_rate_factors(
-        A_c=A_c,
-        A_j=A_j,
-        A_p=A_p,
-        A_n=A_n,
-        A_n_limit_factor=A_n_limit_factor,
-    )
-
-
-def does_A_n_solve_requirements(
-    A_n: float,
-    g_sto_0: float,
-    g_bl: float,
-    f_VPD: float,
-    m: float,
-    Gamma: float,
-    c_a: float,
-    f_SW: float,
-    R_d: float,
-    negative_A_n: bool,
-):
-    """Determines if a suitable solution to the cubic equation satisfies the requirements to be the A_n value
-
-    g_sto > 0
-    c_i > 0
-
-    Based on the methods by (Masutomi, Y., 2023)
-
-    Parameters
-    ----------
-    A_n: float
-        CO2 Assimilation Rate [umol m-2 s-1 CO2]
-    g_sto_0: float
-        Closed stomata conductance [umol/m^2/s CO2]
-    g_bl: float
-        Boundary layer conductance to H2O vapour [umol m-2 PLA s-1 H2O]
-    f_VPD: float
-        Humidity Function (Leuning 1995)
-    m: float
-        Species-specific sensitivity to An [dimensionless]
-    Gamma: float
-        CO2 compensation point [umol/mol CO2]
-    c_a: float
-        Atmospheric CO2 concentration [ppm]
-    f_SW: float
-        Soil water stress factor [dimensionless]
-    negative_A_n: bool
-        Boolean variable to select a negative A_n
-    f_VPD_method: FVPDMethods
-        Method to calculate f_VPD
-
-    Returns
-    -------
-    boolean
-        True if the root is a suitable A_n value, False if not
-
-
-    References
-    ----------
-    - Masutomi, Y., 2023. The appropriate analytical solution for coupled leaf photosynthesis
-    and stomatal conductance models for C3 plants. Ecological Modelling, 481, p.110306.
-
-    """
-
-    # TODO: We are calculating these multiple times. There may be a more efficient way to do this
-    # NOTE: We cannot calculate f_VPD without g_sto and vice versa. So we use the previous value
-
-    g_sto = calc_stomatal_conductance(
-        g_sto_0=g_sto_0,
-        m=m,
-        Gamma=Gamma,
-        g_bl=g_bl,
-        c_a=c_a,
-        A_n=A_n,
-        f_SW=f_SW,
-        f_VPD=f_VPD,
-    )
-
-    c_i = calc_CO2_supply(
-        A_n=A_n,
-        c_a=c_a,
-        g_sto=g_sto,
-        g_bl=g_bl,
-    )
-
-    # This first if statement is to avoid overly large roots
-    # Not a proper solution but a workaround
-    if abs(A_n) > 100:
-        return False
-    if not negative_A_n:
-        if A_n < -R_d:  # TODO: Check if this is ok
-            return False
-
-    if (g_sto >= 0) and (c_i >= 0):
-        return True
-    else:
-        return False
-
-
-def calc_CO2_assimilation_rate_cubic(
-    V_cmax: float,
-    Gamma_star: float,
-    K_C: float,
-    K_O: float,
-    fO3_d: float,
-    f_LS: float,
-    J: float,
-    R_d: float,
-    c_a: float,
-    Gamma: float,
-    P: float,
-    g_sto_0: float,
-    g_sto_prev: float,
-    e_a: float,
-    g_bl: float,
-    e_sat_i: float,
-    D_0: float,
-    fmin: float,
-    f_VPD: float | None,
-    m: float,
-    f_SW: float,
-    f_VPD_method: FVPDMethods,
-    adjust_negative_A_n: AdjustNegativeAnMethods = AdjustNegativeAnMethods.FALSE,
-) -> CO2_assimilation_rate_factors:
-    """Calculate the assimilation rates.
-
-    The original method is based on :
-    Ewert & Porter(2000) Eq 8
-
-    In Dec 2024 we revised the method of calculating the assimilation rates to use
-    a cubic equation as in (Masutomi, Y., 2023)
-
-    Parameters
-    ----------
-    V_cmax: float
-        Max catalytic rate of Rubisco [micro mol/(m^2*s)]
-    Gamma_star: float
-        See ewert
-    K_C: float
-        Michaelis constant CO2 [micro mol/mol]
-    K_O: float
-        Michaelis constant O2 [mmol/mol]
-    fO3_d: float
-        Hourly accumulated ozone impact factor [dimensionless][0-1]
-    f_LS: float
-        Factor effect of leaf senescence on A_c [Dimensionless][0-1]
-    J: float
-        Rate of electron transport [micro mol/(m^2*s)]
-    R_d: float
-        Day respiration rate [micro mol/(m^2*s)]
-    c_a: float
-        Atmospheric CO2 concentration [ppm]
-    RH: float
-        Relative Humidity []
-    Gamma: float
-        CO2 compensation point [umol/mol CO2]
-    P: float
-        Surface Air Pressure [kPa]
-    g_sto_0: float
-        Closed stomata conductance [umol/m^2/s CO2]
-    g_sto_prev: float
-        g_sto from previous hour [umol/m^2/s CO2]
-    e_a: float
-        Ambient vapour pressure [Pa]
-    g_bl: float
-        Boundary layer conductance to H2O vapour [umol m-2 PLA s-1 H2O]
-    e_sat_i: float
-        Internal saturation vapour pressure [Pa]
-    D_0: float
-        The VPD at which g_sto is reduced by a factor of 2 [kPa]
-    fmin: float
-        Minimum value of f_VPD [fraction]
-    f_VPD: float
-        Humidity Function (Leuning 1995)
-    m: float
-        Species-specific sensitivity to An [dimensionless]
-    f_SW: float
-        Soil water stress factor [dimensionless]
-    f_VPD_method: FVPDMethods
-        Method to calculate f_VPD
-    adjust_negative_A_n: AdjustNegativeAnMethods = AdjustNegativeAnMethods.FALSE,
-        If True then allow negative A_n values, else return NaN
-        If "last_resort" then allow negative A_n values if no other solution is found
-        If "clip" then clip negative A_n values to -R_d
-
-    Returns
-    -------
-    A_c: float
-        Eq 8 - Rubisco activity limited rate of photosynthesis
-    A_j: float
-        Eq 3 - RuBP regeneration (electron transport) limited assimilation rate (A_q in paper)
-    A_p: float
-        Eq ? - Triose phosphate utilisation limited assimilation rate
-    A_n: float
-        Eq 1 - CO2 Assimilation Rate [umol m-2 s-1 CO2]
-    A_n_limit_factor: str
-        The factor that has limited CO2 assimilation (A_c/A_j/A_p)
-
-    References
-    ----------
-    - Ewert, F., Porter, J.R., 2000 - Eq8
-    - Masutomi, Y., 2023. The appropriate analytical solution for coupled leaf photosynthesis
-    and stomatal conductance models for C3 plants. Ecological Modelling, 481, p.110306.
-
-    """
-
-    O2 = 20900  # Partial pressure of atmospheric Oxygen
-
-    negative_A_n = adjust_negative_A_n == AdjustNegativeAnMethods.ALLOW
-
-    f_VPD = (
-        calc_humidity_defecit_fVPD(
-            # TODO: We should use prev hour gsto here instead of gsto_0
-            g_sto_in=g_sto_prev,
-            e_a=e_a,
-            g_bl=g_bl,
-            e_sat_i=e_sat_i,
-            D_0=D_0,
-            fmin=fmin,
-            f_VPD_method=f_VPD_method,
-        )
-        if f_VPD_method in [FVPDMethods.LEUNING, FVPDMethods.DANIELSSON]
-        else f_VPD
-    )
-    assert f_VPD is not None, "Must supply f_VPD or use LEUNING or DANIELSSON methods"
-
-    A_p = calc_A_n_product_limited(V_cmax, R_d)
-    A_c_roots = calc_A_n_rubisco_limited(
-        O2,
-        P,
-        K_O,
-        V_cmax,
-        R_d,
-        g_sto_0,
-        m,
-        g_bl,  # H2O
-        c_a,
-        f_VPD,
-        Gamma,
-        Gamma_star,
-        K_C,
-        fO3_d,
-        f_LS,
-        f_SW,
-        negative_A_n,
-    )
-    A_c_root = next(
-        (
-            root
-            for root in A_c_roots
-            if does_A_n_solve_requirements(
-                root,
-                g_sto_0,
-                g_bl,
-                f_VPD,
-                m,
-                Gamma,
-                c_a,
-                f_SW,
-                R_d,
-                negative_A_n,
-            )
-        ),
-        np.nan,
-    )
-    # TODO: May be able to remove this once negative A_n issue resolved
-    if adjust_negative_A_n == AdjustNegativeAnMethods.LAST_RESORT and np.isnan(A_c_root):
-        A_c_root = next(
-            (
-                root
-                for root in A_c_roots
-                if does_A_n_solve_requirements(
-                    root,
-                    g_sto_0,
-                    g_bl,
-                    f_VPD,
-                    m,
-                    Gamma,
-                    c_a,
-                    f_SW,
-                    R_d,
-                    True,
-                )
-            ),
-            np.nan,
-        )
-    if adjust_negative_A_n == AdjustNegativeAnMethods.CLIP and np.isnan(A_c_root):
-        A_c_root = -R_d
-    # A_c = ((A_c_root + R_d) * fO3_d * f_LS) - R_d  # TODO: Check this not needed
-    A_c = A_c_root
-    A_j_roots = calc_A_n_rubp_limited(
-        P,
-        R_d,
-        g_sto_0,
-        m,
-        g_bl,
-        c_a,
-        f_VPD,
-        Gamma,
-        Gamma_star,
-        J,
-        negative_A_n,
-    )
-    A_j = next(
-        (
-            root
-            for root in A_j_roots
-            if does_A_n_solve_requirements(
-                root,
-                g_sto_0,
-                g_bl,
-                f_VPD,
-                m,
-                Gamma,
-                c_a,
-                f_SW,
-                R_d,
-                negative_A_n,
-            )
-        ),
-        np.nan,
-    )
-    # TODO: We could catch NaN values here when they are resolved
-    if any(np.isnan(a) for a in [A_c, A_j, A_p]):
-        warn(f"One of the assimilation rates is NaN A_c={A_c}, A_j={A_j}, A_p={A_p}")
-    A_n = np.nanmin([A_p, A_c, A_j])
-    if adjust_negative_A_n == AdjustNegativeAnMethods.CLIP and np.isnan(A_n) or A_n < -R_d:
-        A_n = -R_d
-
     A_n_limit_factor = sorted(
-        zip(["A_c", "A_j", "A_p"], [A_c, A_j, A_p]),
-        key=lambda tup: np.isnan(tup[1]) and 10000000 or tup[1],
-    )[0][0]
+        zip(['A_c', 'A_j', 'A_p'], [A_c, A_j, A_p]), key=lambda tup: tup[1])[0][0]
 
     return CO2_assimilation_rate_factors(
         A_c=A_c,
@@ -1421,8 +751,7 @@ def calc_humidity_defecit_fVPD(
     g_bl: float,
     e_sat_i: float,
     D_0: float,
-    fmin: float,
-    f_VPD_method: FVPDMethods,
+    f_VPD_method,
 ) -> float:
     """Calculate the humidity defecit from the gsto.
 
@@ -1438,12 +767,8 @@ def calc_humidity_defecit_fVPD(
         Boundary layer conductance to H2O vapour ([umol m-2 PLA s-1 H2O])
     e_sat_i: float
         internal saturation vapour pressure[Pa]
-    fmin: float
-        Minimum stomatal conductance [fraction]
     D_0: float
         "The VPD at which g_sto is reduced by a factor of 2" [kPa] (Leuning et al. 1998)
-    f_VPD_method: FVPDMethods
-        Method to calculate f_VPD
 
     Returns
     -------
@@ -1466,19 +791,18 @@ def calc_humidity_defecit_fVPD(
     e_sat_i_kPa = e_sat_i * 1e-3
     e_a_kPa = e_a * 1e-3
     # Surface humidity
-    h_s = (g_sto_in_mol * e_sat_i_kPa + g_bl_mol * e_a_kPa) / (
-        e_sat_i_kPa * (g_sto_in_mol + g_bl_mol)
-    )  # Nikolov et al 1995
+    h_s = (g_sto_in_mol * e_sat_i_kPa + g_bl_mol * e_a_kPa) / \
+        (e_sat_i_kPa * (g_sto_in_mol + g_bl_mol))  # Nikolov et al 1995
     # Convert relative humidity to humidity defecit
     d_s = e_sat_i_kPa - (e_sat_i_kPa * h_s)
 
     if f_VPD_method == FVPDMethods.LEUNING:
-        f_VPD = 1 / (1 + (d_s / D_0))  # Leuning 1995
+        f_VPD = 1 / (1 + (d_s / D_0))   # Leuning 1995
     elif f_VPD_method == FVPDMethods.DANIELSSON:
-        f_VPD = 1 / (1 + (d_s / D_0) ** 8)  # Leuning 1995
+        f_VPD = 1 / (1 + (d_s / D_0)**8)   # Leuning 1995
     else:
         raise ConfigError(f"Invalid f_VPD_method {f_VPD_method}")
-    f_VPD = max(fmin, f_VPD)
+
     return f_VPD
 
 
@@ -1505,7 +829,7 @@ def calc_stomatal_conductance(
     m: float
         Species-specific sensitivity to An [dimensionless]
     Gamma: float
-        CO2 compensation point [umol/mol CO2]
+        CO2 compensation point in the absense of respiration [umol/mol CO2]
     g_bl: float
         Boundary layer conductance to H2O vapour ([umol m-2 PLA s-1 H2O])
     c_a: float
@@ -1540,7 +864,7 @@ def calc_stomatal_conductance(
 
     # Equation 5 from Ewert paper and Leuning 1995
     g_eq_top = m * A_n * f_SW * f_VPD  # micro mol/(m^2*s)
-    g_eq_bottom = c_s - Gamma
+    g_eq_bottom = (c_s - Gamma)
 
     # Restricted to min g_sto_out of g_sto_0 to improve loop convergence
     g_sto_out_mol = g_sto_0_mol + max(0, (g_eq_top / g_eq_bottom))
@@ -1572,7 +896,7 @@ def calc_CO2_supply(
     g_sto: float
         Stomatal Conductance [umol/m^2/s CO2]
     g_bl: float
-        Boundary layer conductance to H2O vapour ([umol m-2 PLA s-1 H2O])
+        Boundary layer conductance to CO2 vapour ([umol m-2 PLA s-1 CO2])
 
     Returns
     -------
@@ -1601,6 +925,7 @@ def calc_mean_gsto(
 ) -> List[float]:
     """Calculate the mean gsto per layer given percent of each leaf population at each layer.
 
+
     Parameters
     ----------
     leaf_gsto_list : List[List[float]]
@@ -1611,6 +936,4 @@ def calc_mean_gsto(
     List[float]
         mean_gsto per layer
     """
-    return [
-        sum((g * L) for g, L in zip(leaf_gsto_list[iL], leaf_fLAI_list[iL])) for iL in range(nL)
-    ]
+    return [sum((g * L) for g, L in zip(leaf_gsto_list[iL], leaf_fLAI_list[iL])) for iL in range(nL)]

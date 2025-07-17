@@ -292,15 +292,15 @@ def main(
                 logger=logger,
                 **asdict(output_options),
             )
-        except Exception as e:
+        except Exception:
             logger("Error exporting failed run output")
-        raise e from e
+        raise e
     time_taken = datetime.now() - start_time
     logger(f"Model run complete in {time_taken}")
 
     output_filename = run_paths.output_filename
     if run_paths.output_directory:
-        logger("Exporting outputs")
+        logger(f"Exporting outputs to {run_paths.output_directory}")
         export_output(
             output_logs,
             final_state,
@@ -401,19 +401,17 @@ class RunOutput(NamedTuple):
     model_output: MainOutput
 
 
-def run_from_args(args: Args, verbose, kwargs) -> RunOutput:
+def run_from_args(args: Args, verbose) -> RunOutput:
     try:
         if not verbose:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 out = main(
                     **args,
-                    **kwargs,
                 )
         else:
             out = main(
                 **args,
-                **kwargs,
             )
         return RunOutput(0, None, out)
     except Exception as e:
@@ -440,7 +438,6 @@ def batch(
     parallel: bool = True,
     runid: str = None,
     logger: Logger = Logger(),
-    overrides: Tuple[str, str] = (),
 ):
     """Run the model with provided config and input data.
 
@@ -596,23 +593,21 @@ def batch(
 
     start_time = datetime.now()
 
-    _overrides = dict([o.split('=') for o in overrides])
-
     # Run each file distributed
     results_info: List[Tuple[Args, RunOutput]] = []
     if parallel:
         with Pool(processes=8) as pool:
-            results = pool.map(partial(run_from_args, verbose=verbose, kwargs=_overrides), args_to_run)
+            results = pool.map(partial(run_from_args, verbose=verbose), args_to_run)
             results_info = zip(args_to_run, results)
     else:
         for args in args_to_run:
-            result = run_from_args(args, verbose, kwargs=_overrides)
+            result = run_from_args(args, verbose)
             results_info.append([args, result])
 
     runtime = datetime.now() - start_time
 
     logger(f"Complete! \nRuns took: {runtime}")
-    logger(f"Output file located in {project_paths.project_dir}")
+    logger(f"Output files located in {project_paths.project_dir}")
 
     if run_comparisons:
         if compare_fields is None:

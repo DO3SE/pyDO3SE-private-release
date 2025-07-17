@@ -1,3 +1,4 @@
+import pytest
 import pandas as pd
 import numpy as np
 
@@ -24,7 +25,7 @@ class TestDumpOutputToNetCDF:
 
         ds = dump_output_to_netcdf_grid(
             full_output_data,
-            (X, Y, T),
+            X, Y, T,
             lat_data=lat_data,
             lon_data=lon_data,
             time_data=time_data,

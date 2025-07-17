@@ -49,7 +49,7 @@ def model_state_loader(
             if strict:
                 raise e
             else:
-                warnings.warn(f"Failed to load state file from: {state_location}\n {e}")
+                warnings.warn(f"Failed to load state file from: {state_location}\n")
                 return None
         else:
             raise e

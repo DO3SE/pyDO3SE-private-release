@@ -16,7 +16,7 @@ This is compiled from the docs directory using sphinx and built on circle ci
 # Using pyDO3SE End User guide
 
 ## Environment Setup
-TODO: Update to include python UV setup
+
 1. Setup Python 3.8 by following the instructions here: https://github.com/sbland/python_for_modellers_guides/blob/main/setup_python_environment.md
 2. Make sure to create and activate a virtual environment.
 3. Install _wheel_ to help build the packages with `pip install wheel`.
