@@ -1,6 +1,6 @@
 [project]
 name = "pyDO3SE"
-version = "4.42.1.dev1+multilayer-0.0.1"
+version = "4.42.3"
 description = "DO3SE model python API"
 authors = [{ "email" = "sam.bland@york.ac.uk", "name" = "Sam Bland" }]
 readme = "README.md"
