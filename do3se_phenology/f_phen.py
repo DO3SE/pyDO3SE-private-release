@@ -454,7 +454,7 @@ def leaf_f_phen_PLF(
 
     .. code-block:: python
 
-                        b
+                    b            b
                     ______________
                   /              \\
                  /                \\

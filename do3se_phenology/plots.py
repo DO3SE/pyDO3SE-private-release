@@ -13,6 +13,7 @@ from do3se_phenology.utils import generate_days_data, generate_example_td_data
 
 try:
     from matplotlib import pyplot as plt
+    from matplotlib import colormaps as mpcm
 except:
     plt = lambda *args, **kwargs: Exception("matplotlib required to draw graphs!")
 
@@ -256,7 +257,7 @@ def plot_growing_fractions_from_config(
 
     colors = [i / nP for i in range(nP)]
     # cmap=plt.cm.bgrcmyk
-    cmap = plt.cm.get_cmap('Spectral')
+    cmap = mpcm.get_cmap('Spectral')
     c = cmap(colors)
 
     for iP in range(nP):
@@ -380,7 +381,7 @@ def plot_growing_populations_from_config(species_config, nP, td, row_height=0.15
 
     colors = [i / nP for i in range(nP)]
     # cmap=plt.cm.bgrcmyk
-    cmap = plt.cm.get_cmap('Spectral')
+    cmap = mpcm.get_cmap('Spectral')
     c = cmap(colors)
     for iP in range(nP):
         # growing = np.array([g[iP] for g in growing_populations_all])
