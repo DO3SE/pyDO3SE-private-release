@@ -292,11 +292,11 @@ class PhenologyKeyDates:
     ----------
 
     sowing: TimeUnit
-        Sowing day
+        Sowing day or SGS
     emergence: TimeUnit
         The start of the growing season/emergence date
     harvest: TimeUnit
-        The end of the growing season/harvest date
+        The end of the growing season/harvest date or EGS
     Astart: TimeUnit
         The start of leaf accumulation period(leaf f phen)
     Aend: TimeUnit

@@ -212,11 +212,10 @@ def LAI_day_PLF(
     GS_values = [SGS, (SGS + LAI_1), (EGS - LAI_2), EGS, (SGS + 366)]
     # Re-index everything to SGS = 0, wrapping dates before SGS to the end of the year
     GS_offset = offset(GS_values, float(SGS), 365.0)
-
     # y values
     LAI_values = [LAI_a, LAI_b, LAI_c, LAI_d, LAI_a]
 
-    gs_values_in_size_order = all([a < b for a, b in zip(GS_offset[0: 4], GS_offset[1: 5])])
+    gs_values_in_size_order = all([a <= b for a, b in zip(GS_offset[0: 4], GS_offset[1: 5])])
     if not gs_values_in_size_order:
         raise ValueError(f"LAI_day_PLF: points not in order, {GS_offset}")
 
