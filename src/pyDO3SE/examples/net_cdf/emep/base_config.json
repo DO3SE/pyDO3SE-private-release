@@ -1,0 +1,136 @@
+{
+    "COMMENT": "Bangor Wheat Demo",
+    "Met": {
+        "td_base_temperature": 0,
+        "inputs": {
+            "co2_method": "constant",
+            "co2_constant": 391.0,
+            "hd_method": "skip",
+            "PPFD_method": "input",
+            "PAR_method": "calculated",
+            "RH_method": "calculated",
+            "SWC_method": "input"
+        }
+    },
+    "VERSION": 12,
+    "Location": {
+        "lat": 53,
+        "lon": 4,
+        "elev": 5.0,
+        "albedo": 0.2,
+        "z_O3": 1.5,
+        "z_u": 10.0,
+        "Rsoil": 200,
+        "start_day": 71
+    },
+    "resistance": {
+        "rsur_calc_method": "multi_layer",
+        "rext_calc_method": "const"
+    },
+    "soil_moisture": {
+        "soil_texture": "loam",
+        "soil": {
+            "b": null,
+            "fc": null,
+            "swp_ae": null,
+            "ksat": null
+        },
+        "root": 0.4,
+        "pwp": -4.0,
+        "asw_fc": null,
+        "source": "external input SWC",
+        "initial_swc": null
+    },
+    "carbon_allocation": {
+        "use_carbon_allocation": true,
+        "a_root": 18.5,
+        "a_stem": 16.0,
+        "a_leaf": 18.0,
+        "b_root": -20.0,
+        "b_stem": -15.0,
+        "b_leaf": -18.5,
+        "gamma": 27.3,
+        "delta": -0.0507,
+        "theta": 0.4,
+        "k": 1.4,
+        "lambdav": 0.4
+    },
+    "Land_Cover": {
+        "nL": 1,
+        "nP": 3,
+        "layer_height_frac": [
+            1.0
+        ],
+        "height_method": "carbon",
+        "LAI_method": "carbon",
+        "LAI_distribution_method": "fraction",
+        "leaf_emergence_multiplier": 1.8,
+        "SAI_method": "estimate total",
+        "dvi_method": "JULES",
+        "fLAI": [
+            [
+                1.0
+            ]
+        ],
+        "parameters": [
+            {
+                "name": "Bangor Wheat",
+                "Lm": 0.02,
+                "Y": 6.0,
+                "cosA": 0.5,
+                "gsto": {
+                    "method": "photosynthesis",
+                    "fmin": 0.01,
+                    "Tleaf_method": "ambient",
+                    "f_SW_method": "fSWP linear",
+                    "SWP_min": -1.25,
+                    "SWP_max": -0.05,
+                    "fSWP_exp_curve": "temperate",
+                    "fSWP_exp_a": 0.355,
+                    "fSWP_exp_b": -0.706,
+                    "f_VPD_method": "linear",
+                    "VPD_min": 3.2,
+                    "VPD_max": 1.2,
+                    "VPD_crit": 8.0
+                },
+                "pn_gsto": {
+                    "D_0_method": "f_VPD",
+                    "g_sto_0": 20000.0,
+                    "m": 8.12,
+                    "V_cmax_25": 90.0,
+                    "J_max_25": 200.0,
+                    "p_crit": 24,
+                    "p_sens": 0,
+                    "t_b": 0,
+                    "t_o": 20,
+                    "t_m": 30,
+                    "K_z": 24,
+                    "F_0": 37,
+                    "leaf_phenology_method": "disabled",
+                    "use_O3_damage": true,
+                    "R_d_coeff": 0.015,
+                    "senescence_method": "ewert"
+                },
+                "phenology": {
+                    "key_dates": {
+                        "sowing": 71
+                    },
+                    "key_dates_td": {},
+                    "key_lengths_td": {
+                        "sowing_to_end": 2200
+                    },
+                    "key_lengths_leaf_td": {},
+                    "SAI_method": "LAI_max",
+                    "PRESET": "WHEAT_SPRING",
+                    "day_fphen_plf": {},
+                    "leaf_f_phen_method": "tt day PLF",
+                    "f_phen_method": "tt day PLF"
+                }
+            }
+        ],
+        "phenology_options": {
+            "plant_emerge_method": "constant",
+            "phenology_method": "season_fraction"
+        }
+    }
+}

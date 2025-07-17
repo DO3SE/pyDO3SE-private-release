@@ -1,26 +1,29 @@
-Generated documentation for <do3se_phenology>.
+# DO3SE Open Repository
 
-**Use**:
-**Created Date**: 14/05/2021
+This is a repository for hosting released versions of the DO3SE model.
 
-# Developers (Contribution Guidelines)
+It uses a Git SubTree workflow to pull the release version of the sub repositories.
 
-Documentation for contributing to the model
+DO NOT MODIFY THE CONTENTS OF THE 'src' DIRECTORY DIRECTLY.
 
-## Environment Setup
+## Updating versions
 
-You will need to first install `uv` see the [uv documentation](https://docs.astral.sh/uv/getting-started/installation/) for more information.
-To setup the environment create a virtual python environment using `uv venv --python=3.12` and activate it using `source venv/bin/activate`.
-Then run `uv sync` to install the dependencies.
+To pull changes to the sub repositories, use the following command:
 
-## Running the model
+```bash
+./.subtree/clone_and_pull.sh pull main
+```
 
-## CLI
+This will pull the latest changes from the 'main' branch of the sub repositories.
 
-To run a command line interface run `python -m do3se_phenology.cli --help`
+To snapshot a version run the following command:
 
-## Notebooks
+```bash
+./.subtree/snapshot_versions.sh
+```
 
-The model can be used in notebooks...
+This will create a new commit with the current versions of the sub repositories.
 
-# Troubleshooting
+If a sub repository has changed and the version of pyDO3SE hasn't also been updated
+the command will throw an error. This is to ensure that we can keep the version of
+pyDO3SE-open in sync with the version of pyDO3SE.

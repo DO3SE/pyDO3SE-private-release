@@ -1,0 +1,38 @@
+{
+    "COMMENT": "Sparse overrides",
+    "Location": {
+        "start_day": 138,
+        "multi_season": true,
+        "multi_season_day": 364
+    },
+    "Met": {
+        "dd_calc_method": "CALC_FROM_INPUT",
+        "sparse_data": true,
+        "inputs": {
+            "dd_method": "calculated",
+            "CO2_method": "input",
+            "RH_fillna": 1,
+            "Ts_C_fillna": 0
+        }
+    },
+    "Land_Cover": {
+        "phenology_options": {
+            "dvi_method": "disabled",
+            "flag_leaf_emerge_method": "constant",
+            "flag_leaf_only": false,
+            "LAI_method": "estimate total",
+            "latitude": 54,
+            "phenology_method": "day plf",
+            "phenology_method_flag_leaf": "same as canopy",
+            "plant_emerge_method": "fphen",
+            "sgs_key_day": "sowing_day",
+            "sgs_time_type": "julian_day",
+            "sowing_day_method": "LATITUDE_FOREST",
+            "time_type": "julian_day",
+            "use_photoperiod_factor": false,
+            "use_vernalisation": false,
+            "zero_day": "sowing"
+        }
+    },
+    "VERSION": 12
+}

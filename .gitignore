@@ -1,3 +1,13 @@
+.ignore
+
+# This is copied for development only so as to not bloat the repo
+examples/
+tests/
+
+tmp/*
+
+# === Language specific files ===
+
 # Excel temp files
 ~$*
 
@@ -59,7 +69,6 @@ coverage.xml
 *.pot
 
 # Django stuff:
-*.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
