@@ -1,5 +1,4 @@
 """Tests for Ewert helpers."""
-
 import numpy as np
 from math import isclose
 from pyDO3SE.Config.ConfigEnums import FVPDMethods
@@ -17,9 +16,6 @@ from .ewert_helpers import (
     calc_ozone_impact_on_lifespan,
     calc_senescence_factor,
     calc_stomatal_conductance,
-    calc_A_n_rubisco_limited,
-    does_A_n_solve_requirements,
-    calc_CO2_assimilation_rate_cubic,
 )
 
 t_lem_constant = 0.15
@@ -129,7 +125,6 @@ def test_calc_ozone_impact_on_lifespan_alt_senesence_method_2():
     assert isclose(out.t_lma_O3, 539.75, abs_tol=1e-3)
     assert isclose(out.t_lse_limited, 84.15, abs_tol=1e-3)
     assert isclose(out.t_lep_limited, t_lep, abs_tol=1e-3)
-
 
 def test_calc_ozone_impact_on_lifespan_alt_senesence_method_3():
     """Test calc_ozone_impact_on_lifespan output.
@@ -250,7 +245,7 @@ def test_calc_CO2_assimilation_rate():
     assert isclose(out.A_j, 58.3892, abs_tol=1e-3)
     assert isclose(out.A_p, 59.89, abs_tol=1e-3)
     assert isclose(out.A_n, 9.0738, abs_tol=1e-3)
-    assert out.A_n_limit_factor == "A_c"
+    assert out.A_n_limit_factor == 'A_c'
 
 
 def test_calc_stomatal_conductance():
@@ -325,7 +320,6 @@ def test_calc_humidity_defecit_fVPD():
         e_a=1000,
         g_bl=1469999.9,
         e_sat_i=2339.05,
-        fmin=0.1,
         f_VPD_method=FVPDMethods.LEUNING,
     )
     assert isclose(out, 0.362130572, abs_tol=1e-3)
@@ -406,201 +400,3 @@ def test_calc_mean_gsto():
     assert isclose(out[1], 15.0, abs_tol=1e-3)
     assert isclose(out[2], 19.0, abs_tol=1e-3)
     assert isclose(out[3], 0.0, abs_tol=1e-3)
-
-
-def test_invalid_a_c_f_LS_1():
-    kwargs = {
-        "O2": 20900,
-        "P": 101,
-        "K_O": 85.49206630570801,
-        "V_cmax": 12.882285347707354,
-        "R_d": 0.19323428021561032,
-        "g_sto_0": 10000.0,
-        "G_1c": 6,
-        "g_bl": 2865876.0,
-        "c_a": 391.0,
-        "f_VPD": 0.85,
-        "Gamma": 14.333665361703794,
-        "K_C": 30.750578109134757,
-        "negative_A_n": False,
-        "Gamma_star": 12.52438053902872,
-        "fO3_d": 1.0,
-        "f_LS": 1.0,
-        "f_SW": 1.0,
-    }
-    A_c_roots = calc_A_n_rubisco_limited(**kwargs)
-    check_solution_kwargs = {
-        "g_sto_0": 10000.0,
-        "g_bl": 2865876.41382992,
-        "f_VPD": 1.0,
-        "m": 4,
-        "Gamma": 53.92156205557632,
-        "c_a": 391.0,
-        "f_SW": 1.0,
-        "negative_A_n": False,
-        "R_d": 0.19323428021561032,
-    }
-    A_c_root = next(
-        (
-            root
-            for root in A_c_roots
-            if does_A_n_solve_requirements(
-                root,
-                **check_solution_kwargs,
-            )
-        ),
-        np.nan,
-    )
-    R_d = 1.4128945961620585
-    fO3_d = 1.0
-    f_LS = 1.0
-    A_c = ((A_c_root + R_d) * fO3_d * f_LS) - R_d
-    assert A_c >= 0
-
-
-def test_invalid_a_c_f_LS_0_2():
-    kwargs = {
-        "P": 95.69400769656114,
-        "O2": 20900,
-        "K_O": 229.0049027824296,
-        "V_cmax": 100.42212996222611,
-        "R_d": 1.004221299622261,
-        "g_sto_0": 10000,
-        "G_1c": 4,
-        "g_bl": 4312624.0,
-        "c_a": 391.0,
-        "f_VPD": 0.2202330140517664,
-        "Gamma": 40.36327124476167,
-        "Gamma_star": 34.892397775899376,
-        "K_C": 264.3303000588611,
-        "fO3_d": np.float64(0.9830167038456374),
-        "f_LS": np.float64(0.025604078928707086),
-        "f_SW": 1.0,
-        "negative_A_n": False,
-    }
-    A_c_roots = calc_A_n_rubisco_limited(**kwargs)
-
-    check_solution_kwargs = {
-        "g_sto_0": 10000.0,
-        "g_bl": 4312624.071186124,
-        "f_VPD": 1.0,
-        "m": 4,
-        "Gamma": 40.36327124476167,
-        "c_a": 391.0,
-        "f_SW": 1.0,
-        "R_d": 1.004221299622261,
-    }
-    A_c_root = next(
-        (
-            root
-            for root in A_c_roots
-            if does_A_n_solve_requirements(
-                root,
-                negative_A_n=False,
-                **check_solution_kwargs,
-            )
-        ),
-        np.nan,
-    )
-    if np.isnan(A_c_root):
-        A_c_root = next(
-            (
-                root
-                for root in A_c_roots
-                if does_A_n_solve_requirements(
-                    root,
-                    negative_A_n=True,
-                    **check_solution_kwargs,
-                )
-            ),
-            np.nan,
-        )
-
-    R_d = 1.3518291468049928
-    fO3_d = 0.998991139771
-    f_LS = np.float64(0.025604078928707086)
-    A_c = ((A_c_root + R_d) * fO3_d * f_LS) - R_d
-    print(A_c_roots)
-    assert A_c >= -R_d - 1  # Added a small buffer to account for floating point errors
-
-
-def test_invalid_a_c_f_LS_0_3():
-    kwargs = {
-        "O2": 20900,
-        "P": 95.06135577132385,
-        "K_O": 295.54524353754874,
-        "V_cmax": 148.53352511710466,
-        "R_d": 1.4853352511710467,
-        "g_sto_0": 10000.0,
-        "G_1c": 4,
-        "g_bl": 2865876.41382992,
-        "c_a": 391.0,
-        "f_VPD": 0.216982355109823,
-        "Gamma": 53.92156205557632,
-        "K_C": 461.3344332501966,
-        "negative_A_n": False,
-        "Gamma_star": 12.52438053902872,
-        "fO3_d": 1.0,
-        "f_LS": 0.3,
-        "f_SW": 1.0,
-    }
-    A_c_roots = calc_A_n_rubisco_limited(**kwargs)
-    check_solution_kwargs = {
-        "g_sto_0": 10000.0,
-        "g_bl": 2865876.41382992,
-        "f_VPD": 1.0,
-        "m": 4,
-        "Gamma": 53.92156205557632,
-        "c_a": 391.0,
-        "f_SW": 1.0,
-        "negative_A_n": False,
-        "R_d": 1.4853352511710467,
-    }
-    A_c_root = next(
-        (
-            root
-            for root in A_c_roots
-            if does_A_n_solve_requirements(
-                root,
-                **check_solution_kwargs,
-            )
-        ),
-        np.nan,
-    )
-    other_vals = {"R_d": 1.4853352511710467, "fO3_d": np.float64(1.0), "f_LS": 1}
-    R_d = other_vals["R_d"]
-    fO3_d = other_vals["fO3_d"]
-    f_LS = other_vals["f_LS"]
-    A_c = ((A_c_root + R_d) * fO3_d * f_LS) - R_d
-    assert A_c >= 0
-
-
-def test_calc_CO2_assimilation_rate_cubic():
-    out = calc_CO2_assimilation_rate_cubic(
-        V_cmax=119.78,
-        Gamma_star=32.95310,
-        K_C=234.42,
-        K_O=216.75,
-        fO3_d=1,
-        f_LS=1,
-        J=300.36,
-        R_d=1.796,
-        c_a=391.0,
-        Gamma=34.277,
-        P=101,
-        g_sto_0=20000.0,
-        g_sto_prev=80000,
-        e_a=1000,
-        g_bl=1469999.9,
-        e_sat_i=2339.05,
-        D_0=0.75,
-        fmin=0.1,
-        f_VPD=None,  # Not used as we recalculate with Danielsson method
-        m=8.12,
-        f_SW=1,
-        f_VPD_method=FVPDMethods.DANIELSSON,
-    )
-    assert 0 < out.A_c < 60
-    assert 0 < out.A_j < 60
-    assert 0 < out.A_p < 60
-    assert 0 < out.A_n < 60

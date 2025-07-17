@@ -22,43 +22,27 @@ PREVIOUS_THERMAL_TIME_VERSION=`cat SUB_VERSIONS.txt | grep "thermal_time" | cut 
 PREVIOUS_DO3SE_PHENOLOGY_VERSION=`cat SUB_VERSIONS.txt | grep "do3se_phenology" | cut -d " " -f 3`
 PREVIOUS_DO3SE_MET_VERSION=`cat SUB_VERSIONS.txt | grep "do3se_met" | cut -d " " -f 3`
 
-
-
-echo "previous pyDO3SE version: $PREVIOUS_PYDO3SE_VERSION"
-echo "previous thermal_time version: $PREVIOUS_THERMAL_TIME_VERSION"
-echo "previous do3se_phenology version: $PREVIOUS_DO3SE_PHENOLOGY_VERSION"
-echo "previous do3se_met version: $PREVIOUS_DO3SE_MET_VERSION"
-
-
 echo "Checking Versions"
 if [[ "$PREVIOUS_PYDO3SE_VERSION" == "$PYDO3SE_VERSION" ]]; then
   if [[ "$PREVIOUS_THERMAL_TIME_VERSION" != "$THERMAL_TIME_VERSION" ]]; then
-    echo "thermal_time version has changed without updating the version of pyDO3SE.
-    This can cause confusion as the version of pyDO3SE is used to determine the version of the package
-    Please update the version of pyDO3SE before continuing"
+    echo "thermal_time version has changed. Please update the version of pyDO3SE before continuing"
     exit 1
   fi
   if [[ "$PREVIOUS_DO3SE_PHENOLOGY_VERSION" != "$DO3SE_PHENOLOGY_VERSION" ]]; then
-    echo "do3se_phenology version has changed.
-    This can cause confusion as the version of pyDO3SE is used to determine the version of the package
-    Please update the version of pyDO3SE before continuing"
+    echo "do3se_phenology version has changed. Please update the version of pyDO3SE before continuing"
     exit 1
   fi
   if [[ "$PREVIOUS_DO3SE_MET_VERSION" != "$DO3SE_MET_VERSION" ]]; then
-    echo "do3se_met version has changed.
-    This can cause confusion as the version of pyDO3SE is used to determine the version of the package
-    Please update the version of pyDO3SE before continuing"
+    echo "do3se_met version has changed. Please update the version of pyDO3SE before continuing"
     exit 1
   fi
-  else
-    echo "pyDO3SE version has changed. This is fine"
 fi
 
 # If the version of any of the dependencies have changed and PYDO3SE hasn't then we need to
 # ask the user to update the version of pyDO3SE before continuing
 
 if [[ "$1" == "check-only" ]]; then
-  echo "Check complete"
+  echo "Versions are consistent"
   exit 0
 fi
 

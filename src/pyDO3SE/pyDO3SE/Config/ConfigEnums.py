@@ -1,8 +1,10 @@
 from enum import Enum
+
 from deprecated import deprecated
 
 
 class LandCoverType(Enum):
+
     CROP = "CROP"
     FOREST = "FOREST"
 
@@ -21,35 +23,9 @@ class LeafFPhenAnetInfluence(Enum):
         Apply multiplicative leaf_f_phen to leaf_gsto
 
     """
-
     DISABLED = "disabled"
     V_C_MAX = "v_c_max"
     G_STO = "g_sto"
-
-
-class LifeSpanMethods(Enum):
-    """Life span method for calculating t_l etc.
-
-    Options
-    -------
-    CONSTANT = "constant"
-        Use config parameters
-    JULES = "JULES"
-        Use JULES phyllochron phenology method
-    LEAF_F_PHEN = "leaf_f_phen"
-        Estimate the life stages using input leaf_f_phen data
-    T_LEAF_F_PHEN = "t_leaf_f_phen"
-        Estimate the life stages using input leaf_f_phen thermal time intervals
-    GROWING_SEASON = "growing_season"
-        Estimate the life stages when given growing season
-
-    """
-
-    CONSTANT = "constant"
-    JULES = "JULES"
-    LEAF_F_PHEN = "leaf_f_phen"
-    T_LEAF_F_PHEN = "t_leaf_f_phen"
-    GROWING_SEASON = "growing_season"
 
 
 class FVPDMethods(Enum):
@@ -122,7 +98,6 @@ class CanopyHeightMethods(Enum):
 
 
     """
-
     CONSTANT = "constant"
     INPUT = "input"
     CARBON = "carbon"
@@ -213,14 +188,14 @@ class LAIMethods(Enum):
 class DVIMethods(Enum):
     """DVI methods
 
-    DISABLED = "disabled"
-       Not calculated
-    JULES = "JULES"
-       Use JULES thermal time method
-    THERMAL TIME = "THERMAL TIME"
-       Use THERMAL TIME PLF method
-    INPUT = "INPUT"
-       Use external input (NOT IMPLEMENTED)
+     DISABLED = "disabled"
+        Not calculated
+     JULES = "JULES"
+        Use JULES thermal time method
+     THERMAL TIME = "THERMAL TIME"
+        Use THERMAL TIME PLF method
+     INPUT = "INPUT"
+        Use external input (NOT IMPLEMENTED)
 
     """
 
@@ -287,3 +262,25 @@ class OzoneDepositionMethods(Enum):
 class GstoMethods(Enum):
     MULTIPLICATIVE = "multiplicative"
     PHOTOSYNTHESIS = "photosynthesis"
+
+
+class FO3_methods(Enum):
+    DISABLED = "disabled"
+    WHEAT = "wheat"
+    POTATO = "potato"
+    STEPH_WHEAT = "steph_wheat"
+
+
+class EnabledOrDisabled(Enum):
+    ENABLED = "enabled"
+    DISABLED = "disabled"
+
+
+class FTempMethods(Enum):
+    DISABLED = "disabled"
+    DEFAULT = "default"
+    SQUARE_HIGH = "square high"
+
+
+ENABLED = EnabledOrDisabled.ENABLED
+DISABLED = EnabledOrDisabled.DISABLED

@@ -7,9 +7,6 @@ def lat_function(
     """Latitude based phenology sowing date model.
 
     # TODO: May not work when lat is negative
-    # TODO: Could bring in elevation here as in UI
-        # SGS = nint(105.0 + ((lat - 50) * 1.5) + ((elev / 1000.0) * 10.0))
-        # EGS = nint(297.0 - ((lat - 50) * 2.0) - ((elev / 1000.0) * 10.0))
 
     k * (lat - b) + c
     """

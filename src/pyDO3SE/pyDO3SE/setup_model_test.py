@@ -1,5 +1,4 @@
 """Unit tests for setup_model.py ."""
-
 # External Libraries
 from math import floor
 import numpy as np
@@ -24,7 +23,7 @@ from pyDO3SE.setup_model import (
     setup_model,
 )
 
-__module_loc__ = __package__ + ".setup_model"
+__module_loc__ = __package__ + '.setup_model'
 
 # == Mocked return values == #
 mock_config = MagicMock()
@@ -44,6 +43,35 @@ mock_process_runner = Mock(
 )
 
 mock_processes = [1, 2, 3]
+
+
+class TestSetupModel:
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, mocker):
+        mocker.patch(__module_loc__ + '.setup_config', return_value=mock_config)
+        mocker.patch(__module_loc__ + '.setup_external_state',
+                     return_value=(mock_external_state, 0, 100))
+        mocker.patch(__module_loc__ + '.setup_initial_state', return_value=mock_initial_state)
+        mocker.patch(__module_loc__ + '.setup_model_processes', return_value=mock_model_processes)
+
+        mocker.patch(__module_loc__ + '.load_external_state',
+                     return_value=(iter(([None, None], mock_external_state) for _ in range(20))))
+
+    def test_should_call_each_setup_function(self, mocker):
+        pass
+        # TODO: This is not a very useful test!
+        # config_location = "demo_config_location"
+        # data_location = "demo_data_location"
+        # (config,
+        #  external_state,
+        #  initial_state,
+        #  model_processes) = setup_model(config_location, data_location, mock_overrides)
+
+        # assert initial_state == mock_initial_state
+        # assert config == mock_config
+        # assert external_state == mock_external_state
+        # assert model_processes == mock_model_processes
 
 
 external_state_data_demo = External_State_Shape(
@@ -102,7 +130,7 @@ def setup_external_state_fixture(request):
         external_state, start_day_out, end_day_out = setup_external_state(
             config=config,
             external_state_data=deepcopy(external_state_data),
-            overrides=Main_Overrides(start_day=start_day, end_day=end_day),
+            overrides=Main_Overrides(start_day=start_day, end_day=end_day)
         )
         request.cls.external_state_out = external_state
     except Exception as e:
@@ -110,8 +138,9 @@ def setup_external_state_fixture(request):
         raise e
 
 
-@pytest.mark.usefixtures("setup_external_state_fixture")
+@pytest.mark.usefixtures('setup_external_state_fixture')
 class TestSetupExternalState:
+
     def test_should_have_correct_dd(self):
         assert self.external_state_out.dd is not None
         assert self.external_state_out.dd[0] is not None
@@ -219,6 +248,7 @@ class TestSetupExternalState:
 
 
 class TestSetupInitialState:
+
     @pytest.fixture(autouse=True)
     def DEMO_CONFIG(self):
         return Config_Shape()
@@ -246,24 +276,15 @@ class TestSetupInitialState:
         overrides = Main_Overrides()
         initial_state_file = None
         initial_state: Model_State_Shape = setup_initial_state(
-            DEMO_CONFIG,
-            DEMO_EXTERNAL_STATE,
-            Model_State_Shape(),
-            initial_state_file,
-            overrides=overrides,
-        )
+            DEMO_CONFIG, DEMO_EXTERNAL_STATE, Model_State_Shape(), initial_state_file, overrides=overrides)
         assert initial_state.temporal.dd == DEMO_CONFIG.Location.start_day
         # assert initial_state == DEMO_INITIAL_STATE
-        compared = diff(
-            "model_state",
-            dump_state_to_string(initial_state),
-            dump_state_to_string(DEMO_INITIAL_STATE),
-        )
+        compared = diff("model_state", dump_state_to_string(
+            initial_state), dump_state_to_string(DEMO_INITIAL_STATE))
         if len(compared) > 0:
             compared_message = "\n".join(compared)
             raise AssertionError(
-                f"Output and expected output do not match: \n expected -> actual \n\n {compared_message}"
-            )
+                f"Output and expected output do not match: \n expected -> actual \n\n {compared_message}")
 
     # def test_should_work_with_none_empty_initial_state(
     #     self,

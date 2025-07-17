@@ -1,7 +1,8 @@
 import json
 import pytest
+from data_helpers.cls_parsing import unpack
 from data_helpers.dictionary_helpers import ListMergeMethods, merge_dictionaries
-from pyDO3SE.util.test_utils import process_snapshot
+
 from pyDO3SE.Config import Config_Shape
 from pyDO3SE.Config.config_loader import config_loader, process_json_config
 from pyDO3SE.Config.ConfigEnums import GstoMethods
@@ -17,7 +18,7 @@ def test_config_loader(snapshot):
     assert config.Location.lat == 40.43
     assert config.Location.lon == -3.7
     assert config.Land_Cover.parameters[0].gsto.method == GstoMethods.PHOTOSYNTHESIS.value
-    snapshot.assert_match(process_snapshot(config), 'Config')
+    snapshot.assert_match(unpack(config), 'Config')
 
 
 def test_config_loader_invalid_type():
@@ -48,7 +49,7 @@ def test_json_to_config(snapshot):
     DEMO_CONFIG_JSON = json.dumps(DEMO_CONFIG_INPUT)
     config: Config_Shape = process_json_config(DEMO_CONFIG_INPUT)
     assert isinstance(config, Config_Shape)
-    snapshot.assert_match(process_snapshot(config), 'Config from json')
+    snapshot.assert_match(unpack(config), 'Config from json')
 
     # assert config.Location == Config_Location(
     #     lat=52.2,

@@ -207,5 +207,8 @@
         "theta": 0.4,
         "k": 1.4,
         "lambdav": 0.4
+    },
+    "output": {
+        "log_multilayer": true
     }
 }

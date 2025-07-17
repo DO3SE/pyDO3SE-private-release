@@ -142,7 +142,6 @@ class TestProcessCsvData:
             process_csv_data(StringIO(data), has_header_row=False)
 
 
-@pytest.mark.skip(reason="Old Test Failing")
 class TestExternalStateLoader():
 
     def test_external_state_loader_invalid_type(self):
@@ -355,7 +354,6 @@ class TestExternalStateLoader():
                 self.T = 4 * 24
 
 
-@pytest.mark.skip(reason="Old Test Failing")
 class TestExtractCellDataFromNetcdf:
 
     def _default_run(self):

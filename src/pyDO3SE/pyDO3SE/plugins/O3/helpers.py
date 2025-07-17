@@ -310,6 +310,13 @@ def calc_FO3_eff(
 #     # return AOT_0_nLnLC, POD_Y_nLnLC, POD_0_nLnLC, AOT_40_nLnLC, FO3_eff_nLnLC
 
 
+def calc_ftot(
+    O3_nmol_m3: float,
+    Vd: float,
+) -> float:
+    """Calculate the total ozone flux to the vegetated surface."""
+    return O3_nmol_m3 * Vd
+
 def calc_fst(
     Gsto_l: float,
     Rb_l: float,
@@ -338,7 +345,7 @@ def calc_fst(
     Rsto_l: float
         Leaf stomatal ozone resistance [s/m]
     O3_nmol_m3: float
-        Ozone concentration at canopy [nmol/m^3]
+        Ozone concentration at layer or canopy [nmol/m^3]
 
     Returns
     -------

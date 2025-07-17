@@ -17,7 +17,7 @@ from typing import List
 from data_helpers.fill_np_array import fill_np_array_with_cls
 from do3se_phenology.state import LeafPhenologyState, PhenologyState
 from do3se_met.resistance.model import Leaf_Resistance_Model, Resistance_Model
-from pyDO3SE.plugins.soil_moisture.state import PM_State_t, SMDData_t
+from do3se_met.soil_moisture.state import PM_State_t, SMDData_t
 from pyDO3SE import settings
 
 
@@ -74,6 +74,7 @@ class layer_Meteorological_State:
 
     #: umet
     micro_u: float = None         #: Windspeed at layer canopy [m/s]
+    micro_ustar: float = None         #: ustar at layer canopy [m/s]
     micro_O3_top: float = None        #: O3 concentration at layer canopy top [ppb]
     micro_O3: float = None        #: O3 concentration at layer canopy middle [ppb]
     micro_O3_nmol_m3: float = None        #: O3 concentration at layer canopy [nmol_m3]
@@ -102,8 +103,6 @@ class Multip_Gsto_params:
     leaf_f_light: float = 1.0  #: Irradiance effect on leaf gsto [fraction]
     f_temp: float = 1.0        #: Temperature effect on gsto [fraction]
     f_VPD: float = 1.0         #: VPD effect on gsto [fraction]
-        # TODO: Delete this when negative A_n resolved
-    f_VPD_alt: float = 1.0         #: VPD effect on gsto [fraction]
     f_SW: float = 1.0          #: Soil water effect on gsto [fraction]
     f_O3: float = 1.0          #: O3 effect on gsto [fraction]
 
@@ -134,6 +133,7 @@ class Whole_Canopy_State:
         default_factory=lambda: Resistance_Model(1))  #: Must be initialised
     Vd: float = None  #: Velocity of O3 deposition to top of canopy [m/s]
     canopy_top_o3: float = None  #: O3 concentration at top of canopy [ppb]
+    ftot: float = None  #: Total stomatal conductance [mmol O3 m-2 PLA s-1]
 
     #: Single-layer canopy water vapour resistance model
     rmodel_H2O: Resistance_Model = field(default_factory=lambda: Resistance_Model(
@@ -161,7 +161,6 @@ class Canopy_Population_State:
     A_p: float = None  #: Triose phosphate utilisation limited assimilation rate [umol m-2 s-1 CO2]
     R_d: float = None  #: day respiration rate [micro mol/(m^2*s) CO2]
     c_i: float = None  #: CO2 concentration inside stomata   [micromol/mol]
-    c_i_sunlit: float = None  #: CO2 concentration inside stomata for top layer sunlit [micromol/mol]
 
     #: g_sv and leaf_gsto are average per m^2 (Not upscaled)
     g_sv_per_layer: List[float] = None  #: gsto for CO2 from Ewert model
@@ -176,8 +175,8 @@ class Canopy_Population_State:
     bulk_gsto_per_layer: List[float] = field(
         default_factory=lambda: [None for _ in range(settings.global_settings.MAX_NUM_OF_CANOPY_LAYERS)])
 
-    #: TODO: This is from gsto_params Is it still used?!
-    # f_VPD: float = 1.0         #: VPD effect on gsto [fraction]
+    #: TODO: This is from gsto_params
+    f_VPD: float = 1.0         #: VPD effect on gsto [fraction]
 
     #: Photosynthetic stomatal conductance parameters/results
     #: Moved to Canopy_Component_population
@@ -306,6 +305,7 @@ class Canopy_Component_State:
 
     #: D_0 "The VPD at which g_sto is reduced by a factor of 2" [kPa] (Leuning et al. 1998)
     D_0: float = None
+    g_bv_H2O: float = None  #: boundary layer conductance for forced convection [umol m-2 s-1 H2O]
 
     #: Carbon state ==
     #: Carbon Pools
@@ -393,18 +393,9 @@ class Canopy_Layer_Component_State:
     mean_gsto: float = None        #: layer mean stomatal conductance [mmol O3 m-2 PLA s-1]
     bulk_gsto: float = None        #: layer total stomatal conductance [mmol O3 m-2 PLA s-1]
 
-    g_bv_H2O: float = None  #: boundary layer conductance for forced convection [umol m-2 s-1 H2O]
-
     #: Fraction of each population that makes up the layer
     fLAI_layer: List[float] = field(default_factory=lambda: np.zeros(
         settings.global_settings.MAX_NUM_OF_LEAF_POPULATIONS))
-
-
-@dataclass(frozen=False)
-class DebugState:
-    """Debug state for storing intermediate values for debugging."""
-
-    ewert_loop_iterations: int = 0  #: Max number of iterations in the Ewert loop for this hour
 
 
 @dataclass(frozen=False)
@@ -437,6 +428,12 @@ class Model_State_Shape:
         field(default_factory=lambda:
               fill_np_array_with_cls(settings.global_settings.MAX_NUM_OF_CANOPY_LAYERS, Canopy_Layer_State))
 
+    ground_level: Canopy_Layer_State = \
+        field(default_factory=lambda: Canopy_Layer_State())
+
+    custom_height: List[Canopy_Layer_State] = \
+        field(default_factory=lambda:
+              fill_np_array_with_cls(settings.global_settings.MAX_NUM_OF_CANOPY_LAYERS, Canopy_Layer_State))
 
     #: Formally MC_t
     canopy_component: List[Canopy_Component_State] = \
@@ -459,8 +456,6 @@ class Model_State_Shape:
         ))
 
     prev_hour: 'Model_State_Shape' = None  #: Stores the state from the previous hour
-
-    debug: DebugState = field(default_factory=lambda: DebugState())
 
     #: def init():
     #:     #: TODO: Validate input

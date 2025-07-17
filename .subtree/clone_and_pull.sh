@@ -1,4 +1,3 @@
-set -e
 # Initial clone
 PYDO3SE_LOCAL_PATH="src/pyDO3SE"
 THERMAL_TIME_LOCAL_PATH="src/thermal_time"
