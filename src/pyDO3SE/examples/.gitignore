@@ -1,0 +1,5 @@
+/**/runs/*
+/**/outputs/*
+# We should ignore example outputs etc to avoid bloated git repos
+runs
+comparisons

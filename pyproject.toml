@@ -1,33 +1,68 @@
 [project]
-name = "thermal_time"
-version = "0.0.18"
-description = "DO3SE thermal time model"
+name = "pyDO3SE-open"
+version = "4.40.6"
+description = "Full wrapper to the DO3SE tool"
 readme = "README.md"
-authors = [{ "email" = "sam.bland@york.ac.uk", "name" = "Sam Bland" }]
 requires-python = ">=3.12"
-dependencies = ["numpy>=1.18.3", "pandas>=1.0.3", "deprecated>=1.2.12"]
-
+dependencies = [
+  "numpy>=1.18.3",
+  "matplotlib>=3.2.1",
+  "pandas>=1.0.3",
+  "scipy>=1.5.2",
+  "click>=7.1.2",
+  "deprecated>=1.2.12",
+  "wheel>=0.36.2",
+  "proFlow>=0.3.9",
+  "data-helpers>=0.1.29",
+  "dill>=0.3.8",
+]
 
 [dependency-groups]
 dev = [
-  "pytest>=8.3.3",
   "pytest-cov>=5.0.0",
   "pytest-mock>=3.14.0",
   "pytest-snapshot>=0.9.0",
   "ruff>=0.7.0",
   "pre-commit>=2.7.1",
   "bump2version>=1.0.1",
+  "pytest>=8.3.4",
 ]
+
+test = [
+  "pytest-cov>=5.0.0",
+  "pytest-mock>=3.14.0",
+  "pytest-snapshot>=0.9.0",
+  "pytest>=8.3.4",
+]
+
+grid = [
+    "netCDF4",
+    "xarray",
+    "dask",
+]
+
+[tool.uv.workspace]
+members = [
+  "src/pyDO3SE",
+  "src/thermal_time",
+  "src/do3se_phenology",
+  "src/do3se_met",
+]
+
+[tool.uv.sources]
+thermal-time = { workspace = true }
+do3se-met = { workspace = true }
+do3se-phenology = { workspace = true }
+
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-
-[tool.ruff]
-target-version = "py312"
-line-length = 100
-
-[tool.ruff.lint.per-file-ignores]
-"_test.py" = ["D100", "D101", "D102", "D103", "D107"]
-"test_*.py" = ["D100", "D101", "D102", "D103", "D107"]
+[tool.hatch.build.targets.wheel]
+packages = [
+  "src/pyDO3SE/pyDO3SE",
+  "src/thermal_time/thermal_time",
+  "src/do3se_phenology/do3se_phenology",
+  "src/do3se_met/do3se_met",
+]

@@ -1,0 +1,126 @@
+{
+    "COMMENT": "Day Calculations Base Config",
+    "Output": {},
+    "Met": {
+        "thermal_time_method": "SKIP",
+        "inputs": {
+            "co2_method": "constant",
+            "co2_constant": 391.0,
+            "hd_method": "skip",
+            "Rn_method": "input",
+            "PAR_method": "calculated",
+            "RH_method": "input",
+            "P_method": "constant",
+            "P_constant": 101,
+            "VPD_method": "calculated",
+            "fphen_method": "constant",
+            "fphen_constant": 1,
+            "leaffphen_method": "constant",
+            "leaffphen_constant": 1,
+            "td_method": "skip"
+        }
+    },
+    "VERSION": 12,
+    "Location": {
+        "lat": 52.9037,
+        "lon": 12.8072,
+        "elev": 38.0,
+        "albedo": 0.2,
+        "Rsoil": 200,
+        "z_O3": 10,
+        "z_u": 10,
+        "izr": 45,
+        "h_u": 10,
+        "h_O3": 10,
+        "multi_season": true,
+        "multi_season_day": 364
+    },
+    "resistance": {
+        "rsur_calc_method": "single_layer",
+        "rext_calc_method": "const"
+    },
+    "Land_Cover": {
+        "height_method": "constant",
+        "LAI_method": "estimate total",
+        "SAI_method": "estimate total",
+        "flai": [
+            [
+                1.0
+            ]
+        ],
+        "parameters": [
+            {
+                "name": "Bangor Wheat",
+                "Lm": 0.02,
+                "Y": 6.0,
+                "cosA": 0.5,
+                "height": 1.0,
+                "SAI_method": "LAI_max",
+                "gsto": {
+                    "method": "multiplicative",
+                    "fmin": 0.01,
+                    "Tleaf_method": "ambient",
+                    "f_SW_method": "disabled",
+                    "f_VPD_method": "linear",
+                    "VPD_min": 3.2,
+                    "VPD_max": 1.2,
+                    "VPD_crit": 8.0
+                },
+                "multip_gsto": {
+                    "gmax": 500.0,
+                    "gmorph": 1.0,
+                    "f_light_method": "enabled",
+                    "f_lightfac": 0.0105,
+                    "f_temp_method": "default",
+                    "T_min": 12,
+                    "T_opt": 26,
+                    "T_max": 40,
+                    "f_O3_method": "wheat"
+                },
+                "phenology": {
+                    "leaf_f_phen_method": "day PLF",
+                    "f_phen_method": "simple day PLF",
+                    "LAI_a": 0,
+                    "LAI_d": 0,
+                    "LAI_b": 3.5,
+                    "LAI_c": 3.5,
+                    "LAI_1": 70,
+                    "LAI_2": 22,
+                    "key_lengths": {
+                        "sowing_to_end": 192,
+                        "sowing_to_astart": 99,
+                        "sowing_to_emerge": 10
+                    },
+                    "day_fphen_plf": {
+                        "f_phen_limA": null,
+                        "f_phen_limB": null,
+                        "f_phen_a": 0.3,
+                        "f_phen_b": null,
+                        "f_phen_c": 1.0,
+                        "f_phen_d": null,
+                        "f_phen_e": 0.7,
+                        "f_phen_1": 10,
+                        "f_phen_2": null,
+                        "f_phen_3": null,
+                        "f_phen_4": 45,
+                        "leaf_f_phen_a": 0.3,
+                        "leaf_f_phen_b": 1.0,
+                        "leaf_f_phen_c": 0.2,
+                        "leaf_f_phen_1": 0,
+                        "leaf_f_phen_2": 10
+                    }
+                },
+                "pn_gsto": {
+                    "senescence_method": "anet"
+                }
+            }
+        ],
+        "phenology_options": {
+            "plant_emerge_method": "SGS",
+            "phenology_method": "day plf",
+            "sowing_day_method": "LATITUDE_SPRING_EUROPE",
+            "latitude": 50.0,
+            "time_type": "julian_day"
+        }
+    }
+}

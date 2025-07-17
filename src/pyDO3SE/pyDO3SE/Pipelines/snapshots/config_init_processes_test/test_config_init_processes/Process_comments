@@ -1,0 +1,9 @@
+[
+    "Estimate key phenology dates from input config and data.",
+    "Set td start and offset",
+    "Check that a Soil_t is valid",
+    "Calculate available soil water at field capacity",
+    "Set up soil water data source parameters",
+    "calculate measured wind canopy displacement parameters",
+    "calculate measured ozone canopy displacement parameters"
+]

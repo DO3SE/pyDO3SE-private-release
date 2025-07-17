@@ -1,0 +1,11 @@
+{
+  "Land_Cover": {
+    "parameters": [
+      {
+        "phenology": {
+          "f_tt_fst_acc": 0.3
+        }
+      }
+    ]
+  }
+}

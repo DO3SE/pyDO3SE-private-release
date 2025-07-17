@@ -1,0 +1,37 @@
+{
+  "Met": {
+    "thermal_time_method": "SKIP",
+    "inputs": {
+      "co2_method": "constant",
+      "co2_constant": 391.0,
+      "hd_method": "skip",
+      "h_method": "constant",
+      "h_constant": 1,
+      "Rn_method": "input",
+      "RH_method": "input",
+      "PAR_method": "calculated",
+      "VPD_method": "calculated",
+      "P_method": "constant",
+      "P_constant": 101
+    }
+  },
+  "Land_Cover": {
+    "phenology_options": {
+      "dvi_method": "disabled",
+      "flag_leaf_emerge_method": "constant",
+      "flag_leaf_only": false,
+      "LAI_method": "estimate total",
+      "latitude": 54,
+      "phenology_method": "day plf",
+      "phenology_method_flag_leaf": "same as canopy",
+      "plant_emerge_method": "fphen",
+      "sgs_key_day": "sowing_day",
+      "sgs_time_type": "julian_day",
+      "sowing_day_method": "LATITUDE_FOREST",
+      "time_type": "julian_day",
+      "use_photoperiod_factor": false,
+      "use_vernalisation": false,
+      "zero_day": "sowing"
+    }
+  }
+}

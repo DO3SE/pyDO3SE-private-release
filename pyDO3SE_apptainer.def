@@ -1,0 +1,15 @@
+BootStrap: docker
+From: python:3.12-slim-bookworm
+
+%post
+    python -m pip install ./dist/pydo3se_open-4.41.6-py3-none-any.whl
+
+%files
+  $PWD/dist dist
+
+
+%runscript
+  python -m pyDO3SE demo run
+
+%labels
+   Author Sam Bland
