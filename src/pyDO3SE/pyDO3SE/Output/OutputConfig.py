@@ -12,6 +12,7 @@ class OutputConfig:
 
     fields: List[str] = None
     log_multilayer: bool = False
+    include_spacers: bool = True
 
 
 @dataclass

@@ -1,0 +1,18 @@
+{
+    "COMMENT": "default",
+    "Location": {
+        "z_O3": 6.2,
+        "z_u": 2.0,
+        "izr": 45,
+        "h_O3": 1.5,
+        "h_u": 1.5
+    },
+    "Land_Cover": {
+        "parameters": [
+            {
+                "height": 1.0
+            }
+        ]
+    },
+    "VERSION": 12
+}

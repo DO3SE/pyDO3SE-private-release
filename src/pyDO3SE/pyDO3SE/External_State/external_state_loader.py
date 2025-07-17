@@ -21,8 +21,8 @@ from pyDO3SE.overrides import Main_Overrides
 from .External_State_Shape import External_State_Shape, InputField, INPUT_FIELDS
 from .External_State_Config import EStateOptions, FileTypes
 
-CSV_DELIMITER = ','
-HEADER_REGEX = re.compile(r'^(?P<name>.+?)(\s*,\s*(?P<units>.+))?$')
+CSV_DELIMITER = ","
+HEADER_REGEX = re.compile(r"^(?P<name>.+?)(\s*,\s*(?P<units>.+))?$")
 Coord = Tuple[int, int]
 
 
@@ -32,7 +32,7 @@ def match_heading_to_field(heading: str, fields: List[InputField]):
 
     e.g. 'P, kPa' matches InputField('P'...),
     """
-    if not heading or not heading.replace(' ', ''):
+    if not heading or not heading.replace(" ", ""):
         warnings.warn(f"Found empty heading in input")
         return heading, heading
 
@@ -44,18 +44,21 @@ def match_heading_to_field(heading: str, fields: List[InputField]):
         return heading, heading
 
     match = match.groupdict()
-    name, units = match['name'], match['units']
+    name, units = match["name"], match["units"]
 
-    matching_fields = [f for f in fields if (
-        f.name.lower() == name.lower() or name.lower() in f.alt_names)]
+    matching_fields = [
+        f
+        for f in fields
+        if (f.id.lower() == name.lower() or name.lower() in f.alt_names)
+    ]
     matching_fields_units = [f for f in matching_fields if f.units == units]
     ignore_field = None
 
     if len(matching_fields) > 1 and len(matching_fields_units) > 0:
         # attempt to match by unit if too many matching fields
-        field_out = matching_fields_units[0].name
+        field_out = matching_fields_units[0].id
     elif len(matching_fields) >= 1:
-        field_out = matching_fields[0].name
+        field_out = matching_fields[0].id
     else:
         ignore_field = heading
         field_out = heading
@@ -64,14 +67,14 @@ def match_heading_to_field(heading: str, fields: List[InputField]):
 
 
 def match_heading_to_heading(heading: str, headings: List[str]):
-    """ matches a heading from the data to a defined field type
+    """matches a heading from the data to a defined field type
     Uses regex HEADER_REGEX to extract name and units from the header string
 
     e.g. 'P, kPa' matches InputField('P'...),
     """
     # Match information in header string
     match = HEADER_REGEX.match(heading).groupdict()
-    name = match['name']
+    name = match["name"]
 
     matching_fields = [h for h in headings if h == name]
     ignore_field = None
@@ -85,16 +88,17 @@ def match_heading_to_heading(heading: str, headings: List[str]):
     return field_out, ignore_field
 
 
-read_header_csv = partial(csv.reader, skipinitialspace=True,
-                          delimiter=CSV_DELIMITER, quotechar='"')
+read_header_csv = partial(
+    csv.reader, skipinitialspace=True, delimiter=CSV_DELIMITER, quotechar='"'
+)
 
 
 def process_csv_data(
-    csv_data_raw: str,
-    fields: List[InputField] = None,
+    csv_data_raw: str | StringIO,
+    fields: List[InputField] | None = None,
     has_header_row: bool = True,
-    input_headers: List[str] = None,
-    row_indexes: List[int] = None,
+    input_headers: List[str] | None = None,
+    row_indexes: List[int] | None = None,
 ) -> OrderedDict:
     """processes a csv file into a External State Object
 
@@ -106,35 +110,46 @@ def process_csv_data(
 
     """
     if not has_header_row and input_headers is None:
-        raise Exception('Missing headers')
-
+        raise Exception("Missing headers")
     # 1. get headers from data or input
-    data_headings = next(read_header_csv(csv_data_raw)) \
-        if has_header_row else input_headers
+    data_headings = (
+        next(read_header_csv(csv_data_raw)) if has_header_row else input_headers
+    )
 
     # 3. remove whitespace in headers
-    header_row = [h.strip() for h in data_headings] if data_headings else None
+    assert data_headings is not None, "Missing headers"
+    header_row = [h.strip() for h in data_headings]
+
     # 4. match headings from data to requested fields or input_headings list
-    match_headings_fn = \
-        partial(match_heading_to_field, fields=fields) \
-        if fields is not None else \
-        partial(match_heading_to_heading, headings=input_headers)
+    match_headings_fn = (
+        partial(match_heading_to_field, fields=fields)
+        if fields is not None
+        else partial(match_heading_to_heading, headings=input_headers) if input_headers is not None
+        else None
+    )
+    assert match_headings_fn is not None, "Missing match function"
     header_names, ignore_fields = list(zip(*[match_headings_fn(h) for h in header_row]))
     ignore_fields = [f for f in ignore_fields if f is not None]
     if len(ignore_fields) > 0:
-        warnings.warn(UserWarning(
-            f'\nThe following ext data columns have been ignored \n {ignore_fields}'))
+        warnings.warn(
+            UserWarning(
+                f"\nThe following ext data columns have been ignored \n {ignore_fields}"
+            )
+        )
 
     # 1. read csv data
-    data = pd.read_csv(csv_data_raw, skipinitialspace=True,
-                       delimiter=CSV_DELIMITER, quotechar='"',
-                       skiprows=lambda x: x not in row_indexes if row_indexes else False,
-                       names=header_names,
-                       #    header=0
-                       )
+    data = pd.read_csv(
+        csv_data_raw,
+        skipinitialspace=True,
+        delimiter=CSV_DELIMITER,
+        quotechar='"',
+        skiprows=lambda x: x not in row_indexes if row_indexes else False,
+        names=header_names,
+        #    header=0
+    )
     data_filtered = data.drop(ignore_fields, axis=1)
     data_remove_nans = data_filtered.replace({np.nan: None})
-    data_out = data_remove_nans.to_dict('list')
+    data_out = data_remove_nans.to_dict("list")
     return data_out
 
 
@@ -145,13 +160,15 @@ def convert_csv_to_external_state(
     # TODO: WIP
     data_headings = csv_data.columns
     header_row = [h.strip() for h in data_headings] if data_headings else None
-    match_headings_fn = \
-        partial(match_heading_to_field, fields=fields_data)
+    match_headings_fn = partial(match_heading_to_field, fields=fields_data)
     header_names, ignore_fields = list(zip(*[match_headings_fn(h) for h in header_row]))
     ignore_fields = [f for f in ignore_fields if f is not None]
     if len(ignore_fields) > 0:
-        warnings.warn(UserWarning(
-            f'\nThe following ext data columns have been ignored \n {ignore_fields}'))
+        warnings.warn(
+            UserWarning(
+                f"\nThe following ext data columns have been ignored \n {ignore_fields}"
+            )
+        )
     d = {kk: csv_data[k].values for k, kk in zip(data_headings, header_names)}
     external_state_object = External_State_Shape(**d)
     return external_state_object
@@ -164,10 +181,12 @@ def load_external_state_csv(
     logger: Callable[[str, str], None] = print,
 ) -> External_State_Shape:
     try:
-        with open(external_state_file_location, encoding='utf-8-sig') as external_state_file:
+        with open(
+            external_state_file_location, encoding="utf-8-sig"
+        ) as external_state_file:
             logger(f"Loading external data from {external_state_file_location}")
             read_data = external_state_file.read()
-            if os.path.basename(external_state_file_location).split('.')[-1] != 'csv':
+            if os.path.basename(external_state_file_location).split(".")[-1] != "csv":
                 raise ValueError(f"Input data is not a csv file")
             # get the data associated with each requested field
             fields_data = [fieldData for fieldData in INPUT_FIELDS]
@@ -186,7 +205,7 @@ def load_external_state_csv(
         # return External_State_Shape()
         raise e
     except FileNotFoundError as e:
-        full_dir= os.path.abspath(external_state_file_location)
+        full_dir = os.path.abspath(external_state_file_location)
         print(f"Failed to import data from '{full_dir}' due to file not found")
         # list all files in the directory
         files = os.listdir(os.path.dirname(full_dir))
@@ -244,37 +263,52 @@ def extract_cell_data_from_netcdf(
     if use_dask:
         # We can't currently use .item when using dask
         # TODO: This assumes that the indexing is (T, X, Y)
-        data_out = dict([
-            (ki, data[kj][:, vert_index, xi, yi].values) if icount == 4 else
-            (ki, data[kj][:, xi, yi].values) if icount == 3 else
-            (ki, data[kj][:].values)
-            for icount, (ki, kj) in zip(index_counts, variable_map.items())])
+        data_out = dict(
+            [
+                (ki, data[kj][:, vert_index, xi, yi].values)
+                if icount == 4
+                else (ki, data[kj][:, xi, yi].values)
+                if icount == 3
+                else (ki, data[kj][:].values)
+                for icount, (ki, kj) in zip(index_counts, variable_map.items())
+            ]
+        )
 
         data_base = {
-            'dd': data['dd'].values,
-            'hr': data['hr'].values,
-            'time': [data[time_key][t].values.astype(str)[0:19] for t in range(T)]
+            "dd": data["dd"].values,
+            "hr": data["hr"].values,
+            "time": [data[time_key][t].values.astype(str)[0:19] for t in range(T)],
         }
     else:
         data_base = {
-            'dd': [data['dd'].item(t) for t in range(T)],
-            'hr': [data['hr'].item(t) for t in range(T)],
-            'time': [data[time_key][t].values.astype(str)[0:19] for t in range(T)]
+            "dd": [data["dd"].item(t) for t in range(T)],
+            "hr": [data["hr"].item(t) for t in range(T)],
+            "time": [data[time_key][t].values.astype(str)[0:19] for t in range(T)],
         }
         if T > 1:
             # TODO: Make getting multiple time indexes more efficient
-            data_out = dict([
-                (ki, [data[kj].item((t, vert_index, xi, yi)) for t in range(T)]) if icount == 4 else
-                (ki, [data[kj].item((t, xi, yi)) for t in range(T)]) if icount == 3 else
-                (ki, [data[kj].item(t) for t in range(T)])
-                for icount, (ki, kj) in zip(index_counts, variable_map.items())])
+            data_out = dict(
+                [
+                    (ki, [data[kj].item((t, vert_index, xi, yi)) for t in range(T)])
+                    if icount == 4
+                    else (ki, [data[kj].item((t, xi, yi)) for t in range(T)])
+                    if icount == 3
+                    else (ki, [data[kj].item(t) for t in range(T)])
+                    for icount, (ki, kj) in zip(index_counts, variable_map.items())
+                ]
+            )
         else:
             t = 0
-            data_out = dict([
-                (ki, [data[kj].item((t, vert_index, xi, yi))]) if icount == 4 else
-                (ki, [data[kj].item((t, xi, yi))]) if icount == 3 else
-                (ki, [data[kj].item(t)])
-                for icount, (ki, kj) in zip(index_counts, variable_map.items())])
+            data_out = dict(
+                [
+                    (ki, [data[kj].item((t, vert_index, xi, yi))])
+                    if icount == 4
+                    else (ki, [data[kj].item((t, xi, yi))])
+                    if icount == 3
+                    else (ki, [data[kj].item(t)])
+                    for icount, (ki, kj) in zip(index_counts, variable_map.items())
+                ]
+            )
 
     return {**data_base, **data_out}
 
@@ -286,7 +320,7 @@ def load_external_state_netcdf(
     multi_file_data: bool = False,
     preprocess_map: dict = {},
     zero_year: int = None,
-    data_filter: str = '',
+    data_filter: str = "",
     chunks: dict = None,
     parallel: bool = False,
     **kwargs,
@@ -327,35 +361,46 @@ def load_external_state_netcdf(
     variable_map = deepcopy(variable_map)  # Copy so we can pop elements
 
     # Get time and meta data
-    assert "time" in variable_map, f"Must include \"time\" in variable_map.json for data: \"{data_location}\""
-    assert "_SHAPE" in variable_map, f"Must include \"_SHAPE\" in variable_map.json for data: \"{data_location}\""
-    time_key = variable_map.pop('time')
-    shape_key = variable_map.pop('_SHAPE')
+    assert (
+        "time" in variable_map
+    ), f'Must include "time" in variable_map.json for data: "{data_location}"'
+    assert (
+        "_SHAPE" in variable_map
+    ), f'Must include "_SHAPE" in variable_map.json for data: "{data_location}"'
+    time_key = variable_map.pop("time")
+    shape_key = variable_map.pop("_SHAPE")
     use_dask = parallel or chunks is not None or multi_file_data
     # TODO: Handle dropping of layers we don't need
     if multi_file_data:
         # file_filter = f"*{data_filter}*{file_suffix}" if data_filter or file_suffix else '*'
         file_filter = f"*{data_filter}*" if data_filter else "*"
         try:
-            data = xr.open_mfdataset(f'{data_location}/{file_filter}',
-                                     engine="netcdf4",
-                                     parallel=parallel,
-                                     **kwargs,
-                                     )
+            data = xr.open_mfdataset(
+                f"{data_location}/{file_filter}",
+                engine="netcdf4",
+                parallel=parallel,
+                **kwargs,
+            )
         except:
             raise ValueError(
-                f'Failed to load external data files in multi file mode: {data_location} using file_filter: {file_filter}')
+                f"Failed to load external data files in multi file mode: {data_location} using file_filter: {file_filter}"
+            )
 
     else:
         try:
-            data = xr.open_dataset(data_location, chunks=chunks, engine="netcdf4", **kwargs)
+            data = xr.open_dataset(
+                data_location, chunks=chunks, engine="netcdf4", **kwargs
+            )
         except Exception as e:
             raise ValueError(
-                f'Failed to load external data files in single file mode: {data_location}') from e
+                f"Failed to load external data files in single file mode: {data_location}"
+            ) from e
 
-    assert time_key in list(data.keys()) or time_key in list(
-        data.dims) or time_key in list(data.coords), \
-        f'Time key: "{time_key}" not in data. Got keys: {data.keys()} '
+    assert (
+        time_key in list(data.keys())
+        or time_key in list(data.dims)
+        or time_key in list(data.coords)
+    ), f'Time key: "{time_key}" not in data. Got keys: {data.keys()} '
 
     data_processed = data
 
@@ -363,12 +408,15 @@ def load_external_state_netcdf(
         index_counts = [len(data_processed[k].shape) for k in variable_map.values()]
     except KeyError as e:
         raise InputDataError(
-            f"Input data missing required key: {e}\n{','.join(list(data_processed.keys()))}")
+            f"Input data missing required key: {e}\n{','.join(list(data_processed.keys()))}"
+        )
 
     data_processed = data_processed.assign(hr=lambda d: getattr(d, time_key).dt.hour)
     data_processed = data_processed.assign(year=lambda d: getattr(d, time_key).dt.year)
     data_processed = data_processed.assign(
-        dd=lambda d: getattr(d, time_key).dt.strftime('%j').astype(int) + (d.year.astype(int) - zero_year) * 365)
+        dd=lambda d: getattr(d, time_key).dt.strftime("%j").astype(int)
+        + (d.year.astype(int) - zero_year) * 365
+    )
 
     T = data_processed[time_key].shape[0]
 
@@ -379,7 +427,9 @@ def load_external_state_netcdf(
     for xi, yi in coords:
         data_out = extract_cell_data_from_netcdf(
             data_processed,
-            xi, yi, T,
+            xi,
+            yi,
+            T,
             time_key,
             variable_map,
             index_counts,
@@ -460,10 +510,11 @@ def get_date_bounds_from_ext_data(
     if external_state.time is not None and external_state.time[0]:
         start_date = external_state.time[0]
         end_date = external_state.time[-1]
-        time_data = pd.date_range(start_date, periods=len(
-            external_state.time), freq="1H")
+        time_data = pd.date_range(
+            start_date, periods=len(external_state.time), freq="1H"
+        )
         # time_data = external_state.time
-        time_string = f'{time_data[0].year}-{str(time_data[0].month).zfill(2)}-{str(time_data[0].day).zfill(2)}_{str(time_data[0].hour).zfill(2)}'
+        time_string = f"{time_data[0].year}-{str(time_data[0].month).zfill(2)}-{str(time_data[0].day).zfill(2)}_{str(time_data[0].hour).zfill(2)}"
 
     else:
         start_date = None
@@ -503,25 +554,33 @@ def get_lat_and_lon_from_external_data(
         **kwargs,
     )
     print("External state options", _external_state_options)
-    variable_map = deepcopy(_external_state_options.variable_map)  # Copy so we can pop elements
+    variable_map = deepcopy(
+        _external_state_options.variable_map
+    )  # Copy so we can pop elements
 
     # Get time and meta data
-    assert "lat" in variable_map, f"Must include \"lat\" in variable_map.json for data: \"{external_data_file_path}\""
-    assert "lon" in variable_map, f"Must include \"lon\" in variable_map.json for data: \"{external_data_file_path}\""
-    lat_key = variable_map.pop('lat')
-    lon_key = variable_map.pop('lon')
+    assert (
+        "lat" in variable_map
+    ), f'Must include "lat" in variable_map.json for data: "{external_data_file_path}"'
+    assert (
+        "lon" in variable_map
+    ), f'Must include "lon" in variable_map.json for data: "{external_data_file_path}"'
+    lat_key = variable_map.pop("lat")
+    lon_key = variable_map.pop("lon")
 
     if _external_state_options.multi_file_data:
         # file_filter = f"*{data_filter}*{file_suffix}" if data_filter or file_suffix else '*'
         try:
             first_file = os.listdir(external_data_file_path)[0]
-            data = xr.open_dataset(f'{external_data_file_path}/{first_file}',
-                                   engine="netcdf4",
-                                   **kwargs,
-                                   )
+            data = xr.open_dataset(
+                f"{external_data_file_path}/{first_file}",
+                engine="netcdf4",
+                **kwargs,
+            )
         except:
             raise ValueError(
-                f'Failed to load external data files in multi file mode: {external_data_file_path} using file_filter: {first_file}')
+                f"Failed to load external data files in multi file mode: {external_data_file_path} using file_filter: {first_file}"
+            )
 
     else:
         try:
@@ -529,7 +588,8 @@ def get_lat_and_lon_from_external_data(
         except Exception as e:
             print(e)
             raise ValueError(
-                f'Failed to load external data files in single file mode: {external_data_file_path}')
+                f"Failed to load external data files in single file mode: {external_data_file_path}"
+            )
     lat = data[lat_key].values
     lon = data[lon_key].values
     return [lat, lon]
@@ -572,7 +632,9 @@ def load_external_state(
     if _external_state_options.file_type == FileTypes.CSV:
         if grid_coords is not None:
             raise NotImplementedError("Grid workflow not setup for csv")
-        if (_external_state_options.preprocess_map and len(_external_state_options.preprocess_map.keys())):
+        if _external_state_options.preprocess_map and len(
+            _external_state_options.preprocess_map.keys()
+        ):
             raise NotImplementedError("preprocess not implemented for csv")
 
         try:
@@ -582,9 +644,10 @@ def load_external_state(
                 _external_state_options.row_indexes,
                 logger=logger,
             )
-        except Exception:
+        except Exception as e:
             raise InputDataError(
-                f"Failed to load external data from \"{external_state_file_location}\"")
+                f'Failed to load external data from "{external_state_file_location}"'
+            ) from e
 
         yield ext_data
 
@@ -605,7 +668,8 @@ def load_external_state(
             )
         except Exception:
             raise InputDataError(
-                f"Failed to load external data from \"{external_state_file_location}\"")
+                f'Failed to load external data from "{external_state_file_location}"'
+            )
 
         # loaded data is flattened (x, y) array
         # for each coordinate we yield external data
@@ -614,4 +678,5 @@ def load_external_state(
             yield ext_data
     else:
         raise Exception(
-            f'Invalid data file type. Must be csv or netcdf, got {_external_state_options.file_type}')
+            f"Invalid data file type. Must be csv or netcdf, got {_external_state_options.file_type}"
+        )

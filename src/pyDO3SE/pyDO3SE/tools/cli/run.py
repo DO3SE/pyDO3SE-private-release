@@ -13,7 +13,7 @@ Available commands
 
 """
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Optional
 import click
 
 
@@ -224,6 +224,7 @@ def grid_run_init(
 @click.option('--parallel/--no-parallel', default=False, help='Use parallelized paramga')
 @click.option('--e_state_overrides_field_map_path', default=None, help='use_per_config_e_state_overrides_field_map_path')
 @click.option('--run_mask_path', default=None, help='use_per_config_run_mask_path')
+@click.option('--configs-to-run', default=None, help='if provided only run these configs')
 @click.option('--max-processes', default=8, help='Maximum processes when running in parallel')
 @click.option('--cpu-sleep-time', default=0.01, help='Cpu sleep time when running in parallel')
 @click.argument(
@@ -246,20 +247,23 @@ def grid_run(
     cpu_sleep_time: float = 0.01,
     netcdf_regex_multi_file_filter=None,
     e_state_overrides_field_map_path=None,
-    run_mask_path=None,
+    run_mask_path: Optional[str]=None,
+    configs_to_run: Optional[str]=None,
 ):
     """Run the DO3SE grid model.
 
-    Inputs must netcdf files.
+    Inputs must be netcdf files.
     """
     project_paths = setup_grid_model.get_grid_project_paths(project_dir, runid)
     if not output_fields:
         raise ValueError("--output-fields must be set")
-    _output_fields = default_grid_output_fields if output_fields == "_all" else output_fields.split(
-        ',')
+    _output_fields = default_grid_output_fields if output_fields == "_all" \
+          else output_fields.split(',')
 
     logger_main = Logger(loglevel, project_paths.log_path, set_as_default=True,
                          write_mode='w', flush_per_log=loglevel >= 2)
+
+    configs_to_run_: None | list[str] = configs_to_run.split(',') if configs_to_run else None
 
     if init_model:
         click.echo("Running grid init")
@@ -269,6 +273,7 @@ def grid_run(
             sample_size=sample_size,
             e_state_overrides_field_map_path=e_state_overrides_field_map_path,
             run_mask_path=run_mask_path,
+            configs_to_run=configs_to_run_,
         )
     click.echo("Running grid model")
     parallel_args = setup_grid_model.ParallelArgs(
@@ -297,6 +302,7 @@ def grid_run(
             sample_size=sample_size,
             e_state_overrides_field_map_path=e_state_overrides_field_map_path,
             run_mask_path=run_mask_path,
+            configs_to_run=configs_to_run_,
         )
     except Exception as e:
         logger_main.log(f"Error running grid model: {e}")
