@@ -1,7 +1,7 @@
 # %%
 from math import isclose
 
-from pyDO3SE.plugins.soil_moisture.helpers import (
+from do3se_met.soil_moisture.helpers import (
     SWC_to_SWP,
     SWP_to_SWC,
     get_soil_config,

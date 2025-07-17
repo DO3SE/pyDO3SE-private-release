@@ -4,7 +4,7 @@ import os
 from dataclasses import asdict
 from math import isclose
 from pyDO3SE.Config.ConfigEnums import FVPDMethods
-from pyDO3SE.constants.enums import GAS
+from do3se_met.enums import GAS
 
 import pprint
 import numpy as np
@@ -23,8 +23,7 @@ from do3se_met.irradiance import (
     calc_PAR_sun_shade,
 )
 from do3se_met.solar_position import calc_solar_elevation
-
-from pyDO3SE.plugins.gsto.photosynthesis_helpers import calc_g_bv
+from do3se_met.resistance import calc_g_bv
 
 
 from .ewert import (

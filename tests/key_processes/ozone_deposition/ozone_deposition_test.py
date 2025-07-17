@@ -1,7 +1,6 @@
 """Test running a few lines of data to make sure ozone deposition is correct."""
 from math import isclose
 from pathlib import Path
-import numpy as np
 import pytest
 import warnings
 import pandas as pd

@@ -6,11 +6,13 @@ from data_helpers.cls_parsing import rgetattr
 from do3se_phenology.config import TimeTypes
 from pyDO3SE.version import config_version
 from pyDO3SE.Config.Config_Shape import Config_Shape
+from do3se_met.soil_moisture.enums import FSW_Methods
 from pyDO3SE.Config.ConfigEnums import (
     CanopyHeightMethods,
     SenescenceFunctionMethods,
     GstoMethods,
     FVPDMethods,
+    FTempMethods,
 )
 
 
@@ -44,7 +46,7 @@ def required_config_fields_multip_gsto(config): return list(filter(lambda v: v, 
             f"Land_Cover.parameters.{iLC}.multip_gsto.T_min",
             f"Land_Cover.parameters.{iLC}.multip_gsto.T_opt",
             f"Land_Cover.parameters.{iLC}.multip_gsto.T_max",
-        ] if config.Land_Cover.parameters[iLC].multip_gsto.f_temp_method != "disabled" else None,
+        ] if config.Land_Cover.parameters[iLC].multip_gsto.f_temp_method != FTempMethods.DISABLED else None,
         f"Land_Cover.parameters.{iLC}.multip_gsto.gmax",
         f"Land_Cover.parameters.{iLC}.multip_gsto.gmorph",
         f"Land_Cover.parameters.{iLC}.multip_gsto.gmorph",
@@ -98,11 +100,11 @@ def required_config_fields(config): return list(filter(lambda v: v, flatten_list
         f"Land_Cover.parameters.{iLC}.gsto.fmin",
     ] for iLC in range(config.Land_Cover.nLC or 1)],
     # f_SW
-    [config.Land_Cover.parameters[iLC].gsto.f_SW_method in ["fSWP exp", "fLWP exp"] and [
+    [config.Land_Cover.parameters[iLC].gsto.f_SW_method in [FSW_Methods.FSWP_EXP, FSW_Methods.FLWP_EXP] and [
         f"Land_Cover.parameters.{iLC}.gsto.fSWP_exp_a",
         f"Land_Cover.parameters.{iLC}.gsto.fSWP_exp_b",
     ] for iLC in range(config.Land_Cover.nLC or 1)],
-    [config.Land_Cover.parameters[iLC].gsto.f_SW_method in ["linear"] and [
+    [config.Land_Cover.parameters[iLC].gsto.f_SW_method in [FSW_Methods.FSWP_LINEAR] and [
         f"Land_Cover.parameters.{iLC}.gsto.SWP_min",
         f"Land_Cover.parameters.{iLC}.gsto.SWP_max",
     ] for iLC in range(config.Land_Cover.nLC or 1)],
