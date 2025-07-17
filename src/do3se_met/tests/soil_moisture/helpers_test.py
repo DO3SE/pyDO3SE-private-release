@@ -1,13 +1,13 @@
 from math import isclose
 
-from pyDO3SE.plugins.soil_moisture.helpers import (
+from do3se_met.soil_moisture.helpers import (
     SWC_to_SWP,
     SWP_to_SWC,
     get_soil_config, init_soilWater_state,
     soil_moisture_from_SWC,
     soil_moisture_from_SWP,
 )
-from pyDO3SE.plugins.soil_moisture.config import SOIL_LOAM, SOIL_SANDY_LOAM, Soil_t
+from do3se_met.soil_moisture.config import SOIL_LOAM, SOIL_SANDY_LOAM, Soil_t
 
 
 def test_check_soil():

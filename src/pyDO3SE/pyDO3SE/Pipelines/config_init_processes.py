@@ -20,12 +20,11 @@ from proflow.Objects.Interface import I
 from do3se_phenology.switchboard import process_phenology_config
 from do3se_phenology.config import ZeroDayOptions
 from do3se_met.resistance import calc_displacement_and_roughness_parameters
-
+from do3se_met.soil_moisture.penman_monteith import get_initial_SWC
+from do3se_met.soil_moisture.helpers import get_soil_config, calc_ASW
+from do3se_met.soil_moisture.enums import SoilMoistureSource
 from pyDO3SE.Config import Config_Shape
 from pyDO3SE.Config.ConfigLocation import LandCoverType
-from pyDO3SE.plugins.soil_moisture.penman_monteith import get_initial_SWC
-from pyDO3SE.plugins.soil_moisture.helpers import get_soil_config, calc_ASW
-from pyDO3SE.plugins.soil_moisture.enums import SoilMoistureSource
 from pyDO3SE.util.logger import defaultLogger
 
 def _partial(fn, *args, **kwargs):
@@ -101,6 +100,7 @@ def init_soil_config(config: Config_Shape):
         Process(
             func=calc_ASW,
             comment="Calculate available soil water at field capacity",
+            gate=config.soil_moisture.ASW_FC is None, # Only run if not already set
             state_inputs=lambda state: [
                 I(state.soil_moisture.soil_config, as_='soil_config'),
                 I(state.soil_moisture.PWP, as_='PWP'),

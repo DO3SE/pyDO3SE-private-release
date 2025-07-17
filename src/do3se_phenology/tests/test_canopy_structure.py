@@ -37,6 +37,19 @@ def test_LAI_day_PLF():
     )
     assert lai_out == 3.5
 
+    lai_out = LAI_day_PLF(
+        dd=176,
+        SGS=91,
+        EGS=273,
+        LAI_1=85,
+        LAI_2=97,
+        LAI_a=0.0,
+        LAI_b=3.5,
+        LAI_c=3.5,
+        LAI_d=0.0,
+    )
+    assert lai_out == 3.5
+
 
 def test_SAI_wheat_and_LAI():
     """Test that SAI_wheat matches UI output."""

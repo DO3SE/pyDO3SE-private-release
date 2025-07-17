@@ -9,19 +9,19 @@ References
 P. Büker et al. 2012
 
 """
-
+from warnings import warn
 from collections import namedtuple
 from typing import NamedTuple
 from math import exp, inf
-from warnings import warn
 
 from do3se_met.resistance import calc_Rb, calc_Rsto, calc_Rsur
 from do3se_met.resistance.model import Resistance_Model
+from do3se_met.f_functions import inverse_f_PAW, inverse_f_SWP_exp
 
-from pyDO3SE.plugins.gsto.helpers import inverse_f_PAW, inverse_f_SWP_exp
-from pyDO3SE.constants.physical_constants import DIFF_H2O, DRATIO_O3_H20, T0
-from pyDO3SE.plugins.soil_moisture.helpers import soil_moisture_from_SWC
-from pyDO3SE.plugins.soil_moisture.config import Soil_t
+from do3se_met.physical_constants import DIFF_H2O, DRATIO_O3_H20, T0
+from do3se_met.soil_moisture.helpers import soil_moisture_from_SWC
+from do3se_met.soil_moisture.config import Soil_t
+from do3se_met.soil_moisture.enums import FSW_Methods
 
 
 def get_initial_SWC(SWC_in: float = None, FC: float = None) -> float:
@@ -522,16 +522,16 @@ def check_soil_evaporation_blocked(
     # TODO: this assumes the first land cover is the only one that matters
     Es_blocked: bool = True
 
-    if f_SW_method in ['fSWP exp', 'fLWP exp']:
+    if f_SW_method in [FSW_Methods.FSWP_EXP, FSW_Methods.FLWP_EXP]:
         assert SWP is not None
         assert fSWP_exp_a is not None
         assert fSWP_exp_b is not None
         Es_blocked = SWP < inverse_f_SWP_exp(fSWP_exp_a, fSWP_exp_b, 1.0)
-    if f_SW_method == 'fSWP linear':
+    if f_SW_method == FSW_Methods.FSWP_LINEAR:
         assert SWP is not None
         assert SWP_max is not None
         Es_blocked = SWP < SWP_max
-    if f_SW_method == 'fPAW':
+    if f_SW_method == FSW_Methods.FPAW:
         assert ASW is not None
         assert ASW_FC is not None
         assert fmin is not None
@@ -539,15 +539,21 @@ def check_soil_evaporation_blocked(
         # Es_blocked = (ASW < (ASW_FC * (ASW_MAX / 100.0)))
         # TODO: Below has different output for DO3SE UI
         Es_blocked = ASW < inverse_f_PAW(ASW_FC, fmin, 1.0)
-    if f_SW_method == "disabled":
-        # TODO: This is set to calculate to match DO3SE UI
-        # Es_blocked = SWP < SWP_max
+    if f_SW_method == FSW_Methods.DISABLED:
         Es_blocked = True
+        # TODO:  set to calculate to match DO3SE UI
+        # Es_blocked = SWP < SWP_max
 
     # TODO: Move these checks to config validation
     if f_SW_method is not None and \
-            f_SW_method not in ['fSWP exp', 'fLWP exp', 'fSWP linear', 'fPAW', 'disabled']:
+            f_SW_method not in [
+                FSW_Methods.DISABLED,
+                FSW_Methods.FSWP_EXP,
+                FSW_Methods.FLWP_EXP,
+                FSW_Methods.FSWP_LINEAR,
+                FSW_Methods.FPAW,
+            ]:
         raise ValueError(f'{f_SW_method} is an invald fSWP linear method')
-
-    # Ensure output is bool (Issue caused by numpy bool_)
-    return bool(Es_blocked)
+    else:
+        # Ensure output is bool (Issue caused by numpy bool_)
+        return bool(Es_blocked)

@@ -167,7 +167,10 @@ def dump_output_to_netcdf_grid(
         )
     except KeyError as e:
         print(e)
-        raise OutputError(f"Error saving to netcdf. Check output shape: {output_shape}")
+        raise OutputError(f"Error saving to netcdf. Check output shape: {output_shape}, lon_shape: {lon_data.shape}, lat_shape: {lat_data.shape}") from e
+    except ValueError as e:
+        raise OutputError(f"Error saving to netcdf. Check output shape: {output_shape}, lon_shape: {lon_data.shape}, lat_shape: {lat_data.shape}") from e
+
 
 
 def dump_output_to_file_netcdf_grid(
@@ -646,9 +649,10 @@ def export_output(
     os.makedirs(output_directory, exist_ok=True)
     try:
         if options.save_hourly_output_data:
-            logger("Saving hourly output")
             output_filename = "pyDO3SE_output.csv" if output_filename is None else output_filename
-            dump_output_to_file(output_data, f"{output_directory}/{output_filename}")
+            output_location = f"{output_directory}/{output_filename}"
+            logger(f"Saving hourly output to {output_location}")
+            dump_output_to_file(output_data, output_location)
 
         if options.save_external_processed_data:
             logger("Saving external processed data")

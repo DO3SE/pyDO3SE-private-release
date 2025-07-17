@@ -1,4 +1,4 @@
-from typing import List, Tuple, Callable, Union
+from typing import List, Tuple, Callable
 from data_helpers.dictionary_helpers import ListMergeMethods, merge_dictionaries
 from pathlib import Path
 import json
@@ -66,7 +66,7 @@ def config_loader(
 
 
 def config_loader_pickled(
-    config_location: Path,
+    config_location: Path | str,
 ) -> Config_Shape:
     """Load binary config file.
 

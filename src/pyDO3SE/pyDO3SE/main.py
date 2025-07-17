@@ -74,7 +74,7 @@ from functools import partial
 from multiprocessing import Pool
 import warnings
 import ntpath
-from typing import Callable, List, NamedTuple, Tuple, Dict
+from typing import Callable, List, NamedTuple, Tuple, Dict, Optional
 from datetime import datetime
 
 from pyDO3SE.lib import (
@@ -130,18 +130,18 @@ def load_run_files(
 ) -> RunFiles:
     logger("Loading run files")
     return RunFiles(
-        config=config_loader(run_paths.config_path,
-                             project_paths.base_config_path, 'json', logger=logger),
-        state=project_paths.base_state_path and model_state_loader(
-            project_paths.base_state_path, None, 'json', False) or Model_State_Shape(),
+        config=config_loader(run_paths.config_path, project_paths.base_config_path, "json", logger=logger),
+        state=project_paths.base_state_path
+        and model_state_loader(project_paths.base_state_path, None, "json", False)
+        or Model_State_Shape(),
         per_input_config_overrides=pd.read_csv(project_paths.per_input_config_overrides)
-        if project_paths.per_input_config_overrides and os.path.exists(
-            project_paths.per_input_config_overrides) else None
+        if project_paths.per_input_config_overrides and os.path.exists(project_paths.per_input_config_overrides)
+        else None,
     )
 
 
 def get_project_paths(
-    project_dir: str,
+    project_dir: Path,
     config_dir: str = "configs",
     input_dir: str = "inputs",
     base_config_file_name: str = "base_config.json",
@@ -155,7 +155,8 @@ def get_project_paths(
         base_config_path=f"{project_dir}/{base_config_file_name}",
         base_state_path=f"{project_dir}/base_state.json",
         runs_dir=f"{project_dir}/{runs_dir}",
-        per_input_config_overrides=f"{project_dir}/per_input_config_overrides.csv"
+        per_input_config_overrides=f"{project_dir}/per_input_config_overrides.csv",
+        observed_diurnal_path=f"{project_dir}/observed_diurnal.csv",
     )
 
 
@@ -167,10 +168,14 @@ def get_run_paths(
     output_path_format: str = "{runid}/{config}/{input}",
     run_name_format: str = "{config}_{input}_{runid}",
 ) -> RunPaths:
-    run_dir = project_paths.runs_dir + "/" + output_path_format.format(
-        config=config_id,
-        runid=run_id,
-        input=input_file_id,
+    run_dir = (
+        project_paths.runs_dir
+        + "/"
+        + output_path_format.format(
+            config=config_id,
+            runid=run_id,
+            input=input_file_id,
+        )
     )
     run_name = run_name_format.format(
         config=config_id,
@@ -183,10 +188,11 @@ def get_run_paths(
         run_name=run_name,
         run_dir=run_dir,
         log_path=f"{run_dir}/run.log",
-        config_path=f"{project_paths.config_dir}/{config_id}.json",
-        input_data_file_path=f"{project_paths.input_data_dir}/{input_file_id}.csv",
-        output_directory=f"{run_dir}/outputs",
-        comparisons_dir=f"{run_dir}/comparisons",
+        config_path=Path(f"{project_paths.config_dir}/{config_id}.json"),
+        input_data_file_path=Path(f"{project_paths.input_data_dir}/{input_file_id}.csv"),
+        output_directory=Path(f"{run_dir}/outputs"),
+        config_run_dir=Path(f"{run_dir}"),
+        comparisons_dir=Path(f"{run_dir}/comparisons"),
         output_filename=f"{run_name}_output.csv",
         input_file_id=input_file_id,
         config_id=config_id,
@@ -245,13 +251,16 @@ def main(
         logger=logger,
     )
     config_overrides: Dict[str, any] = get_config_overrides(
-        run_paths.input_file_id, loaded_run_files.per_input_config_overrides)
+        run_paths.input_file_id, loaded_run_files.per_input_config_overrides
+    )
     start_time_setup = datetime.now()
 
-    external_state_data = next(load_external_state(
-        run_paths.input_data_file_path,
-        logger=logger,
-    ))
+    external_state_data = next(
+        load_external_state(
+            run_paths.input_data_file_path,
+            logger=logger,
+        )
+    )
     [
         config,
         external_state,
@@ -300,7 +309,7 @@ def main(
 
     output_filename = run_paths.output_filename
     if run_paths.output_directory:
-        logger("Exporting outputs")
+        logger(f"Exporting outputs to {run_paths.output_directory}")
         export_output(
             output_logs,
             final_state,
@@ -330,12 +339,12 @@ def single(
     data_file: Path,
     output_directory: Path,
     verbose: int = 0,
-    runid: str = '',
+    runid: str = "",
     base_config_file: Path = None,
     per_input_config_overrides: Path = None,
     initial_state_path: Path = None,
-    runnotes: str = '',
-    plot_fields: str = None,
+    runnotes: str = "",
+    plot_fields: Optional[str] = None,
     observed_diurnal_data: Path = None,
     output_options: OutputOptions = OutputOptions(),
     overrides: Tuple[str, str] = (),
@@ -346,20 +355,20 @@ def single(
     outputting the final state
     """
     if not config_file:
-        raise ValueError('Missing configfile')
+        raise ValueError("Missing configfile")
 
     if not data_file:
-        raise ValueError('Missing datafile')
+        raise ValueError("Missing datafile")
 
     if not output_directory:
-        raise ValueError('Missing outputdirectory')
+        raise ValueError("Missing outputdirectory")
 
     logger = Logger(log_level=verbose)
     logger("Running pyDO3SE")
     logger("Logger init")
     os.makedirs(output_directory, exist_ok=True)
-    copyfile(config_file, f'{output_directory}/config.json')
-    _plot_fields = plot_fields and plot_fields.split(',') or []
+    copyfile(config_file, f"{output_directory}/config.json")
+    _plot_fields = plot_fields and plot_fields.split(",") or []
 
     project_paths = ProjectPaths(
         base_config_path=base_config_file,
@@ -375,12 +384,12 @@ def single(
         output_directory=output_directory,
         output_filename=f"{runid}.csv",
         run_dir=f"{output_directory}/{runid}",
-        input_file_id=ntpath.basename(data_file).replace('.csv', ''),
-        config_id=ntpath.basename(config_file.replace('.json', ''))
+        input_file_id=ntpath.basename(data_file).replace(".csv", ""),
+        config_id=ntpath.basename(str(config_file).replace(".json", "")),
     )
     create_run_path_directories(run_paths)
 
-    _overrides = [o.split('=') for o in overrides]
+    _overrides = [o.split("=") for o in overrides]
 
     final_state, output_logs, config_processed, initial_state, external_state = main(
         project_paths=project_paths,
@@ -417,10 +426,10 @@ def run_from_args(args: Args, verbose, kwargs) -> RunOutput:
             )
         return RunOutput(0, None, out)
     except Exception as e:
-        if (verbose):
+        if verbose:
             raise e
-        config_file = args['run_paths'].config_path
-        input_file = args['run_paths'].input_data_file_path
+        config_file = args["run_paths"].config_path
+        input_file = args["run_paths"].input_data_file_path
         warnings.warn(f"Failed to run config {config_file} on data {input_file}")
         return RunOutput(1, e, None)
 
@@ -546,40 +555,44 @@ def batch(
     if verbose:
         logger("Running with verbose")
 
-    project_paths = get_project_paths(
-        project_directory) if default_paths else ProjectPaths()
+    project_paths = get_project_paths(project_directory) if default_paths else ProjectPaths()
     project_paths = project_paths._replace(
         config_dir=config_dir_override or project_paths.config_dir,
         input_data_dir=input_dir_override or project_paths.input_data_dir,
     )
 
     config_file_type = "json"
-    config_files = [c for c in os.listdir(project_paths.config_dir) if len(c.split('.')) == 2 and c.split('.')[
-        1] == config_file_type]
+    config_files = [
+        c
+        for c in os.listdir(project_paths.config_dir)
+        if len(c.split(".")) == 2 and c.split(".")[1] == config_file_type
+    ]
     config_files_str = "\n-".join(config_files)
     logger(f"Running following configs:\n{config_files_str}")
 
-    input_files = [f for f in os.listdir(project_paths.input_data_dir) if f.split('.')[-1] == 'csv']
-    output_fields_to_save = output_fields and output_fields.split(',') or None
-    _compare_fields = default_output_fields if compare_fields == "_all" \
-        else compare_fields and compare_fields.split(',') or []
+    input_files = [f for f in os.listdir(project_paths.input_data_dir) if f.split(".")[-1] == "csv"]
+    output_fields_to_save = output_fields and output_fields.split(",") or None
+    _compare_fields = (
+        default_output_fields if compare_fields == "_all" else compare_fields and compare_fields.split(",") or []
+    )
 
     common_args = {}
-    common_args['output_fields'] = output_fields_to_save
-    common_args['output_options'] = output_options
-    common_args['skip_state_init'] = use_base_state
-    common_args['fields_to_graph'] = _compare_fields
-    common_args['debug'] = verbose
-    common_args['logger'] = logger
+    common_args["output_fields"] = output_fields_to_save
+    common_args["output_options"] = output_options
+    common_args["skip_state_init"] = use_base_state
+    common_args["fields_to_graph"] = _compare_fields
+    common_args["debug"] = verbose
+    common_args["logger"] = logger
 
     run_list = [
         get_run_paths(
             runid,
             project_paths,
-            config_file.split('.')[0],
-            input_file.replace('.csv', ''),
+            config_file.split(".")[0],
+            input_file.replace(".csv", ""),
         )
-        for config_file in config_files for input_file in input_files
+        for config_file in config_files
+        for input_file in input_files
     ]
 
     for run_paths_i in run_list:
@@ -591,7 +604,8 @@ def batch(
             **common_args,
             "project_paths": project_paths,
             "run_paths": run_paths_i,
-        } for run_paths_i in run_list
+        }
+        for run_paths_i in run_list
     ]
 
     start_time = datetime.now()
@@ -612,7 +626,7 @@ def batch(
     runtime = datetime.now() - start_time
 
     logger(f"Complete! \nRuns took: {runtime}")
-    logger(f"Output file located in {project_paths.project_dir}")
+    logger(f"Output files located in {project_paths.project_dir}")
 
     if run_comparisons:
         if compare_fields is None:
@@ -621,10 +635,10 @@ def batch(
 
         comparisons_dir = f"{project_paths.project_dir}/comparisons/{runid}"
         os.makedirs(comparisons_dir, exist_ok=True)
-        output_plot_start_day, output_plot_end_day = [int(d) for d in day_range.split(',')] \
-            if day_range is not None else [None, None]
-        logger(
-            f"Running comparisons on {compare_fields} for files: {[d[2] for d in data_files]}")
+        output_plot_start_day, output_plot_end_day = (
+            [int(d) for d in day_range.split(",")] if day_range is not None else [None, None]
+        )
+        logger(f"Running comparisons on {compare_fields} for files: {[d[2] for d in data_files]}")
         create_comparison_graphs(
             data_files,
             _compare_fields,
@@ -638,11 +652,11 @@ def batch(
     # Check for errors
     failed_runs = [(args, r) for args, r in results_info if r.result == 1]
     if len(failed_runs) > 0:
-        logger('Failed Runs (Use --verbose to see more details):', fg='red')
+        logger("Failed Runs (Use --verbose to see more details):", fg="red")
     for args, r in failed_runs:
-        config_file = args['run_paths'].config_path
-        input_file = args['run_paths'].input_data_file_path
-        logger(f"{config_file} | {input_file}", fg='red')
+        config_file = args["run_paths"].config_path
+        input_file = args["run_paths"].input_data_file_path
+        logger(f"{config_file} | {input_file}", fg="red")
         if verbose:
             logger(r.error)
             if verbose > 1:

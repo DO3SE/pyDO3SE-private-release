@@ -29,7 +29,9 @@ jobs:
     - name: Setup test env
       run: |
         mkdir -p tests/key_processes
+        touch tests/__init__.py
         cp -R src/pyDO3SE/tests/key_processes tests
+        cp src/pyDO3SE/tests/utils.py tests/utils.py
         mkdir -p examples
         cp -R src/pyDO3SE/examples .
 

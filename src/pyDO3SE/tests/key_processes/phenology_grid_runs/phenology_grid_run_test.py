@@ -138,15 +138,14 @@ def test_run_phenology_on_gridded_data():
     input_file_count = len(os.listdir(f"{project_dir}/inputs"))
     assert model_output is not None
     time_len = 743 # hours per file?
-    output_field_count = 11
     input_file_count = 7
     grid_coord_length = 2
     assert len(model_output) == input_file_count
     assert len(model_output[0]) == grid_coord_length
     # 4 == [Coords, ModelGridCellOutput, Model_State_Shape, OutputFields]
-    assert len(model_output[0][0]) == 4
-    assert len(model_output[0][0][1]) == output_field_count
-    assert len(model_output[0][0][1][0]) == time_len
+    Coords, ModelGridCellOutput, Model_State_Shape, OutputFields = model_output[0][0]
+    assert len(ModelGridCellOutput) == len(OutputFields)
+    assert len(ModelGridCellOutput[0]) == time_len
     # DVI should reach 2.0
     # final_state: Model_State_Shape = final_states.values()[0]
     # assert final_state.canopy_component[0].dvi >= 2.0

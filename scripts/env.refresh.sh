@@ -3,13 +3,14 @@ set -e
 
 source .venv/bin/activate
 
-uv sync --extra dev
-uv sync --extra grid
+uv sync --all-groups
 
 # Copy integration tests from pyDO3SE
 rm -R tests/key_processes
 mkdir -p tests/key_processes
+touch tests/__init__.py
 cp -R src/pyDO3SE/tests/key_processes tests
+cp src/pyDO3SE/tests/utils.py tests/utils.py
 
 rm -R examples
 mkdir -p examples

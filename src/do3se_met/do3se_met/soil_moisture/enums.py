@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class SoilMoistureSource(Enum):
     """Methods to input soild moisture data.
 
@@ -18,3 +19,11 @@ class SoilMoistureSource(Enum):
     INPUT_SWC = "input SWC"
     INPUT_ASW_EXTERNAL = "external input ASW"
     P_M = "P-M"
+
+
+class FSW_Methods(Enum):
+    DISABLED = "disabled"
+    FSWP_EXP = "fSWP exp"
+    FLWP_EXP = "fLWP exp"
+    FSWP_LINEAR = "fSWP linear"
+    FPAW = "fPAW"

@@ -7,9 +7,9 @@ from math import exp, inf, isclose
 import pytest
 
 from do3se_met.resistance.model import Resistance_Model
-
-from .config import Soil_t
-from .penman_monteith import (
+from do3se_met.soil_moisture.enums import FSW_Methods
+from do3se_met.soil_moisture.config import Soil_t
+from do3se_met.soil_moisture.penman_monteith import (
     PM_soil_moisture_calc,
     check_soil_evaporation_blocked,
     multi_layer_r_model_to_single_H20,
@@ -65,12 +65,7 @@ def test_multilayer_r_model_to_single_H20():
     assert isclose(rmodel_H20.Rext[0], 62.85714, abs_tol=1e-4)
     assert isclose(rmodel_H20.Rsto[0], 30.834582, abs_tol=1e-4)
     assert isclose(rmodel_H20.Rgs, 102.0, abs_tol=1e-4)
-
-    # This changed when we updated the multilayer model Jan 2025.
-    # TODO: Investigate this further to check it still works as expected.
-    # assert isclose(rmodel_H20.Rsur[0], 10.763110043, abs_tol=1e-4)
-
-    assert isclose(rmodel_H20.Rsur[0], 18.2721389, abs_tol=1e-4)
+    assert isclose(rmodel_H20.Rsur[0], 18.2721, abs_tol=1e-4)
 
 
 def test_multilayer_r_model_to_single_H20_when_rinc_is_0():
@@ -100,6 +95,10 @@ def test_multilayer_r_model_to_single_H20_when_rinc_is_0():
     assert isclose(rmodel_H20.Rgs, 102.0, abs_tol=1e-3)
     assert isclose(rmodel_H20.Rsur[0], 102.0, abs_tol=1e-3)
 
+    # This changed when we updated the multilayer model Jan 2025.
+    # TODO: Investigate this further to check it still works as expected.
+    # assert isclose(rmodel_H20.Rsur[0], 10.763110043, abs_tol=1e-4)
+
 
 def test_check_soil_evaporation_blocked():
     """Test that the soil evaporation function returns the correct bool."""
@@ -108,7 +107,7 @@ def test_check_soil_evaporation_blocked():
     )
     assert result is True
     result = check_soil_evaporation_blocked(
-        f_SW_method="fSWP exp",
+        f_SW_method=FSW_Methods.FSWP_EXP,
         fSWP_exp_a=99.9,
         fSWP_exp_b=999.9,
         SWP=0.3,
@@ -125,7 +124,7 @@ def test_check_soil_evaporation_blocked():
     # assert result is True
 
     result = check_soil_evaporation_blocked(
-        f_SW_method="fSWP linear",
+        f_SW_method=FSW_Methods.FSWP_LINEAR,
         SWP=0.3,
         SWP_max=0.2,
     )

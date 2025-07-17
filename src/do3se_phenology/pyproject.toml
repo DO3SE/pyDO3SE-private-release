@@ -13,8 +13,10 @@ dependencies = [
   "click>=7.1.2",
   "deprecated>=1.2.12",
   "data-helpers>=0.1.29",
-  "thermal-time",
-  "do3se-met",
+  # Additional private dependencies
+  # Install these manually with uv pip install -e ../do3se_met etc after uv sync
+  # 'thermal_time@git+ssh://git@github.com/SEI-DO3SE/thermal_time@RELEASE',
+  # 'do3se_met@git+ssh://git@github.com/SEI-DO3SE/do3se_met@RELEASE',
 ]
 
 [dependency-groups]

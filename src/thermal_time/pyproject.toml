@@ -1,6 +1,6 @@
 [project]
 name = "thermal_time"
-version = "0.0.16"
+version = "0.0.18"
 description = "DO3SE thermal time model"
 readme = "README.md"
 authors = [{ "email" = "sam.bland@york.ac.uk", "name" = "Sam Bland" }]

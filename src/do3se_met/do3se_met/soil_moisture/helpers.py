@@ -2,7 +2,7 @@
 from collections import namedtuple
 from typing import NamedTuple
 
-from pyDO3SE.plugins.soil_moisture.config import (
+from do3se_met.soil_moisture.config import (
     SOIL_CLAY_LOAM,
     SOIL_LOAM,
     SOIL_SANDY_LOAM,
