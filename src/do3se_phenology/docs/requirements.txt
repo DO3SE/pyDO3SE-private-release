@@ -1,8 +1,0 @@
-sphinx==3.1.2
-pypandoc
-rst2pdf==0.97
-pandocfilters==1.4.2
-sphinx-rtd-theme==0.5.2
-git+ssh://git@github.com/SEI-DO3SE/thermal_time@RELEASE
-git+ssh://git@github.com/sbland/py_data_helpers.git@RELEASE
-git+ssh://git@github.com/SEI-DO3SE/do3se_met@RELEASE

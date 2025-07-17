@@ -1,5 +1,0 @@
-Running from test
-Model took:	 0:00:25.668601
-Using model version:	 4.13.0b
-Using config version:	 9
-Date:	 23/07/2021 00:14:35

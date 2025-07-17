@@ -1,6 +1,0 @@
-Running from test
-Model took:	 0:00:12.160624
-Setup took:	 0:00:04.626978
-Using model version:	 4.23.0
-Using config version:	 10
-Date:	 12/01/2022 17:38:27

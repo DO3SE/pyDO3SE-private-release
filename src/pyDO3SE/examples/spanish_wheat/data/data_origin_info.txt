@@ -1,6 +1,0 @@
-spanish_wheat_config.json - new config file WIP
-spanish_wheat_config_for_short_test.json - config with short season for testing
-spanish_wheat_config_full.json - old config file from DO3SE model
-spanish_wheat_data.csv - input data from DO3SE model
-spanish_wheat_data_test.csv - input data from DO3SE model plus DO3SE ui. Used for testing
-spanish_wheat_output.csv - output data from DO3SE UI
