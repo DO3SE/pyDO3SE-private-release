@@ -9,9 +9,15 @@ Documentation for contributing to the model
 
 ## Environment Setup
 
-You will need to first install `uv` see the [uv documentation](https://docs.astral.sh/uv/getting-started/installation/) for more information.
-To setup the environment create a virtual python environment using `uv venv --python=3.12` and activate it using `source venv/bin/activate`.
-Then run `uv sync` to install the dependencies.
+Run `python setup.py test`
+
+# End users
+
+## Environment Setup
+
+- Ensure correct Python installed `python -V` should > `3.7`
+- Setup Virtual Python environment and activate
+- Run `python setup.py install`
 
 ## Running the model
 
