@@ -3,11 +3,8 @@
 # DO3SE_PhysicalConstants_ml.F90
 ######################################
 
-# TODO: Use math library instead
-# PI: float = 3.141592653589793238  # real, parameter
-# DEG2RAD: float = 0.017453292519943295  # real, parameter
 
-KTOC: float = 273.15 # Kelvin base temp
+KTOC: float = 273.15  # Kelvin base temp
 
 # > Atmospheric pressure at sea level [kPa]
 seaP: float = 101.325  # real, parameter
