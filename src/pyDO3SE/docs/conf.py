@@ -24,7 +24,7 @@ copyright = '2020,(SEI)'
 author = '(SEI)'
 
 # The full version, including alpha/beta/rc tags
-release = '4.42.3'
+release = '4.42.4'
 
 
 # -- General configuration ---------------------------------------------------

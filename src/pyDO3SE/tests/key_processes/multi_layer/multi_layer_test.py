@@ -9,7 +9,7 @@ import pandas as pd
 from pyDO3SE import settings
 from pyDO3SE.External_State.External_State_Shape import External_State_Shape
 from pyDO3SE import main
-from ...utils import get_test_run, Setup
+from tests.utils import get_test_run, Setup
 
 
 settings.set_settings(MAX_NUM_OF_CANOPY_LAYERS=10)
