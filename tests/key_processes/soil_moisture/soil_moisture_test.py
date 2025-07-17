@@ -11,7 +11,7 @@ from do3se_met.soil_moisture.helpers import SWP_to_SWC
 from do3se_met.soil_moisture.enums import SoilMoistureSource
 from pyDO3SE import main
 from pyDO3SE.External_State.External_State_Shape import External_State_Shape
-from ...utils import get_test_run, Setup
+from tests.utils import get_test_run, Setup
 
 project_dir = "tests/key_processes/soil_moisture"
 
