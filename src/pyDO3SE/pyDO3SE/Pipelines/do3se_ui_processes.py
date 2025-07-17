@@ -79,22 +79,26 @@ from proflow.logger import log_values
 
 from pyDO3SE.Config.Config_Shape import Config_Shape
 from pyDO3SE.Model_State.Model_State import Model_State_Shape
-from pyDO3SE.Config.ConfigEnums import CanopyHeightMethods, FVPDMethods, LAIMethods
+from pyDO3SE.Config.ConfigEnums import (
+    CanopyHeightMethods,
+    FVPDMethods,
+    LAIMethods,
+    FO3_methods,
+)
 from do3se_phenology.config import FPhenMethods, LeafFPhenMethods
 
 # Processes
-from pyDO3SE.plugins.gsto import helpers as gsto_helpers
 from do3se_phenology import f_phen
-from pyDO3SE.plugins.gsto.multiplicative import multiplicative
 from do3se_met import helpers as met_helpers
 from do3se_met import irradiance as met_irrad_helpers
 from do3se_met import wind as met_wind_helpers
 from do3se_met.irradiance import calc_Idrctt_Idfuse, calc_PAR_sun_shade
+from do3se_met import f_functions as met_f_functions
+from do3se_met.soil_moisture import penman_monteith as SMD_PM_helpers
 from do3se_phenology import canopy_structure
-# from pyDO3SE.plugins.soil_moisture import helpers as SMD_helpers
-from pyDO3SE.plugins.soil_moisture import penman_monteith as SMD_PM_helpers
 from pyDO3SE.plugins.O3 import helpers as O3_helpers
 from pyDO3SE.plugins.O3.helpers import calc_fst
+from pyDO3SE.plugins.gsto.multiplicative import multiplicative
 
 from pyDO3SE.Pipelines.validation_processes import setup_validation_processes
 
@@ -844,7 +848,7 @@ def calc_PAR_sun_shade_process(iL, iLC) -> Process:
 def calc_f_light_process(iL: int, iLC: int) -> Process:
     """Calculate f_light."""
     return Process(
-        func=gsto_helpers.calc_f_light_method,
+        func=met_f_functions.calc_f_light_method,
         comment="Calculate f_light",
         config_inputs=lambda config: [
             I(config.Land_Cover.parameters[iLC].multip_gsto.f_lightfac, as_='f_lightfac'),
@@ -884,7 +888,7 @@ def calc_f_temp_process(iL: int, iLC: int, f_temp_method: str) -> Process:
                 comment="f_temp - disabled",
             ),
             "default": Process(
-                func=gsto_helpers.calc_f_temp,
+                func=met_f_functions.calc_f_temp,
                 comment="f_temp - default",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC].multip_gsto.T_min, as_='T_min'),
@@ -903,7 +907,7 @@ def calc_f_temp_process(iL: int, iLC: int, f_temp_method: str) -> Process:
                 ],
             ),
             "square high": Process(
-                func=gsto_helpers.calc_f_temp_square_high,
+                func=met_f_functions.calc_f_temp_square_high,
                 comment="f_temp - square high",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC].multip_gsto.T_min, as_='T_min'),
@@ -942,7 +946,7 @@ def calc_f_VPD_process(iL: int, iLC: int, f_VPD_method: FVPDMethods) -> Process:
                 comment="f_VPD method - disabled",
             ),
             FVPDMethods.LINEAR: Process(
-                func=gsto_helpers.f_VPD_linear,
+                func=met_f_functions.f_VPD_linear,
                 comment="f_VPD_method - linear",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC].gsto.VPD_max, as_='VPD_max'),
@@ -959,7 +963,7 @@ def calc_f_VPD_process(iL: int, iLC: int, f_VPD_method: FVPDMethods) -> Process:
                 ]
             ),
             FVPDMethods.LOG: Process(
-                func=gsto_helpers.f_VPD_log,
+                func=met_f_functions.f_VPD_log,
                 comment="f_VPD_method - log",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC].gsto.fmin, as_='fmin'),
@@ -990,11 +994,11 @@ def f_O3_process(iL: int, iLC: int, f_O3_method: str) -> Process:
         gate=f_O3_method,
         comment="Choose f_O3 method",
         options={
-            "disabled": Process(
+            FO3_methods.DISABLED: Process(
                 func=skip,
                 comment="f_O3 method - disabled",
             ),
-            "wheat": Process(
+            FO3_methods.WHEAT: Process(
                 func=lambda POD_0: ((1 + (POD_0 / 11.5)**10)**(-1)),
                 comment="f_O3_method - wheat",
                 state_inputs=lambda state: [
@@ -1004,7 +1008,7 @@ def f_O3_process(iL: int, iLC: int, f_O3_method: str) -> Process:
                     (result, f'canopy_layer_component.{iL}.{iLC}.gsto_params.f_O3'),
                 ],
             ),
-            "potato": Process(
+            FO3_methods.POTATO: Process(
                 func=lambda AOT_0: ((1 + (AOT_0 / 40)**5)**(-1)),
                 comment="f_O3_method - potato",
                 state_inputs=lambda state: [
@@ -1014,7 +1018,7 @@ def f_O3_process(iL: int, iLC: int, f_O3_method: str) -> Process:
                     (result, f'canopy_layer_component.{iL}.{iLC}.gsto_params.f_O3'),
                 ],
             ),
-            "Steph wheat": Process(
+            FO3_methods.STEPH_WHEAT: Process(
                 func=lambda POD_0: ((1 + (POD_0 / 27)**10)**(-1)),
                 comment="f_O3_method - Steph wheat",
                 state_inputs=lambda state: [
@@ -1049,7 +1053,7 @@ def f_SW_process(iL: int, iLC: int, f_SW_method: str) -> Process:
                 ],
             ),
             "fSWP exp": Process(
-                func=gsto_helpers.f_SWP_exp,
+                func=met_f_functions.f_SWP_exp,
                 comment="f_SWP_method - fSWP exp",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC].multip_gsto.fSWP_exp_a, as_='a'),
@@ -1065,7 +1069,7 @@ def f_SW_process(iL: int, iLC: int, f_SW_method: str) -> Process:
                 ],
             ),
             "fSWP linear": Process(
-                func=gsto_helpers.f_SWP_linear,
+                func=met_f_functions.f_SWP_linear,
                 comment="f_SWP_method - linear",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC].gsto.SWP_min, as_='SWP_min'),
@@ -1081,7 +1085,7 @@ def f_SW_process(iL: int, iLC: int, f_SW_method: str) -> Process:
                 ],
             ),
             "fPAW": Process(
-                func=gsto_helpers.f_PAW,
+                func=met_f_functions.f_PAW,
                 comment="f_SWP_method - fPAW",
                 config_inputs=lambda config: [
                     I(config.soil_moisture.ASW_FC, as_='ASW_FC'),
@@ -1338,6 +1342,8 @@ def calc_fst_process(iL: int, iLC: int) -> Process:
             (result, f'canopy_layer_component.{iL}.{iLC}.O3up'),
         ],
     )
+
+
 
 
 def calc_POD_process(iL, iLC) -> Process:

@@ -43,10 +43,4 @@ TemperateMixedForest = SpeciesConfig(
         f_phen_1=20.0,
         f_phen_4=20.0,
     ),
-    LAI_a=0.4,
-    LAI_b=1.0,
-    LAI_c=1.0,
-    LAI_d=1.0,
-    LAI_1=1.0,
-    LAI_2=1.0,
 )

@@ -22,8 +22,7 @@
         "z_u": 10.0,
         "h_u": 1,
         "Rsoil": 200,
-        "start_day": 71,
-        "h_O3": 1
+        "start_day": 71
     },
     "soil_moisture": {
         "soil_texture": "loam",

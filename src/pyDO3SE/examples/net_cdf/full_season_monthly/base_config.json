@@ -37,7 +37,7 @@
                 "cosA": 0.5,
                 "gsto": {
                     "method": "photosynthesis",
-                    "fmin": 0.2,
+                    "fmin": 0.01,
                     "Tleaf_method": "ambient",
                     "f_SW_method": "disabled",
                     "SWP_min": -1.25,
@@ -45,14 +45,13 @@
                     "fSWP_exp_curve": "temperate",
                     "fSWP_exp_a": 0.355,
                     "fSWP_exp_b": -0.706,
-                    "f_VPD_method": "danielsson",
+                    "f_VPD_method": "linear",
                     "VPD_min": 3.2,
                     "VPD_max": 1.2,
                     "VPD_crit": 8.0
                 },
                 "pn_gsto": {
-                    "D_0": 2.2,
-                    "D_0_method": "constant",
+                    "D_0_method": "f_VPD",
                     "g_sto_0": 20000.0,
                     "m": 8.12,
                     "V_cmax_25": 90.0,
@@ -214,5 +213,8 @@
         "theta": 0.4,
         "k": 1.4,
         "lambdav": 0.4
+    },
+    "output": {
+        "log_multilayer": true
     }
 }

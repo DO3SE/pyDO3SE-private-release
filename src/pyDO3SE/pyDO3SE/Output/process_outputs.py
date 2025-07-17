@@ -646,9 +646,10 @@ def export_output(
     os.makedirs(output_directory, exist_ok=True)
     try:
         if options.save_hourly_output_data:
-            logger("Saving hourly output")
             output_filename = "pyDO3SE_output.csv" if output_filename is None else output_filename
-            dump_output_to_file(output_data, f"{output_directory}/{output_filename}")
+            output_location = f"{output_directory}/{output_filename}"
+            logger(f"Saving hourly output to {output_location}")
+            dump_output_to_file(output_data, output_location)
 
         if options.save_external_processed_data:
             logger("Saving external processed data")

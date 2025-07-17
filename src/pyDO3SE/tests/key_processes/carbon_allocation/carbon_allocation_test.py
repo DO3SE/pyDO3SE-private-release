@@ -1,8 +1,6 @@
 """Test running a few lines of data to make sure soil moisture is correct."""
-
 from collections import namedtuple
 from math import isclose
-from data_helpers.cls_parsing import rsetattr
 from pathlib import Path
 from copy import deepcopy
 import pytest
@@ -32,8 +30,7 @@ def run_with_config(
     project_paths = main.get_project_paths(project_dir)
     run_paths = main.get_run_paths(runid, project_paths, config_file, input_file)
     project_paths = project_paths._replace(
-        base_state_path=f"{project_dir}/initial_state/{input_state_file}.json"
-    )
+        base_state_path=f"{project_dir}/initial_state/{input_state_file}.json")
 
     # Create output dir
     main.create_run_path_directories(run_paths)
@@ -57,14 +54,13 @@ def run_with_config(
     return out
 
 
-RunSetup = namedtuple(
-    "RunSetup", ["runid", "config_file", "input_file", "input_state", "overrides"]
-)
+RunSetup = namedtuple('RunSetup', ['runid', 'config_file',
+                                   'input_file', 'input_state', 'overrides'])
 
 setups = [
-    RunSetup("default_dvi_1_03", "default", "three_days", "dump_state_dvi_1_03", {}),
-    RunSetup("default_dvi_1_49", "default", "three_days", "dump_state_dvi_1_49", {}),
-    RunSetup("default_dvi_1_94", "default", "three_days", "dump_state_dvi_1_94", {}),
+    RunSetup("default_dvi_1_03", "default", "three_days", 'dump_state_dvi_1_03', {}),
+    RunSetup("default_dvi_1_49", "default", "three_days", 'dump_state_dvi_1_49', {}),
+    RunSetup("default_dvi_1_94", "default", "three_days", 'dump_state_dvi_1_94', {}),
 ]
 
 setupsMap = {s.runid: s for s in setups}
@@ -87,61 +83,58 @@ def carbon_allocation_test_run(request):
 
         final_state, output_logs, final_config, initial_state, external_state = out
         request.cls.output[runid] = {}
-        request.cls.output[runid]["out"] = out
-        request.cls.output[runid]["hourly_output"] = pd.DataFrame(output_logs)
+        request.cls.output[runid]['out'] = out
+        request.cls.output[runid]['hourly_output'] = pd.DataFrame(output_logs)
 
 
-@pytest.mark.usefixtures("carbon_allocation_test_run")
+@pytest.mark.usefixtures('carbon_allocation_test_run')
 class TestRunAndCompare:
+
     def test_preruns_run_without_error(self):
         pass
 
-    @pytest.mark.parametrize("runid", ["default_dvi_1_03"])
+    @pytest.mark.parametrize('runid', ['default_dvi_1_03'])
     def test_should_preserve_mass(self, runid):
         """Total NPP should equal the sum of all carbon pools."""
-        hourly_output = self.output[runid]["hourly_output"]
-        c_leaf = hourly_output["c_leaf"].values
-        c_harv = hourly_output["c_harv"].values
-        c_stem = hourly_output["c_stem"].values
-        c_lbrn = hourly_output["c_lbrn"].values
-        c_root = hourly_output["c_root"].values
-        c_resv = hourly_output["c_resv"].values
-        npp = hourly_output["npp"].values
-        npp_acc = hourly_output["npp_acc"].values
-        carbon_pool_start = sum(
-            [
-                c_leaf[0],
-                c_harv[0],
-                c_stem[0],
-                c_lbrn[0],
-                c_root[0],
-                c_resv[0],
-            ]
-        )
-        carbon_pool_end = sum(
-            [
-                c_leaf[-1],
-                c_harv[-1],
-                c_stem[-1],
-                c_lbrn[-1],
-                c_root[-1],
-                c_resv[-1],
-            ]
-        )
+        hourly_output = self.output[runid]['hourly_output']
+        c_leaf = hourly_output['c_leaf'].values
+        c_harv = hourly_output['c_harv'].values
+        c_stem = hourly_output['c_stem'].values
+        c_lbrn = hourly_output['c_lbrn'].values
+        c_root = hourly_output['c_root'].values
+        c_resv = hourly_output['c_resv'].values
+        npp = hourly_output['npp'].values
+        npp_acc = hourly_output['npp_acc'].values
+        carbon_pool_start = sum([
+            c_leaf[0],
+            c_harv[0],
+            c_stem[0],
+            c_lbrn[0],
+            c_root[0],
+            c_resv[0],
+        ])
+        carbon_pool_end = sum([
+            c_leaf[-1],
+            c_harv[-1],
+            c_stem[-1],
+            c_lbrn[-1],
+            c_root[-1],
+            c_resv[-1],
+        ])
         carbon_pool_change = carbon_pool_end - carbon_pool_start
         total_carbon_added = sum(npp) - npp_acc[-1]
         assert isclose(carbon_pool_change, total_carbon_added, abs_tol=1e-6)
 
-    @pytest.mark.parametrize("runid", ["default_dvi_1_03"])
+    @pytest.mark.parametrize('runid', ['default_dvi_1_03'])
     def test_should_increase_carbon_pools(self, runid):
         """Total NPP should equal the sum of all carbon pools."""
-        hourly_output = self.output[runid]["hourly_output"]
-        c_leaf = hourly_output["c_leaf"].values
-        c_harv = hourly_output["c_harv"].values
-        c_stem = hourly_output["c_stem"].values
-        c_lbrn = hourly_output["c_lbrn"].values
-        c_root = hourly_output["c_root"].values
-        c_resv = hourly_output["c_resv"].values
+        hourly_output = self.output[runid]['hourly_output']
+        c_leaf = hourly_output['c_leaf'].values
+        c_harv = hourly_output['c_harv'].values
+        c_stem = hourly_output['c_stem'].values
+        c_lbrn = hourly_output['c_lbrn'].values
+        c_root = hourly_output['c_root'].values
+        c_resv = hourly_output['c_resv'].values
 
         assert max(c_leaf) > 0
         assert max(c_harv) > 0
@@ -150,48 +143,46 @@ class TestRunAndCompare:
         assert max(c_root) > 0
         assert max(c_resv) > 0
 
-    @pytest.mark.parametrize("runid", ["default_dvi_1_94"])
+    @pytest.mark.parametrize('runid', ['default_dvi_1_94'])
     def test_should_distribute_green_leaf_carbon_to_brown_leaf_carbon_after_dvi_1_5(self, runid):
-        hourly_output = self.output[runid]["hourly_output"]
-        hourly_output = self.output[runid]["hourly_output"]
-        c_leaf = hourly_output["c_leaf"].values
-        c_lbrn = hourly_output["c_lbrn"].values
+        hourly_output = self.output[runid]['hourly_output']
+        hourly_output = self.output[runid]['hourly_output']
+        c_leaf = hourly_output['c_leaf'].values
+        c_lbrn = hourly_output['c_lbrn'].values
         assert c_leaf[-1] < c_leaf[0]
         assert c_lbrn[-1] > c_lbrn[0]
 
-    @pytest.mark.parametrize("runid", ["default_dvi_1_94"])
+    @pytest.mark.parametrize('runid', ['default_dvi_1_94'])
     def test_should_distribute_carbon_to_harvest_after_dvi_1_5(self, runid):
-        hourly_output = self.output[runid]["hourly_output"]
-        hourly_output = self.output[runid]["hourly_output"]
-        c_harv = hourly_output["c_harv"].values
-        c_resv = hourly_output["c_resv"].values
+        hourly_output = self.output[runid]['hourly_output']
+        hourly_output = self.output[runid]['hourly_output']
+        c_harv = hourly_output['c_harv'].values
+        c_resv = hourly_output['c_resv'].values
         assert c_resv[-1] < c_resv[0]
         assert c_harv[-1] > c_harv[0]
 
-    @pytest.mark.parametrize("runid", ["default_dvi_1_94"])
+    @pytest.mark.parametrize('runid', ['default_dvi_1_94'])
     def test_should_have_increased_brown_lai_after_start_of_senescence(self, runid):
         # - split leaf carbon between green and brown leaf. 85% of green goes to brown
         # - split decrease 85/15 grain brown leaf
 
-        hourly_output = self.output[runid]["hourly_output"]
-        canopy_lai_brown = hourly_output["canopy_lai_brown"].values
+        hourly_output = self.output[runid]['hourly_output']
+        canopy_lai_brown = hourly_output['canopy_lai_brown'].values
         assert canopy_lai_brown[0] < canopy_lai_brown[-1]
 
-    @pytest.mark.parametrize("runid", ["default_dvi_1_94"])
+    @pytest.mark.parametrize('runid', ['default_dvi_1_94'])
     def test_should_set_sai_to_green_plus_brown_lai(self, runid):
-        hourly_output = self.output[runid]["hourly_output"]
-        canopy_sai = hourly_output["canopy_sai"].values
-        canopy_lai = hourly_output["canopy_lai"].values
-        canopy_lai_brown = hourly_output["canopy_lai_brown"].values
+        hourly_output = self.output[runid]['hourly_output']
+        canopy_sai = hourly_output['canopy_sai'].values
+        canopy_lai = hourly_output['canopy_lai'].values
+        canopy_lai_brown = hourly_output['canopy_lai_brown'].values
         assert canopy_sai[-1] == canopy_lai[-1] + canopy_lai_brown[-1]
 
-    @pytest.mark.parametrize("runid", ["default_dvi_1_94"])
+    @pytest.mark.parametrize('runid', ['default_dvi_1_94'])
     def test_should_distribute_sai_between_layers(self, runid):
-        final_state, output_logs, final_config, initial_state, external_state = self.output[runid][
-            "out"
-        ]
-        hourly_output = self.output[runid]["hourly_output"]
-        canopy_sai = hourly_output["canopy_sai"].values
+        final_state, output_logs, final_config, initial_state, external_state = self.output[runid]['out']
+        hourly_output = self.output[runid]['hourly_output']
+        canopy_sai = hourly_output['canopy_sai'].values
         final_state: Model_State_Shape = final_state
         config: Config_Shape = final_config
         nL = config.Land_Cover.nL
@@ -209,11 +200,9 @@ class TestRunAndCompare:
         # TODO: Check why we this is 0
         # assert final_state.canopy_component[0].SAI > 0
 
-    @pytest.mark.parametrize("runid", all_setups)
+    @pytest.mark.parametrize('runid', all_setups)
     def test_should_calculate_yield_outputs(self, runid):
-        final_state, output_logs, final_config, initial_state, external_state = self.output[runid][
-            "out"
-        ]
+        final_state, output_logs, final_config, initial_state, external_state = self.output[runid]['out']
         final_state: Model_State_Shape = final_state
         stem_dm = final_state.canopy_component[0].stem_dm
         assert stem_dm > 0, "stem_dm has not increased above 0!"
@@ -238,14 +227,14 @@ class TestRunAndCompare:
         yield_ha = final_state.canopy_component[0].yield_ha
         assert yield_ha > 0, "yield_ha has not increased above 0!"
 
-    @pytest.mark.parametrize("runid", ["default_dvi_1_49"])
+    @pytest.mark.parametrize('runid', ['default_dvi_1_49'])
     def test_should_output_respiration_and_npp(self, runid):
-        hourly_output = self.output[runid]["hourly_output"]
-        A_n_canopy = hourly_output["A_n_canopy"].values
-        gpp = hourly_output["gpp"].values
-        npp = hourly_output["npp"].values
-        R_pg = hourly_output["R_pg"].values
-        R_pm = hourly_output["R_pm"].values
+        hourly_output = self.output[runid]['hourly_output']
+        A_n_canopy = hourly_output['A_n_canopy'].values
+        gpp = hourly_output['gpp'].values
+        npp = hourly_output['npp'].values
+        R_pg = hourly_output['R_pg'].values
+        R_pm = hourly_output['R_pm'].values
         assert any(i > 0 for i in A_n_canopy)
         assert any(i > 0 for i in gpp)
         assert any(i > 0 for i in npp)
@@ -259,8 +248,7 @@ def run_single_override_config(runid, config_override=None):
 
     run_paths = main.get_run_paths(runid, project_paths, config_file, input_file)
     project_paths = project_paths._replace(
-        base_state_path=f"{project_dir}/initial_state/{input_state}.json"
-    )
+        base_state_path=f"{project_dir}/initial_state/{input_state}.json")
 
     loaded_run_files = main.load_run_files(
         project_paths=project_paths,
@@ -269,12 +257,10 @@ def run_single_override_config(runid, config_override=None):
 
     overrides_main = main.Main_Overrides(**overrides)
     overrides_main = overrides_main._replace(skip_state_init=True)
-    external_state_data = next(
-        load_external_state(
-            run_paths.input_data_file_path,
-            # logger=logger,
-        )
-    )
+    external_state_data = next(load_external_state(
+        run_paths.input_data_file_path,
+        # logger=logger,
+    ))
     [
         config,
         external_state,
@@ -303,8 +289,8 @@ def run_single_override_config(runid, config_override=None):
 
 
 class TestIndividual:
-    @pytest.mark.parametrize("runid", ["default_dvi_1_94"])
-    def test_setting_carbon_leaf_fractions_change_outputs(self, runid):
+    @pytest.mark.parametrize('runid', ['default_dvi_1_94'])
+    def test_setting_carbon_leaf_fractions(self, runid):
         final_state, config = run_single_override_config(runid)
 
         assert final_state.canopy_component[0].c_leaf > 0, "c_leaf is 0"
@@ -316,7 +302,8 @@ class TestIndividual:
 
         # # Decreasing f_brown_leaf increases leaf carbon and reduces harvest and brown leaf carbon
         def config_override(c):
-            return rsetattr(c, "carbon_allocation.f_green_leaf", 0.2)  # Default is 0.85
+            c.carbon_allocation.f_green_leaf = 0.5
+            return c
 
         final_state_b, config_b = run_single_override_config(runid, config_override)
 
@@ -326,19 +313,16 @@ class TestIndividual:
 
         # Decreasing f_green_leaf increases brown leaf carbon and reduces harvest
         def config_override(c):
-            return rsetattr(c, "carbon_allocation.f_brown_leaf", 0.2)
+            c.carbon_allocation.f_brown_leaf = 0.5
+            return c
 
         final_state_c, config_c = run_single_override_config(runid, config_override)
 
-        assert isclose(
-            final_state.canopy_component[0].c_leaf,
-            final_state_c.canopy_component[0].c_leaf,
-            abs_tol=1e-6,
-        )
+        assert final_state.canopy_component[0].c_leaf == final_state_c.canopy_component[0].c_leaf
         assert final_state.canopy_component[0].c_lbrn > final_state_c.canopy_component[0].c_lbrn
         assert final_state.canopy_component[0].c_harv < final_state_c.canopy_component[0].c_harv
 
-    @pytest.mark.parametrize("runid", ["default_dvi_1_94"])
+    @pytest.mark.parametrize('runid', ['default_dvi_1_94'])
     def test_should_increase_grain_dm_if_we_increase_grain_to_ear(self, runid):
         final_state, config = run_single_override_config(runid)
 
