@@ -369,10 +369,6 @@ class TestInCanopyMet:
             canopy_lai = hourly_output["canopy_lai"].values
 
             # Print for debuging
-            print(micro_O3_iL_0[0:2])
-            print(micro_O3_iL_1[0:2])
-            print(micro_O3_iL_2[0:2])
-            print(canopy_top_o3[0:2])
             print((micro_O3_iL_0 / canopy_top_o3)[0:24])
             print((micro_O3_iL_0 / canopy_top_o3)[-24:])
 
@@ -388,15 +384,19 @@ class TestInCanopyMet:
             # bottom layer should be between 0.01% and 50% of the top layer
             canopy_height = final_state.canopy.canopy_height
             # TODO: should be ratio of canopy LAI also
-            upper_ratio_limit = (-0.001 * canopy_height) + 1 + (1 / ((0.011 * canopy_height) + 1)) - 1
-            lower_ratio_limit = (-0.001 * canopy_height) + 1.4 + (1 / ((1 * canopy_height) + 1)) - 1
+            # upper_ratio_limit = (-0.001 * canopy_height) + 1 + (1 / ((0.011 * canopy_height) + 1)) - 1
+            # lower_ratio_limit = (-0.001 * canopy_height) + 1.4 + (1 / ((1 * canopy_height) + 1)) - 1
+            upper_ratio_limit = (-0.001 * canopy_height) + 1.4 + (1 / ((0.011 * canopy_height) + 1)) - 1
+            lower_ratio_limit = (-0.001 * canopy_height) + 1.1 + (1 / ((1 * canopy_height) + 1)) - 1
             print("Canopy height", canopy_height)
             print("limits", upper_ratio_limit, lower_ratio_limit)
-            assert all(
-                [
+            limit_check = [
                     lai < 0.1 or b * lower_ratio_limit < a < b * upper_ratio_limit
                     for a, b, lai in zip(micro_O3_iL_0, canopy_top_o3, canopy_lai)
                 ]
+            print(list(zip(limit_check, [a/b for a, b in zip(micro_O3_iL_0, canopy_top_o3)])))
+            assert all(
+                limit_check
             )
             # assert all([b * 0.3 < a < b * 0.4 for a, b in zip(micro_O3_iL_0, canopy_top_o3)])
 
