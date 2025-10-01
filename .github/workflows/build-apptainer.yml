@@ -1,0 +1,74 @@
+# Based on workflow here: https://hsf-training.github.io/hsf-training-singularity-webpage/09-bonus-episode/index.html
+name: Build Apptainer Image
+
+on:
+  push:
+    branches:
+      - main
+      - ci
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-source:
+    # TODO: Finish implementing build and upload of source distribution
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    name: Build Source Distribution
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        version: "0.5.13"
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        uv sync --extra grid
+    - name: Build Source with UV
+      run: |
+        uv build
+
+    # - name: Upload source distribution artifact
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: source-distribution
+          #
+  build-apptainer:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+    container:
+        image: ghcr.io/apptainer/apptainer:1.4.1
+        options: --privileged
+    name: Build Apptainer Image
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Apptainer default image
+        run: |
+          apptainer build pyDO3SE_apptainer.sif pyDO3SE_apptainer.def
+      - name: Build Apptainer grid image
+        run: |
+          apptainer build pyDO3SE_grid_apptainer.sif pyDO3SE_grid_apptainer.def
+      - name: Upload Apptainer image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyDO3SE_grid_apptainer.sif
+          path: pyDO3SE_grid_apptainer.sif
