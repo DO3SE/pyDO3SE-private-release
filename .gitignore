@@ -147,3 +147,4 @@ dmypy.json
 
 # Apptainer (Singularity) container
 *.sif
+*.sif.*
