@@ -3,12 +3,8 @@ name: Build Apptainer Image
 
 on:
   push:
-    branches:
-      - main
-      - ci
-  pull_request:
-    branches:
-      - main
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -79,4 +75,93 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pyDO3SE_apptainer.sif
+          path: pyDO3SE_apptainer.sif
+      - name: Upload Grid Apptainer image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyDO3SE_grid_apptainer.sif
           path: pyDO3SE_grid_apptainer.sif
+
+  create_release:
+    runs-on: ubuntu-latest
+
+    needs: build-apptainer
+
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    permissions:
+      contents: write
+      packages: write
+
+    name: Create Release
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download built source distribution artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: built-source
+          path: ./dist
+      - name: Download Apptainer image artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: pyDO3SE_apptainer.sif
+
+      - name: Download Grid Apptainer image artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: pyDO3SE_grid_apptainer.sif
+
+      - name: Set tag name
+        id: tag
+        run: |
+          if [[ "${{ github.event_name }}" != "push" ]]; then
+            tag=v$(date +%Y%m%d.%H%M%S)
+          else
+            tag=$(basename "${{ github.ref }}")
+          fi
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tag="${{ steps.tag.outputs.tag }}"
+          body="release example for apptainer image and source distribution"
+          gh release create --draft "$tag" --title "$tag" --notes "$body"
+
+      - name: Upload Source Distribution to Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tag="${{ steps.tag.outputs.tag }}"
+          gh release upload "$tag" ./dist/*
+      - name: Upload Apptainer Image to Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tag="${{ steps.tag.outputs.tag }}"
+          gh release upload "$tag" ./pyDO3SE_apptainer.sif
+
+      - name: Upload Grid Apptainer Image to Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tag="${{ steps.tag.outputs.tag }}"
+          gh release upload "$tag" ./pyDO3SE_grid_apptainer.sif
+
+  publish:
+    name: Publish Release
+    needs: create_release
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+    - name: Publish Release
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+      run: gh release edit ${{ needs.create_release.outputs.tag }} --draft=false
