@@ -128,7 +128,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           tag="${{ steps.tag.outputs.tag }}"
-          body="release example for apptainer image and source distribution"
+          body="Automated release of version $tag"
           gh release create --draft "$tag" --title "$tag" --notes "$body"
 
       - name: Upload Source Distribution to Release
