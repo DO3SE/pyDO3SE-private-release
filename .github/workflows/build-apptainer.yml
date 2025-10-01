@@ -41,13 +41,13 @@ jobs:
     - name: Build Source with UV
       run: |
         uv build
-
-    # - name: Upload source distribution artifact
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: source-distribution
-          #
+    - name: Upload source distribution artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: built-source
+        path: dist
   build-apptainer:
+    needs: build-source
     runs-on: ubuntu-latest
 
     permissions:
@@ -56,11 +56,16 @@ jobs:
     container:
         image: ghcr.io/apptainer/apptainer:1.4.1
         options: --privileged
+
     name: Build Apptainer Image
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Download built source distribution artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: built-source
       - name: Build Apptainer default image
         run: |
           apptainer build pyDO3SE_apptainer.sif pyDO3SE_apptainer.def
