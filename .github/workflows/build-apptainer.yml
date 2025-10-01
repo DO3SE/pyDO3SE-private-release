@@ -68,6 +68,7 @@ jobs:
           name: built-source
       - name: Build Apptainer default image
         run: |
+          ls -l dist
           apptainer build pyDO3SE_apptainer.sif pyDO3SE_apptainer.def
       - name: Build Apptainer grid image
         run: |
