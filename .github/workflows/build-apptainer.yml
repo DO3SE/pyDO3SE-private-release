@@ -78,5 +78,5 @@ jobs:
       - name: Upload Apptainer image artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pyDO3SE_grid_apptainer.sif
+          name: pyDO3SE_apptainer.sif
           path: pyDO3SE_grid_apptainer.sif
