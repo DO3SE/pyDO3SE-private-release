@@ -1,7 +1,6 @@
-
 import click
 
-from pyDO3SE.version import version
+from pyDO3SE.version import version as pydo3se_version
 from . import run as run_commands
 from . import config as config_commands
 from . import analysis as analysis_commands
@@ -9,23 +8,31 @@ from . import demo as demo_commands
 from . import setup as setup_commands
 
 
+@click.option("--silent", is_flag=True, default=False, help="Run in silent mode")
 @click.group()
-def cli():
+def cli(
+    silent: bool = False,
+):
     """Main cli entrypoint."""
     from do3se_met.version import version as do3se_met_version
     from do3se_phenology.version import version as do3se_phenology_version
     from proflow.version import version as proflow_version
-    click.echo(f"Welcome to pyDO3SE version: {version}")
-    click.echo(f"==== Update Info ====")
 
-    click.echo(f"=====================\n")
-    click.echo(f"===== dependency versions ======\n")
+    if not silent:
+        # If silent mode is off, print welcome message
+        click.echo(f"\n=====================")
 
-    click.echo(f"do3se_met: {do3se_met_version}\n")
-    click.echo(f"do3se_phenology: {do3se_phenology_version}\n")
-    click.echo(f"proflow: {proflow_version}\n")
+        click.echo(f"Welcome to pyDO3SE version: {pydo3se_version}")
+        click.echo(f"==== Update Info ====")
 
-    click.echo(f"=====================\n")
+        click.echo(f"=====================\n")
+        click.echo(f"===== dependency versions ======\n")
+
+        click.echo(f"do3se_met: {do3se_met_version}\n")
+        click.echo(f"do3se_phenology: {do3se_phenology_version}\n")
+        click.echo(f"proflow: {proflow_version}\n")
+
+        click.echo(f"=====================\n")
 
 
 @cli.group()
@@ -74,5 +81,27 @@ demo.add_command(demo_commands.batch)
 setup.add_command(setup_commands.generate_project_dir)
 setup.add_command(setup_commands.print_outputs)
 
-if __name__ == '__main__':
+
+@click.option("--include-sub-deps", is_flag=True, default=False, help="Include sub-dependencies")
+@click.command()
+def version(include_sub_deps: bool = False):
+    """Print the version of pyDO3SE."""
+
+    # If silent mode is off, print welcome message
+    click.echo(f"pyDO3SE: {pydo3se_version}")
+
+    if include_sub_deps:
+        from do3se_met.version import version as do3se_met_version
+        from do3se_phenology.version import version as do3se_phenology_version
+        from proflow.version import version as proflow_version
+
+        click.echo(f"do3se_met: {do3se_met_version}")
+        click.echo(f"do3se_phenology: {do3se_phenology_version}")
+        click.echo(f"proflow: {proflow_version}")
+
+
+cli.add_command(version)
+
+
+if __name__ == "__main__":
     cli()
