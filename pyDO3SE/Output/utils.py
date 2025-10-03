@@ -2,7 +2,9 @@ from pyDO3SE.settings import settings
 from pyDO3SE.Output.Output_Shape import output_fields
 
 def get_multi_dimension_output_fields(fieldId: str):
-    field_data = next(o for o in output_fields if o.id == fieldId)
+    field_data = next((o for o in output_fields if o.id == fieldId), None)
+    if field_data is None:
+         raise ValueError(f"Field ID '{fieldId}' not found in output fields.")
     field_additional_multi_dimension_field_ids = []
     if field_data.per_iL:
         field_additional_multi_dimension_field_ids += [
