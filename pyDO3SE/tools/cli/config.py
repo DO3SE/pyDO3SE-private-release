@@ -325,7 +325,6 @@ def process_grid_config(
             raise ValueError(f"{k} is invalid for ({xi},{yi})")
         print(f"Overriding {k} to {v} for cell ({xi},{yi})")
         config_cell = rsetattr(config_cell, k, v, True)
-    print(f"Config after overrides: {config_cell}")
     # TODO: We only need to set up for each cell if the overrides effect the setup config
     config = setup_config(
         config_cell,
