@@ -96,6 +96,10 @@ def pull_config_vars_from_netcdf(
         x, y = coord
         return {k: ds[v].item((x, y)) for k, v in e_state_overrides_field_map.items()}
     except TypeError as e:
+        print("Failed to override using fields from ")
+        print(e_state_overrides_field_map)
+        print("From ds file: ")
+        print(ds)
         raise e
     except ValueError as e:
         print(ds)
