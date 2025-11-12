@@ -393,15 +393,18 @@ def get_season_length_from_config(
         elif species_config.key_dates_td.harvest:
             season_length = species_config.key_dates_td.harvest
         elif species_config.key_dates.harvest:
-            td_data = calc_thermal_time_range(external_data.get('Ts_C'), t_b=td_base_temperature)
-            EGS = species_config.key_dates.harvest
-            try:
-                t_sgs = next(t for t, d in zip(td_data, external_data.get('dd')) if d == sowing_day)
-                t_egs = next(t for t, d in zip(td_data, external_data.get('dd')) if d == EGS)
-            except StopIteration:
-                raise StopIteration(
-                    f'Sowing day or harvest date are outside range of input data. Sowing day: {sowing_day}, Harvest day: {EGS}')
-            season_length = t_egs - t_sgs
+            if model_config.time_type == TimeTypes.THERMAL_TIME:
+                td_data = calc_thermal_time_range(external_data.get('Ts_C'), t_b=td_base_temperature)
+                EGS = species_config.key_dates.harvest
+                try:
+                    t_sgs = next(t for t, d in zip(td_data, external_data.get('dd')) if d == sowing_day)
+                    t_egs = next(t for t, d in zip(td_data, external_data.get('dd')) if d == EGS)
+                except StopIteration:
+                    raise StopIteration(
+                        f'Sowing day or harvest date are outside range of input data. Sowing day: {sowing_day}, Harvest day: {EGS}')
+                season_length = t_egs - t_sgs
+            else:
+                season_length = species_config.key_dates.harvest - sowing_day
     if season_length is None:
         raise ConfigError("Could not establish season length from current configuration.")
     return season_length
