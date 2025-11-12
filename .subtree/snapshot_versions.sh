@@ -79,6 +79,9 @@ cp src/pyDO3SE/VERSION.txt VERSION.txt
 git add VERSION.txt
 git add SUB_VERSIONS.txt
 git add .bumpversion.cfg
+git add pyDO3SE_apptainer.def
+git add pyDO3SE_grid_apptainer.def
+git add pyproject.toml
 git commit -m "Bump version to $PYDO3SE_VERSION"
 git push
 
