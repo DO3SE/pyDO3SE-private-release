@@ -3,15 +3,23 @@ from pprint import pprint
 import json
 import os
 import click
+import math
+from copy import deepcopy
+from data_helpers.cls_parsing import rsetattr
 
 from do3se_phenology.plots import plot_phenology_from_config
+from pyDO3SE.Grid_Model.setup_grid_model import load_additional_gridded_config_data
+from pyDO3SE.util.loader import json_loader
 from pyDO3SE.version import config_version
 from pyDO3SE.Config.config_loader import config_loader
 from pyDO3SE.Config.generate_config import generate_config
 from pyDO3SE.Config.config_migration import Migrations
 from pyDO3SE.Config.Config_Shape import Config_Shape
 from pyDO3SE.Output.Output_Shape import output_fields_map
-from pyDO3SE.Output.process_outputs import dump_config_to_file_json, dump_model_processes_info_to_string
+from pyDO3SE.Output.process_outputs import (
+    dump_config_to_file_json,
+    dump_model_processes_info_to_string,
+)
 from pyDO3SE.Pipelines.default_processes import (
     full_model_processes,
 )
@@ -24,41 +32,47 @@ def generate(
     out_location: Path,
     gsto_method: str = None,
 ):
-    """Generate a template config file based on the response to some simple questions.
-
-    """
+    """Generate a template config file based on the response to some simple questions."""
     click.echo("Welcome to pyDO3SE config generator")
     click.echo(gsto_method)
     # TODO: Fix prompts
     if gsto_method is None:
-        gsto_method = click.prompt('Please enter photosynthesis method', type=str)
+        gsto_method = click.prompt("Please enter photosynthesis method", type=str)
     click.echo(f"Config set to {gsto_method} defaults")
-    new_config = generate_config(**{
-        "Land_Cover.parameters.0.gsto.method": gsto_method,
-    })
+    new_config = generate_config(
+        **{
+            "Land_Cover.parameters.0.gsto.method": gsto_method,
+        }
+    )
     dump_config_to_file_json()(new_config, out_location)
 
 
 def migrate_config(config_dir: Path, filename: Path, override):
     config_location = f"{config_dir}/{filename}"
     with open(config_location) as config_file_data:
-        print(f"Running migrations on \"{config_location}/{filename}\"")
+        print(f'Running migrations on "{config_location}/{filename}"')
         config = json.load(config_file_data)
-        input_version = config.get('VERSION', 0)
+        input_version = config.get("VERSION", 0)
         try:
             migrated_config = Migrations.run_migrations(config, input_version)
         except Exception as e:
             raise Exception(f"Failed to migrate {filename}. {e}")
         out_dir = config_dir  # os.path.dirname(config_location)
         out_file_name = os.path.splitext(filename)[0]
-        out_file_name = f"{out_file_name}.json" if override else f"{out_file_name}_{config_version}.json"
-        with open(f"{out_dir}/{out_file_name}", 'w') as out_location:
+        out_file_name = (
+            f"{out_file_name}.json" if override else f"{out_file_name}_{config_version}.json"
+        )
+        with open(f"{out_dir}/{out_file_name}", "w") as out_location:
             json.dump(migrated_config, out_location, indent=4)
 
 
 @click.command()
-@click.option("--override/--no-override", default=False, help="If true then will override the input config. Otherwise a copy is created.")
-@click.argument('config_location')
+@click.option(
+    "--override/--no-override",
+    default=False,
+    help="If true then will override the input config. Otherwise a copy is created.",
+)
+@click.argument("config_location")
 def migrate(config_location: str, override: bool):
     """Migrate an old config file to the latest version.
 
@@ -79,26 +93,25 @@ def migrate(config_location: str, override: bool):
 
 
 @click.command()
-@click.option('--detailed/--short', default=False)
+@click.option("--detailed/--short", default=False)
 def available_outputs(
     detailed: bool = False,
 ):
-    """Print available outputs for output data and graphs.
-    """
-    if(detailed):
+    """Print available outputs for output data and graphs."""
+    if detailed:
         pprint(output_fields_map)
     else:
         print("ID\tShort\tType")
         print("------\t------")
-        print('\n'.join([f"{o.id}\t{o.short}\t{o.type}" for o in output_fields_map.values()]))
+        print("\n".join([f"{o.id}\t{o.short}\t{o.type}" for o in output_fields_map.values()]))
 
 
 @click.command()
-@click.option('--detailed/--short', default=False)
-@click.option('--allow-errors/--strict', default=False)
-@click.option('--out-location', default=None, type=click.Path(exists=False))
-@click.option('--base-config-path', default=None, type=click.Path(exists=False))
-@click.argument('config-location', type=click.Path(exists=True))
+@click.option("--detailed/--short", default=False)
+@click.option("--allow-errors/--strict", default=False)
+@click.option("--out-location", default=None, type=click.Path(exists=False))
+@click.option("--base-config-path", default=None, type=click.Path(exists=False))
+@click.argument("config-location", type=click.Path(exists=True))
 def output_process_list(
     config_location: Path,
     out_location: Path = None,
@@ -120,31 +133,39 @@ def output_process_list(
         If true will print detailed info on each process
 
     """
-    config = config_loader(config_location, base_config_path, 'json')
+    config = config_loader(config_location, base_config_path, "json")
 
     hours = list(range(24))
     full_model_processes_out = full_model_processes(config, hours)
     flattened_process_comments = dump_model_processes_info_to_string(
-        full_model_processes_out, detailed, allow_errors)
+        full_model_processes_out, detailed, allow_errors
+    )
 
     if out_location:
-        with open(out_location, 'w') as f:
-            f.write('\n'.join(flattened_process_comments))
+        with open(out_location, "w") as f:
+            f.write("\n".join(flattened_process_comments))
     else:
-        print('\n'.join(flattened_process_comments))
+        print("\n".join(flattened_process_comments))
 
 
-@click.option('--input-data-file', type=click.Path(exists=True), default=None, help='Input data csv file')
-@click.option('--base-config-file', default=None, help='The base config file path', type=click.Path(exists=True))
-@click.option('--plot-dd', default=False, help='Plot day data')
+@click.option(
+    "--input-data-file", type=click.Path(exists=True), default=None, help="Input data csv file"
+)
+@click.option(
+    "--base-config-file",
+    default=None,
+    help="The base config file path",
+    type=click.Path(exists=True),
+)
+@click.option("--plot-dd", default=False, help="Plot day data")
 @click.argument(
-    'output-directory',
+    "output-directory",
     # type=click.Path(),
     # prompt='Enter output directory',
     # help='The location to save outputs',
 )
 @click.argument(
-    'config-file',
+    "config-file",
     type=click.Path(exists=True),
     # prompt='Enter config location(.json)',
     # help='The location of the config file. Should be a json file',
@@ -159,14 +180,17 @@ def plot_phenology(
     day_count: int = 365,
 ):
     """Plot the phenology from config file."""
-    config: Config_Shape = config_loader(config_file, base_config_file, 'json')
+    config: Config_Shape = config_loader(config_file, base_config_file, "json")
     os.makedirs(output_directory, exist_ok=True)
 
-    day_count = (config.Location.end_day or 0) - (config.Location.start_day or 0) if config.Location.start_day \
-        is not None and config.Location.end_day is not None else day_count
+    day_count = (
+        (config.Location.end_day or 0) - (config.Location.start_day or 0)
+        if config.Location.start_day is not None and config.Location.end_day is not None
+        else day_count
+    )
 
     if plot_dd:
-        raise NotImplementedError('Plotting day data is not implemented')
+        raise NotImplementedError("Plotting day data is not implemented")
         assert input_data_file is not None
 
     plot_phenology_from_config(
@@ -180,18 +204,23 @@ def plot_phenology(
     )
 
 
-
-
-@click.option('--input-data-file', type=click.Path(exists=True), default=None, help='Input data csv file')
-@click.option('--base-config-file', default=None, help='The base config file path', type=click.Path(exists=True))
+@click.option(
+    "--input-data-file", type=click.Path(exists=True), default=None, help="Input data csv file"
+)
+@click.option(
+    "--base-config-file",
+    default=None,
+    help="The base config file path",
+    type=click.Path(exists=True),
+)
 @click.argument(
-    'output-directory',
+    "output-directory",
     # type=click.Path(),
     # prompt='Enter output directory',
     # help='The location to save outputs',
 )
 @click.argument(
-    'config-file',
+    "config-file",
     type=click.Path(exists=True),
     # prompt='Enter config location(.json)',
     # help='The location of the config file. Should be a json file',
@@ -214,11 +243,12 @@ def process_config(
 
     from pyDO3SE.setup_model import setup_config, get_config_overrides
     from pyDO3SE.Output.process_outputs import dump_config_to_file_json
-    config_in=config_loader(config_file, base_config_file, 'json')
 
-    external_state_in = None # TODO: Implement external state if provided
-    input_file_id = None # TODO: Implement input file id if provided
-    per_input_config_overrides = {} # TODO: Implement per input config overrides if provided
+    config_in = config_loader(config_file, base_config_file, "json")
+
+    external_state_in = None  # TODO: Implement external state if provided
+    input_file_id = None  # TODO: Implement input file id if provided
+    per_input_config_overrides = {}  # TODO: Implement per input config overrides if provided
 
     # config_overrides: Dict[str, any] = get_config_overrides(
     #     input_file_id, per_input_config_overrides)
@@ -228,4 +258,77 @@ def process_config(
         external_state_in,
         config_overrides,
     )
-    dump_config_to_file_json(config, f'{output_directory}/processed_config.json')
+    dump_config_to_file_json(config, f"{output_directory}/processed_config.json")
+
+
+@click.option(
+    "--grid-overrides-file", type=click.Path(exists=True), default=None, help="Input data csv file"
+)
+@click.option(
+    "--grid-overrides-field-map-path", type=click.Path(exists=True), default=None, help="Input data csv file"
+)
+@click.option(
+    "--base-config-file",
+    default=None,
+    help="The base config file path",
+    type=click.Path(exists=True),
+)
+@click.argument(
+    "output-directory",
+    # type=click.Path(),
+    # prompt='Enter output directory',
+    # help='The location to save outputs',
+)
+@click.argument(
+    "config-file",
+    type=click.Path(exists=True),
+    # prompt='Enter config location(.json)',
+    # help='The location of the config file. Should be a json file',
+)
+@click.command()
+def process_grid_config(
+    config_file: Path,
+    output_directory: Path,
+    grid_overrides_file: Path = None,
+    grid_overrides_field_map_path: Path = None,
+    base_config_file: Path = None,
+    grid_coord: tuple[int, int] = (0, 0),
+):
+    """Process a config with grid overrides by combining the config and base config.
+
+    There are also some setup processes applied to the config such as setting up
+    the phenology parameters.
+
+    This copies parts of initialize_grid_configs
+
+    """
+
+    from pyDO3SE.setup_model import setup_config
+    from pyDO3SE.Output.process_outputs import dump_config_to_file_json
+    from pyDO3SE.optional_dependencies import xarray as xr
+
+    config_in = config_loader(config_file, base_config_file, "json")
+    e_state_overrides_field_map = json_loader(grid_overrides_field_map_path)
+    grid_overrides_ds = xr.open_dataset(grid_overrides_file)
+    (xi, yi), override_dict = next(
+        load_additional_gridded_config_data(
+            [grid_coord],
+            grid_overrides_ds,
+            e_state_overrides_field_map,
+        )
+    )
+
+    config_cell = deepcopy(config_in)
+    for k, v in override_dict.items():
+        if v is None or math.isnan(v):
+            print(override_dict)
+            raise ValueError(f"{k} is invalid for ({xi},{yi})")
+        print(f"Overriding {k} to {v} for cell ({xi},{yi})")
+        config_cell = rsetattr(config_cell, k, v, True)
+    print(f"Config after overrides: {config_cell}")
+    # TODO: We only need to set up for each cell if the overrides effect the setup config
+    config = setup_config(
+        config_cell,
+    )
+    os.makedirs(output_directory, exist_ok=True)
+    dump_config_to_file_json(config, f"{output_directory}/processed_config.json")

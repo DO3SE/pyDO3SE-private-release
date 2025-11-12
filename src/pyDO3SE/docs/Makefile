@@ -27,7 +27,7 @@ copyExampleFiles:
 buildSource:
 # Build source code docstring to rst ignoring tests and snapshots
 	rm -f source/*.rst
-	SPHINX_APIDOC_OPTIONS=members,undoc-members sphinx-apidoc -f -a -d 1  -M -e -o source ../pyDO3SE ../*[s_][nt][ae][ps][st]* ../venv/lib/python3.8/site-packages/do3se_phenology-0.3.1-py3.8.egg/do3se_phenology
+	SPHINX_APIDOC_OPTIONS=members,undoc-members sphinx-apidoc -f -a -d 1  -M -e -o source ../pyDO3SE ../*[s_][nt][ae][ps][st]*
 
 buildPdf: convertWordFiles
 	echo "Build pdf disabled"
