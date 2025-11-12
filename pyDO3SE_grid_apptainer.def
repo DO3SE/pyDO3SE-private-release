@@ -2,7 +2,7 @@ BootStrap: docker
 From: python:3.12-slim-bookworm
 
 %post
-    python -m pip install ./dist/pydo3se_open-4.42.10-py3-none-any.whl
+    python -m pip install ./dist/pydo3se_open-4.42.11-py3-none-any.whl
     python -m pip install xarray dask netcdf4
     apt-get update && \
     apt-get install -y procps
