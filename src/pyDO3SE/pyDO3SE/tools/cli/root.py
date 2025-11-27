@@ -70,6 +70,7 @@ config.add_command(config_commands.generate)
 config.add_command(config_commands.migrate)
 config.add_command(config_commands.output_process_list)
 config.add_command(config_commands.plot_phenology)
+config.add_command(config_commands.plot_grid_phenology)
 config.add_command(config_commands.process_config)
 config.add_command(config_commands.process_grid_config)
 
