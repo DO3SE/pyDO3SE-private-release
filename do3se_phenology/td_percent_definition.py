@@ -31,7 +31,7 @@ import warnings
 from .units import *
 from .presets.wheat import Wheat
 
-from do3se_phenology.f_phen import tt_f_phen_simple_PLF, tt_leaf_f_phen_PLF
+from do3se_phenology.f_phen import tt_f_phen_simple_PLF_value, tt_leaf_f_phen_PLF_value
 
 
 def get_dvi_from_season_length(
@@ -48,6 +48,17 @@ def get_dvi_from_season_length(
     tt_rep = season_length * f_tt_rep
     return tt_emr, tt_veg, tt_rep
 
+CanopyTDIntervals = namedtuple('CanopyTDIntervals', [
+        "t_Astart",
+        "t_mid_anthesis",
+        "t_fphen_a",
+        "t_fphen_b",
+        "t_fphen_c",
+        "t_fphen_d",
+        "tt_emr",
+        "tt_veg",
+        "tt_rep",
+    ])
 
 def get_canopy_td_intervals_f(
     t_sgs: ThermalTime,
@@ -61,7 +72,7 @@ def get_canopy_td_intervals_f(
     f_tt_emr: Fraction = Wheat.f_tt_emr,
     f_tt_veg: Fraction = Wheat.f_tt_veg,
     f_tt_rep: Fraction = Wheat.f_tt_rep,
-) -> NamedTuple:
+) -> CanopyTDIntervals:
     """Get the canopy thermal time intervals using fractions of growing season.
 
     NOTE: t_sgs is thermal time at sowing date and t_egs is thermal time at end of canopy senesence.
@@ -98,17 +109,6 @@ def get_canopy_td_intervals_f(
         Thermal time equivalents of fractions.
     """
 
-    Output = namedtuple('Output', [
-        "t_Astart",
-        "t_mid_anthesis",
-        "t_fphen_a",
-        "t_fphen_b",
-        "t_fphen_c",
-        "t_fphen_d",
-        "tt_emr",
-        "tt_veg",
-        "tt_rep",
-    ])
     assert t_sgs is not None
     assert t_egs is not None
     season_td = t_egs - t_sgs
@@ -122,7 +122,7 @@ def get_canopy_td_intervals_f(
     tt_veg = season_td * f_tt_veg
     tt_rep = season_td * f_tt_rep
 
-    return Output(
+    return CanopyTDIntervals(
         t_Astart=t_Astart,
         t_mid_anthesis=t_mid_anthesis,
         t_fphen_a=t_fphen_a,
@@ -135,6 +135,7 @@ def get_canopy_td_intervals_f(
     )
 
 
+# NOT USED YET! #
 def get_current_f_phen_from_t_sgs_t_egs(
     td: ThermalTime,
     t_sgs: ThermalTime,
@@ -188,7 +189,7 @@ def get_current_f_phen_from_t_sgs_t_egs(
         f_fphen_c=f_fphen_c,
         f_fphen_d=f_fphen_d,
     )
-    f_phen = tt_f_phen_simple_PLF(
+    f_phen = tt_f_phen_simple_PLF_value(
         td=td,
         t_f_phen_a=out.t_fphen_a,
         t_f_phen_b=out.t_fphen_b,
@@ -258,7 +259,7 @@ def get_current_leaf_f_phen_from_t_sgs_t_egs(
         f_fphen_4_ets=f_fphen_4_ets,
         f_fphen_5_ets=f_fphen_5_ets,
     )
-    leaf_f_phen = tt_leaf_f_phen_PLF(
+    leaf_f_phen = tt_leaf_f_phen_PLF_value(
         td=td,
         t_leaf_f_phen_a=f_leaf_f_phen_a,
         t_leaf_f_phen_b=f_leaf_f_phen_b,

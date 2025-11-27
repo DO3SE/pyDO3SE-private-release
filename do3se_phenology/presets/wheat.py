@@ -1,4 +1,11 @@
-from do3se_phenology.config import SpeciesConfig
+from do3se_phenology.config import (
+    SpeciesConfig, DayFphenPlf,
+    PhenologyKeyDates,
+    PhenologyKeyLengths,
+    FPhenMethods,
+    LeafFPhenMethods,
+    SAILCMethods,
+)
 
 # NOTE: Preset values that override presets in the dataclass will be overriden
 
@@ -27,6 +34,43 @@ SpringWheat = SpeciesConfig(
     f_t_lse_mature=0.33,
     f_phen_min=0,
     f_leaf_f_fphen=0.46,
+)
+
+SpringWheatMultiplicative = SpeciesConfig(
+    day_fphen_plf=DayFphenPlf(
+        f_phen_1=20,
+        f_phen_2=0,
+        f_phen_3=0,
+        f_phen_4=30,
+        f_phen_a=0.1,
+        f_phen_b=1.0,
+        f_phen_c=1.0,
+        f_phen_d=0.1,
+        f_phen_e=0.1,
+        f_phen_limA=0,
+        f_phen_limB=0,
+        leaf_f_phen_1=20,
+        leaf_f_phen_2=30,
+        leaf_f_phen_a=0.0,
+        leaf_f_phen_b=1.0,
+        leaf_f_phen_c=0.0
+    ),
+    key_dates=PhenologyKeyDates(
+        harvest=197.0,
+        sowing=105.0
+    ),
+    key_lengths=PhenologyKeyLengths(
+        sowing_to_emerge=0.0
+    ),
+    LAI_a=0.0,
+    LAI_b=4.0,
+    LAI_c=4.0,
+    LAI_d=0.0,
+    LAI_1=40.0,
+    LAI_2=30.0,
+    f_phen_method=FPhenMethods.SIMPLE_DAY_PLF,
+    leaf_f_phen_method=LeafFPhenMethods.DAY_PLF,
+    SAI_method=SAILCMethods.LAI
 )
 
 #: Winter wheat defaults

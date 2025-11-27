@@ -49,7 +49,7 @@ See :module:`do3se_phenology.fphen` and :module:`do3se_phenology.phyllochron_dvi
 
 
 from data_helpers.fill_np_array import fill_np_array_with_cls
-from typing import List
+from typing import List, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -306,12 +306,12 @@ class PhenologyKeyDates:
 
     """
 
-    sowing: TimeUnit = None
-    emergence: TimeUnit = None
-    harvest: TimeUnit = None
-    Astart: TimeUnit = None
-    Aend: TimeUnit = None
-    mid_anthesis: TimeUnit = None
+    sowing: Optional[TimeUnit] = None
+    emergence: Optional[TimeUnit] = None
+    harvest: Optional[TimeUnit] = None
+    Astart: Optional[TimeUnit] = None
+    Aend: Optional[TimeUnit] = None
+    mid_anthesis: Optional[TimeUnit] = None
 
 
 @dataclass
@@ -340,15 +340,15 @@ class PhenologyKeyLengths:
 
     """
 
-    sowing_to_emerge: TimeUnit = None
-    sowing_to_f_phen_b: TimeUnit = None
-    sowing_to_f_phen_c: TimeUnit = None
-    sowing_to_astart: TimeUnit = None
-    sowing_to_end: TimeUnit = None
-    emerg_to_astart: TimeUnit = None
-    emerg_to_end: TimeUnit = None
-    emerg_to_veg: TimeUnit = None
-    veg_to_harvest: TimeUnit = None
+    sowing_to_emerge: Optional[TimeUnit] = None
+    sowing_to_f_phen_b: Optional[TimeUnit] = None
+    sowing_to_f_phen_c: Optional[TimeUnit] = None
+    sowing_to_astart: Optional[TimeUnit] = None
+    sowing_to_end: Optional[TimeUnit] = None
+    emerg_to_astart: Optional[TimeUnit] = None
+    emerg_to_end: Optional[TimeUnit] = None
+    emerg_to_veg: Optional[TimeUnit] = None
+    veg_to_harvest: Optional[TimeUnit] = None
 
 
 @dataclass
@@ -359,36 +359,36 @@ class PhenologyLeafKeyLengths:
     ----------
 
     """
-    tl: TimeUnit = None
-    tl_em: TimeUnit = None
-    tl_ma: TimeUnit = None
-    tl_ep: TimeUnit = None
-    tl_se: TimeUnit = None
+    tl: Optional[TimeUnit] = None
+    tl_em: Optional[TimeUnit] = None
+    tl_ma: Optional[TimeUnit] = None
+    tl_ep: Optional[TimeUnit] = None
+    tl_se: Optional[TimeUnit] = None
 
     #: Thermal time between Astart and leaf_f_phen_e(Mid anthesis) [degC Days]
-    leaf_f_phen_e: TimeUnit = None
+    leaf_f_phen_e: Optional[TimeUnit] = None
     #: Thermal time between Mid Anthesis and start of seed setting [degC Days]
-    leaf_f_phen_g: TimeUnit = None
+    leaf_f_phen_g: Optional[TimeUnit] = None
     #: Thermal time between Mid anthesis and start of senesence [degC Days]
-    leaf_f_phen_h: TimeUnit = None
+    leaf_f_phen_h: Optional[TimeUnit] = None
     #: Thermal time between Mid anthesis and end of senescence [degC Days]
-    leaf_f_phen_i: TimeUnit = None
+    leaf_f_phen_i: Optional[TimeUnit] = None
 
     #: Thermal time between plant emergence and leaf emergence
-    plant_emerg_to_leaf_emerg: TimeUnit = None
+    plant_emerg_to_leaf_emerg: Optional[TimeUnit] = None
     #: Thermal time between plant emergence and leaf fst acc
-    leaf_emerg_to_leaf_fst_acc: TimeUnit = None
+    leaf_emerg_to_leaf_fst_acc: Optional[TimeUnit] = None
     #: Thermal time between leaf emergence and leaf maturity
-    leaf_emerg_to_astart: TimeUnit = None
+    leaf_emerg_to_astart: Optional[TimeUnit] = None
     #: Thermal time between leaf maturity and leaf senescence
-    astart_to_senescence: TimeUnit = None
+    astart_to_senescence: Optional[TimeUnit] = None
 
 
 @dataclass
 class PhenologyPLFs:
-    fphen_intervals: PiecewiseFunction = None
-    leaf_fphen_intervals: PiecewiseFunction = None
-    dvi_interval: PiecewiseFunction = None
+    fphen_intervals: Optional[PiecewiseFunction] = None
+    leaf_fphen_intervals: Optional[PiecewiseFunction] = None
+    dvi_interval: Optional[PiecewiseFunction] = None
 
 
 class DVIMethods(Enum):
@@ -526,24 +526,24 @@ class DayFphenPlf:
     """
 
     # f_phen
-    f_phen_limA: int = None   #: Start of soil water limitation
-    f_phen_limB: int = None   #: End of soil water limitation
-    f_phen_a: float = None          #: f_phen at SGS
-    f_phen_b: float = None
-    f_phen_c: float = None
-    f_phen_d: float = None
-    f_phen_e: float = None          #: f_phen at EGS
-    f_phen_1: int = None      #: Time from f_phen_a to f_phen_b [days]
-    f_phen_2: int = None      #: Time from f_phen_b to f_phen_c [days]
-    f_phen_3: int = None      #: Time from f_phen_c to f_phen_d [days]
-    f_phen_4: int = None      #: Time from f_phen_d to f_phen_e [days]
+    f_phen_limA: Optional[int] = None   #: Start of soil water limitation
+    f_phen_limB: Optional[int] = None   #: End of soil water limitation
+    f_phen_a: Optional[float] = None          #: f_phen at SGS
+    f_phen_b: Optional[float] = None
+    f_phen_c: Optional[float] = None
+    f_phen_d: Optional[float] = None
+    f_phen_e: Optional[float] = None          #: f_phen at EGS
+    f_phen_1: Optional[int] = None      #: Time from f_phen_a to f_phen_b [days]
+    f_phen_2: Optional[int] = None      #: Time from f_phen_b to f_phen_c [days]
+    f_phen_3: Optional[int] = None      #: Time from f_phen_c to f_phen_d [days]
+    f_phen_4: Optional[int] = None      #: Time from f_phen_d to f_phen_e [days]
 
     # leaf_f_phen
-    leaf_f_phen_a: float = None       #: f_phen at Astart
-    leaf_f_phen_b: float = None       #: f_phen at mid-season peak
-    leaf_f_phen_c: float = None       #: f_phen at Aend
-    leaf_f_phen_1: int = None   #: Time from _a to _b [days]
-    leaf_f_phen_2: int = None   #: Time from _b to _c [days]
+    leaf_f_phen_a: Optional[float] = None       #: f_phen at Astart
+    leaf_f_phen_b: Optional[float] = None       #: f_phen at mid-season peak
+    leaf_f_phen_c: Optional[float] = None       #: f_phen at Aend
+    leaf_f_phen_1: Optional[int] = None   #: Time from _a to _b [days]
+    leaf_f_phen_2: Optional[int] = None   #: Time from _b to _c [days]
 
 
 @dataclass
@@ -555,11 +555,11 @@ class SpeciesConfig:
 
     """
     #: Set PRESET to use preset values
-    PRESET: SpeciesPresets = None
+    PRESET: Optional[SpeciesPresets] = None
 
-    fphen_intervals: PiecewiseFunction = None
-    leaf_fphen_intervals: PiecewiseFunction = None
-    dvi_interval: PiecewiseFunction = None
+    fphen_intervals: Optional[PiecewiseFunction] = None
+    leaf_fphen_intervals: Optional[PiecewiseFunction] = None
+    dvi_interval: Optional[PiecewiseFunction] = None
 
     key_dates: PhenologyKeyDates = field(default_factory=lambda: PhenologyKeyDates())
     key_dates_td: PhenologyKeyDates = field(default_factory=lambda: PhenologyKeyDates())
@@ -578,12 +578,12 @@ class SpeciesConfig:
 
     # LAI piecewise linear function parameters
     # TODO: Merge this with LAI constant
-    LAI_a: Fraction = None       #: LAI value at SGS [m2 m-2]
-    LAI_b: Fraction = None       #: LAI value at SGS + LAI_1 [m2 m-2]
-    LAI_c: Fraction = None       #: LAI value at EGS - LAI_2 [m2 m-2]
-    LAI_d: Fraction = None       #: LAI value at EGS [m2 m-2]
-    LAI_1: TimeUnit = None   #: Time from LAI_a to LAI_b [days]
-    LAI_2: TimeUnit = None   #: Time from LAI_c to LAI_d [days]
+    LAI_a: Optional[Fraction] = None       #: LAI value at SGS [m2 m-2]
+    LAI_b: Optional[Fraction] = None       #: LAI value at SGS + LAI_1 [m2 m-2]
+    LAI_c: Optional[Fraction] = None       #: LAI value at EGS - LAI_2 [m2 m-2]
+    LAI_d: Optional[Fraction] = None       #: LAI value at EGS [m2 m-2]
+    LAI_1: Optional[TimeUnit] = None   #: Time from LAI_a to LAI_b [days]
+    LAI_2: Optional[TimeUnit] = None   #: Time from LAI_c to LAI_d [days]
 
     #: SAI method:
     SAI_method: SAILCMethods = SAILCMethods.LAI
@@ -593,36 +593,36 @@ class SpeciesConfig:
     leaf_f_phen_method: LeafFPhenMethods = LeafFPhenMethods.DISABLED
     day_fphen_plf: DayFphenPlf = field(default_factory=lambda: DayFphenPlf())
 
-    f_phen_min: TimeUnit = None  #: thermal time between sowing day and phen_min []
+    f_phen_min: Optional[TimeUnit] = None  #: thermal time between sowing day and phen_min []
 
     # Thermal Time leaf_f_phen
-    leaf_f_phen_a: TimeUnit = None  #: Gradient of descent during seed setting [degC Days]
-    leaf_f_phen_b: TimeUnit = None  #: Gradient of descent during senescence [degC Days]
+    leaf_f_phen_a: Optional[TimeUnit] = None  #: Gradient of descent during seed setting [degC Days]
+    leaf_f_phen_b: Optional[TimeUnit] = None  #: Gradient of descent during senescence [degC Days]
 
     # Season fractions
     # Should all be fractions of growing season I.e from sowing to end of senescence(harvest)
 
-    f_Astart: Fraction = None
-    f_mid_anthesis: Fraction = None
-    f_fphen_1_ets: Fraction = None
-    f_fphen_3_ets: Fraction = None
-    f_fphen_4_ets: Fraction = None
-    f_fphen_5_ets: Fraction = None
-    f_t_lem: Fraction = None
-    f_t_lma: Fraction = None
-    f_t_lep: Fraction = None
-    f_t_lse: Fraction = None
-    f_t_lse_mature: Fraction = None  # fraction of mature leaf
-    f_fphen_a: Fraction = None
-    f_fphen_b: Fraction = None
-    f_fphen_c: Fraction = None
-    f_fphen_d: Fraction = None
-    f_tt_emr: Fraction = None
+    f_Astart: Optional[Fraction] = None
+    f_mid_anthesis: Optional[Fraction] = None
+    f_fphen_1_ets: Optional[Fraction] = None
+    f_fphen_3_ets: Optional[Fraction] = None
+    f_fphen_4_ets: Optional[Fraction] = None
+    f_fphen_5_ets: Optional[Fraction] = None
+    f_t_lem: Optional[Fraction] = None
+    f_t_lma: Optional[Fraction] = None
+    f_t_lep: Optional[Fraction] = None
+    f_t_lse: Optional[Fraction] = None
+    f_t_lse_mature: Optional[Fraction] = None  # fraction of mature leaf
+    f_fphen_a: Optional[Fraction] = None
+    f_fphen_b: Optional[Fraction] = None
+    f_fphen_c: Optional[Fraction] = None
+    f_fphen_d: Optional[Fraction] = None
+    f_tt_emr: Optional[Fraction] = None
     #: Fraction of thermal time from sowing to first accumulation of ozone
-    f_tt_fst_acc: Fraction = None
-    f_tt_veg: Fraction = None
-    f_tt_rep: Fraction = None
-    f_leaf_f_fphen: Fraction = None
+    f_tt_fst_acc: Optional[Fraction] = None
+    f_tt_veg: Optional[Fraction] = None
+    f_tt_rep: Optional[Fraction] = None
+    f_leaf_f_fphen: Optional[Fraction] = None
 
     # Vernalisation
     v_T_max: float = 30  #: Maximum temperature for vernalisation
@@ -630,9 +630,9 @@ class SpeciesConfig:
     PIV: float = 1.5  #: Sensitivity to vernalisation
 
     # Latitude_function
-    lat_f_k: float = None  #: Latitude function parameter
-    lat_f_b: float = None  #: Latitude function parameter
-    lat_f_c: float = None  #: Latitude function parameter
+    lat_f_k: Optional[float] = None  #: Latitude function parameter
+    lat_f_b: Optional[float] = None  #: Latitude function parameter
+    lat_f_c: Optional[float] = None  #: Latitude function parameter
 
 
 @dataclass
@@ -645,7 +645,7 @@ class ModelConfig:
 
     """
     flag_leaf_only: bool = False
-    phenology_method: PhenologyMethods = None
+    phenology_method: Optional[PhenologyMethods] = None
     dvi_method: DVIMethods = DVIMethods.DISABLED
     LAI_method: LAIMethods = LAIMethods.ESTIMATE_TOTAL
     time_type: TimeTypes = TimeTypes.THERMAL_TIME
@@ -657,7 +657,7 @@ class ModelConfig:
     use_vernalisation: bool = False
     use_photoperiod_factor: bool = False
     sowing_day_method: SowingDateMethods = SowingDateMethods.INPUT
-    latitude: float = None  #: Only required for sowing_day_methods.LATITUDE
+    latitude: Optional[float] = None  #: Only required for sowing_day_methods.LATITUDE
 
 
 @dataclass
@@ -665,4 +665,4 @@ class PhenologyConfig:
     model: ModelConfig = field(default_factory=lambda: ModelConfig())
     species: List[SpeciesConfig] = \
         field(default_factory=lambda: fill_np_array_with_cls(
-            DEFAULT_LC, SpeciesConfig))
+            DEFAULT_LC, SpeciesConfig)) # type: ignore

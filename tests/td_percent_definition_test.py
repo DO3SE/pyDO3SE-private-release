@@ -3,12 +3,23 @@ from math import isclose
 import numpy as np
 
 from do3se_phenology.presets.wheat import Wheat
-from do3se_phenology.td_percent_definition import calculate_growing_season_from_leaf_f_phen_data, get_canopy_td_intervals, get_current_f_phen_from_t_sgs_t_egs, get_current_leaf_f_phen_from_t_sgs_t_egs
+from do3se_phenology.td_percent_definition import (
+    calculate_growing_season_from_leaf_f_phen_data,
+    get_canopy_td_intervals,
+    get_current_f_phen_from_t_sgs_t_egs,
+    get_current_leaf_f_phen_from_t_sgs_t_egs,
+    get_leaf_td_intervals,
+)
 from thermal_time.calcs import calc_thermal_time_range
 from do3se_phenology.f_phen import tt_f_phen_simple_PLF_range, tt_leaf_f_phen_PLF_range
-from do3se_phenology.plots import plot_ewert_phenology_data, plot_ewert_phenology_data_box_plot, plot_f_phen_box_data, plot_f_phen_data, plot_leaf_f_phen_box_plot, plot_leaf_f_phen_data
-from do3se_phenology.td_percent_definition import get_canopy_td_intervals
-from do3se_phenology.td_percent_definition import get_canopy_td_intervals, get_leaf_td_intervals
+from do3se_phenology.plots import (
+    plot_ewert_phenology_data,
+    plot_ewert_phenology_data_box_plot,
+    plot_f_phen_tt_box_data,
+    plot_f_phen_td_data,
+    plot_leaf_f_phen_td_box_plot,
+    plot_leaf_f_phen_data,
+)
 
 
 def test_get_canopy_td_intervals():
@@ -150,14 +161,17 @@ def test_get_leaf_td_intervals():
     assert isclose(t_lep, 550.25, abs_tol=1e-3)
 
 
-@pytest.mark.parametrize(['td', 't_sgs', 't_egs', 'expected_f_phen'], [
-    (1, 0, 100, 0.0),
-    (10, 0, 100, 0.333),
-    (40, 0, 100, 1),
-    (80, 0, 100, 0.526),
-    (100, 0, 100, 0.0),
-    (101, 0, 100, 0.0),
-])
+@pytest.mark.parametrize(
+    ["td", "t_sgs", "t_egs", "expected_f_phen"],
+    [
+        (1, 0, 100, 0.0),
+        (10, 0, 100, 0.333),
+        (40, 0, 100, 1),
+        (80, 0, 100, 0.526),
+        (100, 0, 100, 0.0),
+        (101, 0, 100, 0.0),
+    ],
+)
 def test_get_fphen_from_t_sgs_t_egs(td, t_sgs, t_egs, expected_f_phen):
     out = get_current_f_phen_from_t_sgs_t_egs(
         td,
@@ -175,14 +189,17 @@ def test_get_fphen_from_t_sgs_t_egs(td, t_sgs, t_egs, expected_f_phen):
     assert isclose(out, expected_f_phen, abs_tol=1e-3)
 
 
-@pytest.mark.parametrize(['td', 't_sgs', 't_egs', 'expected_f_phen'], [
-    (1, 0, 100, 0.0),
-    (10, 0, 100, 0.0),
-    (40, 0, 100, 0),
-    (80, 0, 100, 0.7705),
-    (100, 0, 100, 0.0),
-    (101, 0, 100, 0.0),
-])
+@pytest.mark.parametrize(
+    ["td", "t_sgs", "t_egs", "expected_f_phen"],
+    [
+        (1, 0, 100, 0.0),
+        (10, 0, 100, 0.0),
+        (40, 0, 100, 0),
+        (80, 0, 100, 0.7705),
+        (100, 0, 100, 0.0),
+        (101, 0, 100, 0.0),
+    ],
+)
 def test_get_leaf_fphen_from_t_sgs_t_egs(td, t_sgs, t_egs, expected_f_phen):
     out = get_current_leaf_f_phen_from_t_sgs_t_egs(
         td,
@@ -204,8 +221,11 @@ def test_get_leaf_fphen_from_t_sgs_t_egs(td, t_sgs, t_egs, expected_f_phen):
 def test_calculate_growing_season_from_leaf_f_phen_data():
     example_SGS_t = 100
 
-    leaf_f_phen_data = np.interp(np.arange(0, 2200 + 20, 20 / 24), np.array([0, 1080, 1081, 1240, 1340, 1680, 2000]) - example_SGS_t, [
-        0.0, 0.0, 1.0, 1.0, 1.0, 0.8, 0.1]).tolist()
+    leaf_f_phen_data = np.interp(
+        np.arange(0, 2200 + 20, 20 / 24),
+        np.array([0, 1080, 1081, 1240, 1340, 1680, 2000]) - example_SGS_t,
+        [0.0, 0.0, 1.0, 1.0, 1.0, 0.8, 0.1],
+    ).tolist()
 
     dd = [j for j in range(111) for _ in range(24)]
     td = [j * 20 for j in range(111) for _ in range(24)]
@@ -224,6 +244,7 @@ def test_calculate_growing_season_from_leaf_f_phen_data():
 
 def test_plot_overlays():
     from matplotlib import pyplot as plt
+
     t_sgs = 100
     t_egs = 1000
     T_b, T_o, T_m = [0, 20, 50]
@@ -334,7 +355,7 @@ def test_plot_overlays():
         ax=axs[0][0],
     )
 
-    plot_leaf_f_phen_box_plot(
+    plot_leaf_f_phen_td_box_plot(
         t_leaf_f_phen_a,
         t_leaf_f_phen_b,
         t_leaf_f_phen_e,
@@ -355,7 +376,7 @@ def test_plot_overlays():
         ax=axs[0][1],
     )
 
-    plot_leaf_f_phen_box_plot(
+    plot_leaf_f_phen_td_box_plot(
         t_leaf_f_phen_a,
         t_leaf_f_phen_b,
         fphen_1_ets,
@@ -369,7 +390,7 @@ def test_plot_overlays():
     )
 
     # f phen
-    plot_f_phen_data(
+    plot_f_phen_td_data(
         td,
         f_phen_data,
         t_sgs,
@@ -381,7 +402,7 @@ def test_plot_overlays():
         ax=axs[0][0],
     )
 
-    plot_f_phen_data(
+    plot_f_phen_td_data(
         dd_data,
         f_phen_data,
         SGS,
@@ -393,9 +414,8 @@ def test_plot_overlays():
         ax=axs[0][1],
     )
 
-
     # f phen
-    plot_f_phen_box_data(
+    plot_f_phen_tt_box_data(
         t_sgs,
         t_egs,
         t_f_phen_a,
@@ -406,7 +426,7 @@ def test_plot_overlays():
         box_y_start=10,
     )
 
-    plot_f_phen_box_data(
+    plot_f_phen_tt_box_data(
         SGS,
         EGS,
         fphen_a - SGS,
@@ -422,8 +442,10 @@ def test_plot_overlays():
     f_LA = [max(0, min(1, 1 - (td_dd - t_astart) / (t_lma))) for td_dd in td_dd_list]
     # f_LA = [max(0,min(1,1 - (td_dd - t_lem) / (t_lma))) for td_dd in td_dd_list]
     fO3_l = 1
-    f_LS = [max(0, min(1, 1 - ((td_dd - t_astart - t_lep) / (t_lma / fO3_l - t_lep))))
-            for td_dd in td_dd_list]
+    f_LS = [
+        max(0, min(1, 1 - ((td_dd - t_astart - t_lep) / (t_lma / fO3_l - t_lep))))
+        for td_dd in td_dd_list
+    ]
     # f_LS = [max(0,min(1,1 - ((td_dd - t_lem - t_lep) / (t_lma / fO3_l - t_lep)))) for td_dd in td_dd_list]
     t_l = t_lma + t_lem
 
@@ -454,7 +476,6 @@ def test_plot_overlays():
         ax=axs[0][1],
     )
 
-
     plot_ewert_phenology_data_box_plot(
         t_lem,
         t_lma,
@@ -478,8 +499,12 @@ def test_plot_overlays():
         box_y_start=17,
     )
 
-    dvi_x = [td_at_sgs, td_at_sgs + tt_emr, td_at_sgs +
-             tt_emr + tt_veg, td_at_sgs + tt_emr + tt_veg + tt_rep]
+    dvi_x = [
+        td_at_sgs,
+        td_at_sgs + tt_emr,
+        td_at_sgs + tt_emr + tt_veg,
+        td_at_sgs + tt_emr + tt_veg + tt_rep,
+    ]
     dvi_y = [-1, 0, 1, 2]
 
     axs[0][0].plot(dvi_x, dvi_y, label="DVI", color="yellow")
@@ -498,4 +523,4 @@ def test_plot_overlays():
     axs[0][1].set_ylabel("leaf_f_phen")
     axs[0][1].legend()
     # plt.show()
-    plt.savefig('tests/outputs/td_percent_overlay.png')
+    plt.savefig("tests/outputs/td_percent_overlay.png")

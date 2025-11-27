@@ -2,6 +2,8 @@ from math import isclose
 from typing import List
 import numpy as np
 from thermal_time.calcs import calc_thermal_time_range
+from .units import PiecewiseFunction, TimeUnit
+
 
 def PLF_value(points: List[List[float]], x: float) -> float:
     """Calculate the value of a piecewise linear function at a particular x value.
@@ -40,20 +42,34 @@ def PLF_value(points: List[List[float]], x: float) -> float:
             if isclose(abs(ax - bx), 0.0):
                 continue
 
-            if (x <= bx):
+            if x <= bx:
                 y = ay + (by - ay) * ((x - ax) / (bx - ax))
                 break
     return y
 
 
+def get_PLF_value(
+    x_values: List[TimeUnit],
+    y_values: List[float],
+    x: float,
+) -> float:
+    """Calculate the value of a piecewise linear function at a particular x value.
+    Uses numpy interp for simplicity.
+
+    """
+
+    return float(np.interp(x, x_values, y_values))
+
+
 def offset(arr, zero, wrap) -> list:
     """offset an array to be relative to a particular *zero* value.  If *wrap*
-       is supplied, new values less than 0 are offset by the *wrap* value.
-       Note: formally known as reindex
+    is supplied, new values less than 0 are offset by the *wrap* value.
+    Note: formally known as reindex
     """
     out_a = [i - zero for i in arr]
     out_b = [(i + wrap) if i < 0.0 else i for i in out_a] if wrap else out_a
     return out_b
+
 
 def generate_hours_data(day_count: int) -> List[int]:
     return np.array([[hr for hr in range(24)] for _ in range(day_count)]).reshape(day_count * 24)
@@ -69,7 +85,6 @@ def generate_example_td_data(day_count: int, T_b) -> List[float]:
     tsc = demo_temp_data
     td_data = calc_thermal_time_range(tsc, t_b=T_b)
     return td_data
-
 
 
 def get_day_from_td(target_td, dd_data, td_range, INVALID_VAL=999) -> int:
@@ -93,12 +108,12 @@ def get_day_from_td(target_td, dd_data, td_range, INVALID_VAL=999) -> int:
 
     """
     try:
-        i, d = next((i, dd) for i, (td, dd) in enumerate(zip(
-            td_range, dd_data)) if td >= target_td)
+        i, d = next((i, dd) for i, (td, dd) in enumerate(zip(td_range, dd_data)) if td >= target_td)
     except StopIteration:
         d = INVALID_VAL
         i = INVALID_VAL
     return i, d
+
 
 def get_td_from_day(target_dd, dd_data, td_range, INVALID_VAL=999) -> int:
     """Helper to get the julian day from a thermal time value.
@@ -121,8 +136,7 @@ def get_td_from_day(target_dd, dd_data, td_range, INVALID_VAL=999) -> int:
 
     """
     try:
-        i, d = next((i, td) for i, (td, dd) in enumerate(zip(
-            td_range, dd_data)) if dd >= target_dd)
+        i, d = next((i, td) for i, (td, dd) in enumerate(zip(td_range, dd_data)) if dd >= target_dd)
     except StopIteration:
         d = INVALID_VAL
         i = INVALID_VAL
