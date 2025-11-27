@@ -1,6 +1,6 @@
 [project]
 name = "pyDO3SE"
-version = "4.43.2"
+version = "4.43.3"
 description = "DO3SE model python API"
 authors = [{ "email" = "sam.bland@york.ac.uk", "name" = "Sam Bland" }]
 readme = "README.md"
@@ -15,7 +15,7 @@ dependencies = [
   "deprecated>=1.2.12",
   "wheel>=0.36.2",
   "proflow>=0.3.9",
-  "data-helpers>=0.1.29",
+  "data-helpers_v2>=0.1.29",
   "dill>=0.3.8",
   # Additional private dependencies
   # Install these manually with uv pip install -e ../do3se_met etc after uv sync
