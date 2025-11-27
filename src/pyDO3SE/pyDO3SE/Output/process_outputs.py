@@ -16,6 +16,8 @@ from data_helpers.list_helpers import flatten_list
 from proflow.Objects.Process import Process
 from deprecated import deprecated
 
+from do3se_phenology.plots import plot_phenology_from_config
+from do3se_phenology.units import TimeTypes
 from pyDO3SE.Model_State.model_state_loader import dump_state_to_file
 
 from pyDO3SE.optional_dependencies import xarray as xr
@@ -650,26 +652,26 @@ def export_output(
     try:
         if options.save_hourly_output_data:
             output_filename = "pyDO3SE_output.csv" if output_filename is None else output_filename
-            output_location = f"{output_directory}/{output_filename}"
+            output_location = Path(f"{output_directory}/{output_filename}")
             logger(f"Saving hourly output to {output_location}")
             dump_output_to_file(output_data, output_location)
 
         if options.save_external_processed_data:
             logger("Saving external processed data")
-            row_count = len(external_state.dd)
+            row_count = len(external_state.dd or [])
             external_state_out = pd.DataFrame({k: v[0:row_count] if v is not None else None
                                                for k, v in asdict(external_state).items()})
-            external_state_out.to_csv(f"{output_directory}/external_data.csv")
+            external_state_out.to_csv(f"{output_directory}/external_data.csv", index=False)
 
         if options.save_processed_config:
             # Save out processed config
             logger("Saving processed config")
-            dump_config_to_file_json(final_config, f"{output_directory}/processed_config.json")
+            dump_config_to_file_json(final_config, Path(f"{output_directory}/processed_config.json"))
 
         if options.save_initial_state:
             # Save out processed initial state
             logger("Saving initial state")
-            dump_state_to_file(initial_state, f"{output_directory}/initial_state.json")
+            dump_state_to_file(initial_state, Path(f"{output_directory}/initial_state.json"))
 
         if options.save_model_processes:
             # Save model processes info to file
@@ -737,6 +739,29 @@ def export_output(
                 output_data=output_data,
                 start_day=start_day,
                 end_day=end_day,
+            )
+
+        if options.plot_phenology_charts:
+            logger(f"Plotting phenology charts")
+            phenology_plot_dir = f"{output_directory}/phenology_plots"
+            os.makedirs(phenology_plot_dir, exist_ok=True)
+            day_count = int(
+                (final_config.Location.end_day or 365) - (final_config.Location.start_day or 0)
+                if final_config.Location.start_day is not None and final_config.Location.end_day is not None
+                else 365
+            )
+            plot_phenology_from_config(
+                final_config.Land_Cover.parameters[0].phenology,
+                final_config.Land_Cover.phenology_options,
+                nP=final_config.Land_Cover.nP,
+                output_location=Path(f"{phenology_plot_dir}/phenology.png"),
+                day_count=day_count,
+                plot_dd=final_config.Land_Cover.phenology_options.time_type == TimeTypes.JULIAN_DAY,
+                plot_td=final_config.Land_Cover.phenology_options.time_type == TimeTypes.THERMAL_TIME,
+                plot_f_phen=True,
+                plot_lengths=True,
+                plot_carbon=final_config.Land_Cover.phenology_options.time_type == TimeTypes.THERMAL_TIME,
+                plot_growing=final_config.Land_Cover.phenology_options.time_type == TimeTypes.THERMAL_TIME,
             )
         if options.save_final_state:
             dump_state_to_file(final_state, f'{output_directory}/final_state.json')

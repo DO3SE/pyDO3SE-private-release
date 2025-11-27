@@ -3,13 +3,10 @@ from pprint import pprint
 import json
 import os
 import click
-import math
-from copy import deepcopy
-from data_helpers.cls_parsing import rsetattr
+from typing import Optional
 
 from do3se_phenology.plots import plot_phenology_from_config
-from pyDO3SE.Grid_Model.setup_grid_model import load_additional_gridded_config_data
-from pyDO3SE.util.loader import json_loader
+from do3se_phenology.units import TimeTypes
 from pyDO3SE.version import config_version
 from pyDO3SE.Config.config_loader import config_loader
 from pyDO3SE.Config.generate_config import generate_config
@@ -157,7 +154,6 @@ def output_process_list(
     help="The base config file path",
     type=click.Path(exists=True),
 )
-@click.option("--plot-dd", default=False, help="Plot day data")
 @click.argument(
     "output-directory",
     # type=click.Path(),
@@ -174,9 +170,8 @@ def output_process_list(
 def plot_phenology(
     config_file: Path,
     output_directory: Path,
-    input_data_file: Path = None,
-    base_config_file: Path = None,
-    plot_dd: bool = False,
+    input_data_file: Optional[Path] = None,
+    base_config_file: Optional[Path] = None,
     day_count: int = 365,
 ):
     """Plot the phenology from config file."""
@@ -184,23 +179,99 @@ def plot_phenology(
     os.makedirs(output_directory, exist_ok=True)
 
     day_count = (
-        (config.Location.end_day or 0) - (config.Location.start_day or 0)
+        int(config.Location.end_day or 0) - int(config.Location.start_day or 0)
         if config.Location.start_day is not None and config.Location.end_day is not None
         else day_count
     )
-
-    if plot_dd:
-        raise NotImplementedError("Plotting day data is not implemented")
-        assert input_data_file is not None
 
     plot_phenology_from_config(
         config.Land_Cover.parameters[0].phenology,
         config.Land_Cover.phenology_options,
         nP=config.Land_Cover.nP,
-        output_location=f"{output_directory}/phenology.png",
+        output_location=Path(f"{output_directory}/phenology.png"),
         # TODO: Add external data input
         day_count=day_count,
-        plot_dd=plot_dd,
+        plot_dd=config.Land_Cover.phenology_options.time_type == TimeTypes.JULIAN_DAY,
+        plot_td=config.Land_Cover.phenology_options.time_type == TimeTypes.THERMAL_TIME,
+        plot_f_phen=True,
+        plot_lengths=True,
+        plot_carbon=config.Land_Cover.phenology_options.time_type == TimeTypes.THERMAL_TIME,
+        plot_growing=config.Land_Cover.phenology_options.time_type == TimeTypes.THERMAL_TIME,
+    )
+
+
+@click.option(
+    "--grid-overrides-file", type=click.Path(exists=True), default=None, help="Input data csv file"
+)
+@click.option(
+    "--grid-overrides-field-map-path",
+    type=click.Path(exists=True),
+    default=None,
+    help="Input data csv file",
+)
+@click.option(
+    "--base-config-file",
+    default=None,
+    help="The base config file path",
+    type=click.Path(exists=True),
+)
+@click.argument(
+    "output-directory",
+    # type=click.Path(),
+    # prompt='Enter output directory',
+    # help='The location to save outputs',
+)
+@click.argument(
+    "config-file",
+    type=click.Path(exists=True),
+    # prompt='Enter config location(.json)',
+    # help='The location of the config file. Should be a json file',
+)
+@click.command()
+def plot_grid_phenology(
+    config_file: Path,
+    output_directory: Path,
+    grid_overrides_file: Path,
+    grid_overrides_field_map_path: Path,
+    base_config_file: Optional[Path] = None,
+    day_count: int = 365,
+):
+    """Plot the phenology from config file."""
+    from pyDO3SE.Grid_Model.setup_grid_model import process_grid_config as process_grid_config_fn
+
+    processed_grid_config = process_grid_config_fn(
+        config_file,
+        grid_overrides_file=grid_overrides_file,
+        grid_overrides_field_map_path=grid_overrides_field_map_path,
+        base_config_file=base_config_file,
+        grid_coord=(0, 0),
+    )
+    os.makedirs(output_directory, exist_ok=True)
+
+    day_count = (
+        int(processed_grid_config.Location.end_day or 0)
+        - int(processed_grid_config.Location.start_day or 0)
+        if processed_grid_config.Location.start_day is not None
+        and processed_grid_config.Location.end_day is not None
+        else day_count
+    )
+
+    plot_phenology_from_config(
+        processed_grid_config.Land_Cover.parameters[0].phenology,
+        processed_grid_config.Land_Cover.phenology_options,
+        nP=processed_grid_config.Land_Cover.nP,
+        output_location=Path(f"{output_directory}/phenology.png"),
+        day_count=day_count,
+        plot_dd=processed_grid_config.Land_Cover.phenology_options.time_type
+        == TimeTypes.JULIAN_DAY,
+        plot_td=processed_grid_config.Land_Cover.phenology_options.time_type
+        == TimeTypes.THERMAL_TIME,
+        plot_f_phen=True,
+        plot_lengths=True,
+        plot_carbon=processed_grid_config.Land_Cover.phenology_options.time_type
+        == TimeTypes.THERMAL_TIME,
+        plot_growing=processed_grid_config.Land_Cover.phenology_options.time_type
+        == TimeTypes.THERMAL_TIME,
     )
 
 
@@ -229,8 +300,7 @@ def plot_phenology(
 def process_config(
     config_file: Path,
     output_directory: Path,
-    input_data_file: Path = None,
-    base_config_file: Path = None,
+    base_config_file: Optional[Path] = None,
 ):
     """Process the config by combining the config and base config.
 
@@ -265,7 +335,10 @@ def process_config(
     "--grid-overrides-file", type=click.Path(exists=True), default=None, help="Input data csv file"
 )
 @click.option(
-    "--grid-overrides-field-map-path", type=click.Path(exists=True), default=None, help="Input data csv file"
+    "--grid-overrides-field-map-path",
+    type=click.Path(exists=True),
+    default=None,
+    help="Input data csv file",
 )
 @click.option(
     "--base-config-file",
@@ -289,9 +362,9 @@ def process_config(
 def process_grid_config(
     config_file: Path,
     output_directory: Path,
-    grid_overrides_file: Path = None,
-    grid_overrides_field_map_path: Path = None,
-    base_config_file: Path = None,
+    grid_overrides_file: Path,
+    grid_overrides_field_map_path: Path,
+    base_config_file: Optional[Path] = None,
     grid_coord: tuple[int, int] = (0, 0),
 ):
     """Process a config with grid overrides by combining the config and base config.
@@ -302,32 +375,14 @@ def process_grid_config(
     This copies parts of initialize_grid_configs
 
     """
+    from pyDO3SE.Grid_Model.setup_grid_model import process_grid_config as process_grid_config_fn
 
-    from pyDO3SE.setup_model import setup_config
-    from pyDO3SE.Output.process_outputs import dump_config_to_file_json
-    from pyDO3SE.optional_dependencies import xarray as xr
-
-    config_in = config_loader(config_file, base_config_file, "json")
-    e_state_overrides_field_map = json_loader(grid_overrides_field_map_path)
-    grid_overrides_ds = xr.open_dataset(grid_overrides_file)
-    (xi, yi), override_dict = next(
-        load_additional_gridded_config_data(
-            [grid_coord],
-            grid_overrides_ds,
-            e_state_overrides_field_map,
-        )
-    )
-
-    config_cell = deepcopy(config_in)
-    for k, v in override_dict.items():
-        if v is None or math.isnan(v):
-            print(override_dict)
-            raise ValueError(f"{k} is invalid for ({xi},{yi})")
-        print(f"Overriding {k} to {v} for cell ({xi},{yi})")
-        config_cell = rsetattr(config_cell, k, v, True)
-    # TODO: We only need to set up for each cell if the overrides effect the setup config
-    config = setup_config(
-        config_cell,
+    processed_config = process_grid_config_fn(
+        config_file,
+        grid_overrides_file,
+        grid_overrides_field_map_path,
+        base_config_file,
+        grid_coord,
     )
     os.makedirs(output_directory, exist_ok=True)
-    dump_config_to_file_json(config, f"{output_directory}/processed_config.json")
+    dump_config_to_file_json(processed_config, Path(f"{output_directory}/processed_config.json"))

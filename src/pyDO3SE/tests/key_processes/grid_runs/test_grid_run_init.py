@@ -1,4 +1,4 @@
-"""A set of tests that run the hourly model then compare the output against the previous version."""
+"""A set of tests for checking we can initialise grid runs."""
 import os
 import pytest
 from pyDO3SE.Config.config_loader import config_loader_pickled
