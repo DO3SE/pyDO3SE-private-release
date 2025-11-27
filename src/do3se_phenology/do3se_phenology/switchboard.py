@@ -49,7 +49,7 @@ from do3se_phenology.td_percent_definition import (
     get_dvi_from_season_length,
     get_leaf_td_intervals_f,
 )
-from do3se_phenology.f_phen import get_fphen_PLF, get_leaf_fphen_PLF
+from do3se_phenology.f_phen import get_tt_fphen_PLF_fn, get_leaf_fphen_PLF_fn, get_tt_leaf_fphen_PLF_fn
 from do3se_phenology.config import (
     ModelConfig,
     PhenologyLeafKeyLengths,
@@ -101,7 +101,7 @@ def phenology_from_legacy_day_plf(
 
         flag_emerg_to_astart = 0  # NOTE: This method assumes flag emergence time is 0
         plant_emerg_to_flag_emerg = Astart - sowing_to_emerg - flag_emerg_to_astart
-        astart_to_senescence = egs - sowing_to_astart
+        astart_to_senescence = egs - sowing_to_astart - sowing_day
 
         species_config.key_lengths_flag_leaf.plant_emerg_to_leaf_emerg = plant_emerg_to_flag_emerg
         species_config.key_lengths_flag_leaf.leaf_emerg_to_astart = flag_emerg_to_astart
@@ -109,7 +109,9 @@ def phenology_from_legacy_day_plf(
         species_config.key_lengths.emerg_to_astart = emerg_to_astart
         species_config.key_dates.Astart = Astart
         species_config.key_dates.Aend = egs
+        species_config.key_lengths.sowing_to_emerge = sowing_to_emerg
 
+        assert species_config.key_lengths.sowing_to_emerge is not None, "key_lengths.sowing_to_emerge could not be defined!"
         assert species_config.key_lengths_flag_leaf.plant_emerg_to_leaf_emerg is not None, "key_lengths_flag_leaf.plant_emerg_to_leaf_emerg could not be defined!"
         assert species_config.key_lengths_flag_leaf.leaf_emerg_to_astart is not None, "key_lengths_flag_leaf.leaf_emerg_to_astart could not be defined!"
         assert species_config.key_lengths_flag_leaf.astart_to_senescence is not None, "key_lengths_flag_leaf.astart_to_senescence could not be defined!"
@@ -119,15 +121,24 @@ def phenology_from_legacy_day_plf(
     else:
         species_config.key_lengths_flag_leaf.plant_emerg_to_leaf_emerg = 0
 
+    if species_config.leaf_f_phen_method == LeafFPhenMethods.DAY_PLF:
+        leaf_fphen_intervals = get_leaf_fphen_PLF_fn(
+            leaf_f_phen_1=species_config.day_fphen_plf.leaf_f_phen_1,
+            leaf_f_phen_2=species_config.day_fphen_plf.leaf_f_phen_2,
+            leaf_f_phen_a=species_config.day_fphen_plf.leaf_f_phen_a,
+            leaf_f_phen_b=species_config.day_fphen_plf.leaf_f_phen_b,
+            leaf_f_phen_c=species_config.day_fphen_plf.leaf_f_phen_c,
+            Astart=species_config.key_dates.Astart,
+            Aend=species_config.key_dates.Aend,
+        )
+        species_config.leaf_fphen_intervals = leaf_fphen_intervals
+
     emerg_to_end = season_length - sowing_to_emerg
 
     species_config.key_dates.sowing = sowing_day
     species_config.key_dates.harvest = egs
 
     species_config.key_lengths.emerg_to_end = emerg_to_end
-
-    species_config.key_dates.sowing = sowing_day
-    species_config.key_dates.harvest = egs
 
     assert species_config.key_lengths.emerg_to_end is not None, "key_lengths.emerg_to_end could not be defined!"
 
@@ -375,13 +386,11 @@ def get_season_length_from_config(
     elif model_config.time_type == TimeTypes.JULIAN_DAY:
         if species_config.key_lengths.sowing_to_end:
             season_length = species_config.key_lengths.sowing_to_end
-        elif species_config.key_lengths.sowing_to_end:
-            season_length = species_config.key_lengths.sowing_to_end
         elif species_config.key_lengths.sowing_to_emerge and species_config.key_lengths.emerg_to_end:
             season_length = species_config.key_lengths.sowing_to_emerge + \
                 species_config.key_lengths.emerg_to_end
         elif species_config.key_dates.harvest:
-            season_length = species_config.key_dates.harvest
+            season_length = species_config.key_dates.harvest - sowing_day
     else:
         if species_config.key_lengths_td.sowing_to_end:
             season_length = species_config.key_lengths_td.sowing_to_end
@@ -544,7 +553,7 @@ def phenology_from_season_fraction(
     assert species_config_out.key_lengths_flag_leaf_td.plant_emerg_to_leaf_emerg >= 0, f"plant_emerg_to_leaf_emerg must be >= 0 but value is {species_config_out.key_lengths_flag_leaf_td.plant_emerg_to_leaf_emerg}"
 
     # 4. get intervals
-    fphen_intervals = list(zip(*get_fphen_PLF(
+    fphen_intervals = list(zip(*get_tt_fphen_PLF_fn(
         species_config_out.key_lengths_td.sowing_to_emerge,
         species_config_out.key_lengths_td.sowing_to_f_phen_b,
         species_config_out.key_lengths_td.sowing_to_f_phen_c,
@@ -553,7 +562,7 @@ def phenology_from_season_fraction(
         x_offset=sowing_offset_td,
     )))
 
-    leaf_fphen_intervals = list(zip(*get_leaf_fphen_PLF(
+    leaf_fphen_intervals = list(zip(*get_tt_leaf_fphen_PLF_fn(
         species_config_out.leaf_f_phen_a,
         species_config_out.leaf_f_phen_b,
         species_config_out.key_lengths_flag_leaf_td.leaf_f_phen_e,
@@ -661,7 +670,7 @@ def phenology_from_fphen_td_int(
     """
     growing_season_length = species_config.key_lengths_td.sowing_to_end
     # TODO: Implement Complex fphen
-    fphen_intervals = list(zip(*get_fphen_PLF(
+    fphen_intervals = list(zip(*get_tt_fphen_PLF_fn(
         species_config.key_lengths_td.sowing_to_emerge,
         species_config.key_lengths_td.sowing_to_f_phen_b,
         species_config.key_lengths_td.sowing_to_f_phen_c,
@@ -669,7 +678,7 @@ def phenology_from_fphen_td_int(
         species_config.f_phen_min,
     )))
 
-    leaf_fphen_intervals = list(zip(*get_leaf_fphen_PLF(
+    leaf_fphen_intervals = list(zip(*get_tt_leaf_fphen_PLF_fn(
         species_config.leaf_f_phen_a,
         species_config.leaf_f_phen_b,
         species_config.key_lengths_flag_leaf_td.leaf_f_phen_e,
@@ -773,6 +782,10 @@ def calc_key_dates(
     td_data: np.ndarray,
     dd_data: np.ndarray,
 ) -> SpeciesConfig:
+    """Calculate key dates from thermal time or julian day data.
+
+    This assigns key dates in julian days based on input td or dd data and config parameters.
+    """
     species_config_out = deepcopy(species_config)
     sowing_dd = int(species_config_out.key_dates.sowing)
     assert sowing_dd is not None
@@ -898,6 +911,25 @@ def process_phenology_config(
     """Convert many phenology options into a single DO3SE phenology config.
 
     Note: All values are relative to SGS
+
+    Parameters
+    ----------
+    model_config : ModelConfig
+        phenology model config
+    species_config : SpeciesConfig
+        species config
+    external_data: dict
+        dict of external data with fields such as 'Ts_C', 'dd', 'leaf_fphen' etc
+        Each value should be a numpy array of the same length
+    td_base_temperature: float
+        Base temp for thermal time calculations
+    nP: int
+        Number of leaf populations
+    calculate_key_dates: bool
+        Whether to calculate key dates from key lengths after phenology processing
+    logger: Callable[[str, str], None]
+        Logger function to use for logging messages
+
     """
     phenology_method = model_config.phenology_method
     if phenology_method == PhenologyMethods.DISABLED:
