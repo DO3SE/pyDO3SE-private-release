@@ -1,14 +1,12 @@
 """Functions relating to canopy structure (Height, LAI and SAI)."""
 
-from data_helpers.list_helpers import flatten_list
 from do3se_phenology.config import SpeciesConfig
 from math import ceil
 from typing import List, Tuple
 import numpy as np
 
-from .utils import PLF_value
-from .utils import offset
 from do3se_phenology.phyllochron_dvi import calc_emergence_rate, get_growing_populations
+from .utils import PLF_value, offset
 
 
 def height_method_input():
