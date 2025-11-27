@@ -7,8 +7,7 @@
             ]
         ],
         "height_method": "constant",
-        "LAI": 3,
-        "LAI_method": "constant",
+        "LAI_method": "estimate total",
         "nL": 1,
         "nP": 1,
         "parameters": [
@@ -62,38 +61,36 @@
                 },
                 "name": "Bangor Wheat",
                 "phenology": {
-                    "day_fphen_plf": {},
-                    "f_Astart": 0.7660377358490567,
-                    "f_fphen_1_ets": 0.0641509433962264,
-                    "f_fphen_3_ets": 0.05,
-                    "f_fphen_4_ets": 0.22,
-                    "f_fphen_5_ets": 0.16981132075471694,
-                    "f_fphen_a": 0.05,
-                    "f_fphen_b": 0.2,
-                    "f_fphen_c": 0.8301886792452831,
-                    "f_fphen_d": 1,
-                    "f_leaf_f_fphen": 0.23396226415094334,
-                    "f_mid_anthesis": 0.8301886792452831,
-                    "f_phen_method": "tt day PLF",
-                    "f_phen_min": 0,
-                    "f_t_lem": 0.7160377358490566,
-                    "f_t_lep": 0.15597484276729556,
-                    "f_t_lma": 0.23396226415094334,
-                    "f_t_lse": 0.07798742138364778,
-                    "f_t_lse_mature": 0.33,
-                    "f_tt_emr": 0.05,
-                    "f_tt_rep": 0.2339622641509434,
-                    "f_tt_veg": 0.7160377358490566,
-                    "key_dates": {
-                        "harvest": 157,
-                        "sowing": 319
+                    "day_fphen_plf": {
+                        "f_phen_1": 20,
+                        "f_phen_2": 0,
+                        "f_phen_3": 0,
+                        "f_phen_4": 30,
+                        "f_phen_a": 0.1,
+                        "f_phen_b": 1.0,
+                        "f_phen_c": 1.0,
+                        "f_phen_d": 0.1,
+                        "f_phen_e": 0.1,
+                        "f_phen_lima": 0,
+                        "f_phen_limb": 0,
+                        "leaf_f_phen_1": 20,
+                        "leaf_f_phen_2": 30,
+                        "leaf_f_phen_a": 0.0,
+                        "leaf_f_phen_b": 1.0,
+                        "leaf_f_phen_c": 0.0
+                    },"key_dates": {
+                        "harvest": 312.0,
+                        "sowing": 162.0
                     },
-                    "key_dates_td": {},
-                    "key_lengths_leaf_td": {},
-                    "key_lengths_td": {},
-                    "leaf_f_phen_a": 0.3,
-                    "leaf_f_phen_b": 0.7,
-                    "leaf_f_phen_method": "tt day PLF"
+                    "LAI_a": 0.0,
+                    "LAI_b": 4.0,
+                    "LAI_c": 4.0,
+                    "LAI_d": 0.0,
+                    "LAI_1": 40.0,
+                    "LAI_2": 30.0,
+                    "f_phen_method": "simple day PLF",
+                    "leaf_f_phen_method": "day PLF",
+                    "SAI_method": "LAI"
                 },
                 "pn_gsto": {
                     "senescence_method": "anet"
@@ -102,12 +99,13 @@
             }
         ],
         "phenology_options": {
-            "phenology_method": "season_fraction",
-            "plant_emerge_method": "constant",
+            "phenology_method": "day plf",
+            "plant_emerge_method": "fphen",
+            "flag_leaf_emerge_method": "leaf_f_phen",
+            "time_type": "julian_day",
             "zero_day": "sowing"
         },
-        "SAI": 4,
-        "SAI_method": "constant"
+        "SAI_method": "estimate total"
     },
     "Location": {
         "albedo": 0.2,

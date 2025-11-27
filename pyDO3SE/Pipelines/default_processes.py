@@ -1689,7 +1689,7 @@ def f_phen_method_process(iL: int, iLC: int, f_phen_method: str) -> Process:
                 ],
             ),
             FPhenMethods.SIMPLE_DAY_PLF: Process(
-                func=f_phen_helpers.f_phen_simple_PLF,
+                func=f_phen_helpers.f_phen_simple_PLF_value,
                 comment="f_phen_method - f_phen_simple_PLF",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC]
@@ -1756,7 +1756,7 @@ def f_phen_method_process(iL: int, iLC: int, f_phen_method: str) -> Process:
             #     ]
             # ),
             FPhenMethods.TT_DAY_PLF: Process(
-                func=f_phen_helpers.tt_f_phen_simple_PLF,
+                func=f_phen_helpers.tt_f_phen_simple_PLF_value,
                 comment="f_phen_method - tt_f_phen_simple_PLF",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC].phenology.key_lengths_td.sowing_to_emerge, as_='t_f_phen_a'),
@@ -1844,7 +1844,7 @@ def leaf_f_phen_process(iL: int, iLC: int, leaf_f_phen_method) -> Process:
                 ]
             ),
             LeafFPhenMethods.DAY_PLF: Process(
-                func=f_phen_helpers.leaf_f_phen_PLF,
+                func=f_phen_helpers.leaf_f_phen_PLF_value,
                 comment="calculate leaf_f_phen_method - day PLF",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC].phenology.day_fphen_plf.leaf_f_phen_1,
@@ -1870,7 +1870,7 @@ def leaf_f_phen_process(iL: int, iLC: int, leaf_f_phen_method) -> Process:
             ),
             LeafFPhenMethods.TT_DAY_PLF: Process(
                 # TODO: td is time since zero day
-                func=f_phen_helpers.tt_leaf_f_phen_PLF,
+                func=f_phen_helpers.tt_leaf_f_phen_PLF_value,
                 comment="calculate leaf_f_phen_method - leaf tt day PLF",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC].phenology.leaf_f_phen_a,

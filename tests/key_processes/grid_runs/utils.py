@@ -34,6 +34,7 @@ class TestSetup:
     logger_main: Callable
     regex_multi_file_filter: str
     netcdf_loader_kwargs: dict
+    config_id: str
 
 
 def _assertTestSetup(self: TestSetup):
@@ -46,7 +47,7 @@ def _setup(self: TestSetup):
     print("Setting up")
     runid = self.runid
     project_dir = self.project_dir
-    config_id = "bangor_wheat"
+    config_id = self.config_id if hasattr(self, 'config_id') else "bangor_wheat"
     # multi_file_netcdf = self.multi_file_netcdf
     self.seperate_state_path = True
 

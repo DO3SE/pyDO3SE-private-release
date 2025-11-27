@@ -6,7 +6,7 @@ import warnings
 import pandas as pd
 
 from pyDO3SE.Output.OutputConfig import (
-    output_results_only_options,
+    OutputOptions
 )
 from pyDO3SE import main
 
@@ -18,10 +18,7 @@ def run_with_config(runid: str, project_dir: Path, config_file: str, input_file:
     # Create output dir
     main.create_run_path_directories(run_paths)
 
-    output_options = output_results_only_options()
-    # output_options = OutputOptions()
-    output_options.save_hourly_output_data = False
-    # output_options.save_processed_config = True
+    output_options = OutputOptions()
 
     kwargs_all = {
         **dict(
@@ -41,11 +38,11 @@ def run_with_config(runid: str, project_dir: Path, config_file: str, input_file:
     return out
 
 
-project_dir = "tests/key_processes/multiplicative"
+project_dir = Path("tests/key_processes/multiplicative")
 
 setups = [
     # runid, config_file, input_file, overrides
-    # ["default_sparse_simple", "default", "three_days", dict()],
+    ["default_sparse_simple", "default", "three_days", dict()],
     ["bihourly_sparse_simple", "bihourly", "bihourly", dict()],
     ["alt", "alt", "A_03", dict()],
 ]
@@ -69,6 +66,15 @@ def legacy_fphen_test_run(request):
         request.cls.output[runid]['out'] = out
         request.cls.output[runid]['hourly_output'] = pd.DataFrame(output_logs)
 
+
+def test_run_alt():
+    out = run_with_config(
+        runid="alt",
+        project_dir=project_dir,
+        config_file="alt",
+        input_file="A_03",
+    )
+    final_state, output_logs, final_config, initial_state, external_state = out
 
 @pytest.mark.usefixtures('legacy_fphen_test_run')
 class TestRunAndCompare:
@@ -97,3 +103,14 @@ class TestRunAndCompare:
         assert max(f_phen) == 1
         assert min(f_phen) == 0
         assert f_phen[-1] == 1
+
+    @pytest.mark.parametrize('runid', ['alt'])
+    def test_should_calculate_leaf_f_phen_correctly(self, runid):
+        hourly_output = self.output[runid]['hourly_output']
+        leaf_f_phen = hourly_output['leaf_f_phen'].values
+        assert leaf_f_phen[0] is not None
+        assert leaf_f_phen[-1] is not None
+        assert all(f is not None for f in leaf_f_phen)
+        assert max(leaf_f_phen) == 1
+        assert min(leaf_f_phen) == 0
+        assert leaf_f_phen[-1] == 0

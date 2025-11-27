@@ -155,7 +155,9 @@ def load_additional_gridded_config_data(
 
     """
     for coord in coords:
-        field_map = pull_config_vars_from_netcdf(e_state_overrides_dataset, coord, e_state_overrides_field_map)
+        field_map = pull_config_vars_from_netcdf(
+            e_state_overrides_dataset, coord, e_state_overrides_field_map
+        )
         yield (coord, field_map)
 
 
@@ -177,7 +179,9 @@ def get_grid_coords_from_dataarray(
         grid_coords, grid_x_size, grid_y_size
 
     """
-    assert len(da.data.shape) == 2, f"Coordinates netcdf file must have shape (x, y) but has shape {da.data.shape}"
+    assert len(da.data.shape) == 2, (
+        f"Coordinates netcdf file must have shape (x, y) but has shape {da.data.shape}"
+    )
 
     x_indices, y_indices = np.indices(da.data.shape)
     flat_mask = da.data.astype(bool).flatten()
@@ -327,7 +331,9 @@ def initialize_grid_configs(
             config_cell = rsetattr(config_cell, k, v, True)
 
         # TODO: We only need to set up for each cell if the overrides effect the setup config
-        initialized_config = setup_config(config_cell, external_state_data=None, overrides=overrides)
+        initialized_config = setup_config(
+            config_cell, external_state_data=None, overrides=overrides
+        )
         yield initialized_config
 
 
@@ -406,13 +412,19 @@ def init_all_grid_model_configs(
             )
             end_time = datetime.now()
             setup_duration_run = end_time - start_time
-            logger(f"Initialization complete for: \n{run_paths.config_run_dir}\nSetup took: ({setup_duration})")
+            logger(
+                f"Initialization complete for: \n{run_paths.config_run_dir}\nSetup took: ({setup_duration})"
+            )
 
         except Exception as e:
             logger.close()
-            raise Do3seSetupError(f"Failed to run grid init for config: {config_file_path}\nRun Paths: {run_paths}", e)
+            raise Do3seSetupError(
+                f"Failed to run grid init for config: {config_file_path}\nRun Paths: {run_paths}", e
+            )
         setup_duration += setup_duration_run
-    logger(f"== COMPLETE - Running init_all_grid_model_configs\nSetup took: {setup_duration} ===== \n")
+    logger(
+        f"== COMPLETE - Running init_all_grid_model_configs\nSetup took: {setup_duration} ===== \n"
+    )
     return setup_duration
 
 
@@ -499,7 +511,9 @@ def create_grid_run_path_directories(
     run_paths: GridRunPaths,
 ):
     os.makedirs(run_paths.config_run_dir, exist_ok=True) if run_paths.config_run_dir else None
-    os.makedirs(run_paths.processed_configs_dir, exist_ok=True) if run_paths.processed_configs_dir else None
+    os.makedirs(
+        run_paths.processed_configs_dir, exist_ok=True
+    ) if run_paths.processed_configs_dir else None
     os.makedirs(run_paths.prev_state_dir, exist_ok=True) if run_paths.prev_state_dir else None
     os.makedirs(run_paths.live_state_dir, exist_ok=True) if run_paths.live_state_dir else None
     os.makedirs(run_paths.output_data_dir, exist_ok=True) if run_paths.output_data_dir else None
@@ -558,10 +572,48 @@ def init_grid_model(
 
     logger("Setting up grid state")
     initialized_state_gen = (
-        setup_initial_state(state, config, external_state=None, run_init_processes=True, overrides=overrides)
+        setup_initial_state(
+            state, config, external_state=None, run_init_processes=True, overrides=overrides
+        )
         for config in initialized_config_gen()
     )
 
     logger("init_grid_model - COMPLETE")
 
     return initialized_config_gen(), initialized_state_gen
+
+
+def process_grid_config(
+    config_file: Path,
+    grid_overrides_file: Path,
+    grid_overrides_field_map_path: Path,
+    base_config_file: Optional[Path] = None,
+    grid_coord: tuple[int, int] = (0, 0),
+):
+    """Process a single grid cell config with overrides.
+
+    This is used for debugging grid cell configs.
+    """
+    config_in = config_loader(config_file, base_config_file, "json")
+    e_state_overrides_field_map = json_loader(grid_overrides_field_map_path)
+    grid_overrides_ds = xr.open_dataset(grid_overrides_file)
+    (xi, yi), override_dict = next(
+        load_additional_gridded_config_data(
+            [grid_coord],
+            grid_overrides_ds,
+            e_state_overrides_field_map,
+        )
+    )
+
+    config_cell = deepcopy(config_in)
+    for k, v in override_dict.items():
+        if v is None or math.isnan(v):
+            print(override_dict)
+            raise ValueError(f"{k} is invalid for ({xi},{yi})")
+        print(f"Overriding {k} to {v} for cell ({xi},{yi})")
+        config_cell = rsetattr(config_cell, k, v, True)
+    # TODO: We only need to set up for each cell if the overrides effect the setup config
+    config = setup_config(
+        config_cell,
+    )
+    return config

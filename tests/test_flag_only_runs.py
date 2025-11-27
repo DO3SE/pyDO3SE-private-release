@@ -33,7 +33,6 @@ setups = [
     for f in os.listdir(f"{project_dir}/inputs")
 ]
 
-@pytest.mark.skip(reason="Not Implemented")
 @pytest.fixture(scope="class", params=setups)
 def setup_test_run_and_compare(request):
     raise NotImplementedError("Update flag only run tests")
