@@ -429,18 +429,6 @@ wheels = [
 ]
 
 [[package]]
-name = "data-helpers"
-version = "0.1.32"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/d5/b9/870bbd9ee56d0645af77f0a2f79ed2e0cbc8edf91015dd0f867a80dd3e10/data_helpers-0.1.32.tar.gz", hash = "sha256:c8c3ab42c9408beab913b7814839fc70a17f13c67f69738755504d901c923d81", size = 33923 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/90/de/d499f86632221f9bd8ba5846738aa48fcabddb6dae73db6ba809ddf835de/data_helpers-0.1.32-py3-none-any.whl", hash = "sha256:756388997cf203b0d87fc3d2e7847abdeca13eac133541fee4f203e324d6d475", size = 41031 },
-]
-
-[[package]]
 name = "data-helpers-v2"
 version = "0.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -564,7 +552,7 @@ version = "4.40.6"
 source = { editable = "src/do3se_phenology" }
 dependencies = [
     { name = "click" },
-    { name = "data-helpers" },
+    { name = "data-helpers-v2" },
     { name = "deprecated" },
     { name = "matplotlib" },
     { name = "numpy" },
@@ -586,7 +574,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=7.1.2" },
-    { name = "data-helpers", specifier = ">=0.1.29" },
+    { name = "data-helpers-v2", specifier = ">=0.1.29" },
     { name = "deprecated", specifier = ">=1.2.12" },
     { name = "matplotlib", specifier = ">=3.2.1" },
     { name = "numpy", specifier = ">=1.18.3" },
@@ -1708,11 +1696,11 @@ wheels = [
 
 [[package]]
 name = "pydo3se"
-version = "4.43.1"
+version = "4.43.3"
 source = { editable = "src/pyDO3SE" }
 dependencies = [
     { name = "click" },
-    { name = "data-helpers" },
+    { name = "data-helpers-v2" },
     { name = "deprecated" },
     { name = "dill" },
     { name = "matplotlib" },
@@ -1767,7 +1755,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=7.1.2" },
-    { name = "data-helpers", specifier = ">=0.1.29" },
+    { name = "data-helpers-v2", specifier = ">=0.1.29" },
     { name = "deprecated", specifier = ">=1.2.12" },
     { name = "dill", specifier = ">=0.3.8" },
     { name = "matplotlib", specifier = ">=3.2.1" },
@@ -1821,7 +1809,7 @@ test = [
 
 [[package]]
 name = "pydo3se-open"
-version = "4.43.1"
+version = "4.43.3"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
