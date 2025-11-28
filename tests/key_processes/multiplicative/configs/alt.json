@@ -84,7 +84,8 @@
                         "sowing": 20.0
                     },
                     "key_lengths": {
-                        "sowing_to_emerge": 0.0
+                        "sowing_to_emerge": 0.0,
+                        "sowing_to_astart": 60.0
                     },
                     "LAI_a": 0.0,
                     "LAI_b": 4.0,
@@ -125,8 +126,9 @@
         "inputs": {
             "co2_constant": 391,
             "co2_method": "constant",
+            "R_method": "input",
             "PAR_method": "calculated",
-            "PPFD_method": "input",
+            "PPFD_method": "calculated",
             "RH_method": "input",
             "VPD_method": "calculated",
             "P_method": "constant",
