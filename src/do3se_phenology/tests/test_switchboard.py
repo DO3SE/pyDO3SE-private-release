@@ -445,7 +445,7 @@ class TestSwitchBoardDayPLF(SwitchBoardTestBase):
         deepcopy(species_config),
         key_dates=replace(
             deepcopy(species_config.key_dates),
-            Astart=125,  # Where does this come from?
+            Astart=145,  # sowing + sowing_to_astart
             Aend=species_config.key_dates.harvest,  # Same as harvest
         ),
         key_lengths=replace(
@@ -453,15 +453,15 @@ class TestSwitchBoardDayPLF(SwitchBoardTestBase):
             sowing_to_emerge=0,
             sowing_to_end=197 - 105,  # harvest - sowing
             emerg_to_end=197 - 105 - 0,  # harvest - sowing - sowing_to_emerge
-            emerg_to_astart=125,  # Astart - sowing
+            emerg_to_astart=145,  # Astart - sowing
         ),
         key_lengths_flag_leaf=replace(
             deepcopy(species_config.key_lengths_flag_leaf),
-            plant_emerg_to_leaf_emerg=125,  # Same as emerg_to_astart
-            astart_to_senescence=197 - 125,  # Aend - Astart
-            leaf_emerg_to_astart=0,
+            plant_emerg_to_leaf_emerg=145,  # Same as sowing +
+            leaf_emerg_to_fully_grown=20,  # f_phen_1
+            fully_grown_to_senescence=2.0,  # 197 - 167
         ),
-        leaf_fphen_intervals=([125, 125, 145, 167.0, 197.0, 197.0], [0.0, 0.0, 1.0, 1.0, 0.0, 0.0]),
+        leaf_fphen_intervals=([145.0, 145.0, 165.0, 167.0, 197.0, 197.0], [0.0, 0.0, 1.0, 1.0, 0.0, 0.0]),
     )
 
     def test_sets_sgs_and_egs(self):
@@ -481,8 +481,8 @@ class TestSwitchBoardDayPLF(SwitchBoardTestBase):
         assert species_config.key_dates.Astart is not None
         assert species_config.key_dates.Aend is not None
         assert species_config.key_lengths_flag_leaf.plant_emerg_to_leaf_emerg is not None
-        assert species_config.key_lengths_flag_leaf.leaf_emerg_to_astart is not None
-        assert species_config.key_lengths_flag_leaf.astart_to_senescence is not None
+        assert species_config.key_lengths_flag_leaf.leaf_emerg_to_fully_grown is not None
+        assert species_config.key_lengths_flag_leaf.fully_grown_to_senescence is not None
 
         assert species_config.key_lengths.emerg_to_astart is not None
         assert species_config.key_lengths.emerg_to_end is not None
@@ -508,7 +508,7 @@ class TestSwitchBoardDayPLFPlantOnly(TestSwitchBoardDayPLF):
         leaf_f_phen_method=LeafFPhenMethods.F_PHEN,
         key_lengths=replace(
             deepcopy(TestSwitchBoardDayPLF.species_config.key_lengths),
-            sowing_to_astart=None,
+            sowing_to_astart=40.0,
             sowing_to_end=197 - 105,
             emerg_to_end=197 - 105,  # harvest - sowing
         ),
