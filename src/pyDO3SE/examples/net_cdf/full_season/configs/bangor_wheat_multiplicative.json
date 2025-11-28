@@ -84,7 +84,8 @@
                         "sowing": 20.0
                     },
                     "key_lengths": {
-                        "sowing_to_emerge": 0.0
+                        "sowing_to_emerge": 0.0,
+                        "sowing_to_astart": 20.0
                     },
                     "LAI_a": 0.0,
                     "LAI_b": 4.0,
