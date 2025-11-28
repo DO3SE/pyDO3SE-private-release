@@ -317,14 +317,16 @@ def calc_if_flag_leaf_has_emerged_process(
     iLC: int,
     flag_leaf_emerge_method: PlantEmergeMethod,
 ) -> Process:
+    def constant_flag_leaf_emerged_method(td: float, t_emerg: float, dd: int, emerg: int) -> bool:
+        """Determine if flag leaf has emerged."""
+        return td > t_emerg if t_emerg is not None else dd > emerg if emerg is not None else raise_error(
+            ValueError("Must set key_lengths_flag_leaf.plant_emerg_to_leaf_emerg or key_lengths_flag_leaf_td.plant_emerg_to_leaf_emerg"))
     return switch(
         gate=flag_leaf_emerge_method,
         comment="Choose method for defining if flag leaf has emerged",
         options={
             PlantEmergeMethod.CONSTANT: Process(
-                func=lambda td, t_emerg, dd, emerg: td > t_emerg if t_emerg is not None
-                else dd > emerg if emerg is not None
-                else raise_error(ValueError("Must set key_lengths_flag_leaf.plant_emerg_to_leaf_emerg or key_lengths_flag_leaf_td.plant_emerg_to_leaf_emerg")),
+                func=constant_flag_leaf_emerged_method,
                 comment="Set flag leaf has emerged when td or dd pass flag leaf emergence date",
                 config_inputs=lambda config: [
                     I(config.Land_Cover.parameters[iLC]
@@ -534,10 +536,12 @@ def get_phenology_stage_process(nP: int, iLC: int, leaf_f_phen_method: LeafFPhen
                   as_="sowing_to_plant_emerg"),
                 I(config.Land_Cover.parameters[iLC].phenology.key_lengths_flag_leaf.plant_emerg_to_leaf_emerg,
                   as_="plant_emerg_to_leaf_emerg"),
-                I(config.Land_Cover.parameters[iLC].phenology.key_lengths_flag_leaf.leaf_emerg_to_astart,
-                    as_="leaf_emerg_to_astart"),
-                I(config.Land_Cover.parameters[iLC].phenology.key_lengths_flag_leaf.astart_to_senescence,
-                    as_="Astart_to_senescence"),
+                I(config.Land_Cover.parameters[iLC].phenology.key_lengths_flag_leaf.leaf_emerg_to_fully_grown,
+                  as_="leaf_emerg_to_fully_grown"),
+                I(config.Land_Cover.parameters[iLC].phenology.key_lengths_flag_leaf.fully_grown_to_senescence,
+                  as_="fully_grown_to_senescence"),
+                I(config.Land_Cover.parameters[iLC].phenology.key_lengths.sowing_to_end,
+                  as_="sowing_to_end"),
             ],
             state_inputs=lambda state: [
                 I(state.temporal.dd, as_='dd'),

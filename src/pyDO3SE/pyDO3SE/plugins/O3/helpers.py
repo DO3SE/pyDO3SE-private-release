@@ -107,7 +107,9 @@ def calc_POD(
     POD_Y: float
         Phytotoxic Ozone Dose above threshold Y [mmol m-2 PLA]
     """
-    if not has_emerged or is_growing:
+    # if not has_emerged or is_growing:
+    # TODO: Check if pody should accumulate while leaf is growing
+    if not has_emerged:
         return PODOutput(0, 0)
     POD_0 = POD_0_prev + ((fst * DT) / 1000000)
     POD_Y = POD_Y_prev + ((max(0.0, fst - Y) * DT) / 1000000)
