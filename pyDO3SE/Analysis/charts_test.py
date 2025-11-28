@@ -1,27 +1,43 @@
 import pytest
-from pytest_mock import MockerFixture
-
+import pandas as pd
+import numpy as np
 from pyDO3SE.Output.Output_Shape import output_fields_map
-from pyDO3SE.Analysis.charts import annual_graph
-
-__module_loc__ = __package__ + '.charts'
+from pyDO3SE.Analysis.charts import annual_graph, monthly_diurnal_graph
 
 
-@pytest.fixture(autouse=True)
-def mock_pyplot(mocker: MockerFixture) -> object:
-    """Mock imported functions."""
-    _mock_pyplot = mocker.patch(__module_loc__ + '.plt', autospec=True)
-    return _mock_pyplot
-
-
-def test_create_an_annual_graph_of_gsto(mock_pyplot):
+def test_create_an_annual_graph():
     # We can only test that this runs successfully.
     # If there are any actual differences these should appear in git diff
-    fig = annual_graph([1, 2, 3, 8, 9, 7], output_fields_map['gsto'])
+    fig = annual_graph([1, 2, 3, 8, 9, 7], output_fields_map["gsto"])
     assert fig
-    mock_pyplot.figure.assert_called_with()
-    # assert fig.texts == [Text(0.5, 0.98, 'Gsto')]
+
+
+@pytest.mark.parametrize("month", [0, 6, 11])
+def test_create_an_diurnal_graph(month):
+    # We can only test that this runs successfully.
+    # If there are any actual differences these should appear in git diff
+
+    data = pd.DataFrame(
+        {
+            "hr": np.arange(0, 24),
+            "gsto": np.sin(np.linspace(0, 2 * np.pi, 24)) * 5 + 5,
+        }
+    )
+    observed_data = pd.DataFrame(
+        {
+            "hr": np.arange(0, 24),
+            "observed": np.sin(np.linspace(0, 2 * np.pi, 24)) * 5 + 5 + np.random.normal(0, 1, 24),
+        }
+    )
+    fig = monthly_diurnal_graph(
+        data,
+        observed_data,
+        output_fields_map["gsto"],
+        month,
+        ylim=(0, 10),
+    )
+    assert fig is not None
 
 
 if __name__ == "__main__":
-    test_create_an_annual_graph_of_gsto()
+    test_create_an_annual_graph()

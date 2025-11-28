@@ -4,7 +4,7 @@ This is where the actual model starts!
 The inputs should come from setup_model.
 """
 
-from typing import Any, Callable, List, Tuple, Dict
+from typing import Any, Callable, List, Tuple, Dict, Optional
 from copy import deepcopy
 from proflow.ProcessRunnerCls import ProcessRunner
 from proflow.Objects.Process import Process
@@ -62,10 +62,10 @@ def run_model_on_mapped_processes(
     config: Config_Shape,
     external_state: External_State_Shape,
     model_processes: Dict[int, List[Process]],
-    start_index: int = None,
+    start_index: Optional[int] = None,
     logger: Callable[[str], None] = Logger(),
     DEBUG_MODE: bool = False,
-) -> Tuple[Model_State_Shape, List[List[Any]]]:
+) -> Tuple[Model_State_Shape, List[dict[str, Any]]]:
     """Run the model between day range from the point we have received all external data."""
     process_runner = ProcessRunner(config, external_state, DEBUG_MODE=DEBUG_MODE)
     model_state = deepcopy(initial_state)
@@ -74,10 +74,11 @@ def run_model_on_mapped_processes(
     process_runner.tm.row_index = model_state.temporal.row_index or 0
     logger(f"Running model from start index: {start_index}/ {len(external_state.hr)}")
     # Run for day range
+    assert external_state.hr is not None, "External state hours data is missing!"
     for hr in external_state.hr:
-        model_state = process_runner.run_processes(
+        model_state: Model_State_Shape = process_runner.run_processes(
             model_processes[hr],
-            model_state,
+            model_state,  # type: ignore
         )
 
     output_logs = process_runner.state_logs

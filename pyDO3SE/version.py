@@ -1,5 +1,5 @@
 """Current version."""
-version = '4.43.3'
+version = '4.43.4'
 config_version = 12
 
 if __name__ == "__main__":

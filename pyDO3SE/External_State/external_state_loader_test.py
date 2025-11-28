@@ -36,12 +36,12 @@ class TestMatchHeadingToField:
 
     def test_match_heading_to_field(self):
         field, ignore_field = match_heading_to_field('dd', DEMO_FIELDS)
-        assert field == DEMO_FIELDS[0].label
+        assert field == DEMO_FIELDS[0].id
         assert ignore_field is None
 
     def test_match_heading_to_field_with_unit(self):
         field, ignore_field = match_heading_to_field('P, kPa', DEMO_FIELDS)
-        assert field == DEMO_FIELDS[2].label
+        assert field == DEMO_FIELDS[2].id
         assert ignore_field is None
 
     def test_match_heading_to_field_with_no_match(self):
@@ -51,7 +51,7 @@ class TestMatchHeadingToField:
 
     def test_match_heading_to_field_with_multi_match(self):
         field, ignore_field = match_heading_to_field('temperature, C', DEMO_FIELDS)
-        assert field == DEMO_FIELDS[3].label
+        assert field == DEMO_FIELDS[3].id
         assert ignore_field is None
 
 

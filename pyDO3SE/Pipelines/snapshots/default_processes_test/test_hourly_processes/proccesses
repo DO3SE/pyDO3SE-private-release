@@ -1137,6 +1137,21 @@
                 }
             ]
         ],
+        {
+            "additional_inputs": "PLACEHOLDER_FUNC",
+            "args": [],
+            "comment": "calculate measured wind canopy displacement parameters",
+            "config_inputs": "PLACEHOLDER_FUNC",
+            "external_state_inputs": "PLACEHOLDER_FUNC",
+            "format_output": false,
+            "func": "PLACEHOLDER_FUNC",
+            "gate": true,
+            "group": null,
+            "parameters_inputs": "PLACEHOLDER_FUNC",
+            "ptype": 0,
+            "state_inputs": "PLACEHOLDER_FUNC",
+            "state_outputs": "PLACEHOLDER_FUNC"
+        },
         [
             {
                 "additional_inputs": "PLACEHOLDER_FUNC",
@@ -1398,21 +1413,6 @@
                 }
             ]
         ],
-        {
-            "additional_inputs": "PLACEHOLDER_FUNC",
-            "args": [],
-            "comment": "calculate measured wind canopy displacement parameters",
-            "config_inputs": "PLACEHOLDER_FUNC",
-            "external_state_inputs": "PLACEHOLDER_FUNC",
-            "format_output": false,
-            "func": "PLACEHOLDER_FUNC",
-            "gate": true,
-            "group": null,
-            "parameters_inputs": "PLACEHOLDER_FUNC",
-            "ptype": 0,
-            "state_inputs": "PLACEHOLDER_FUNC",
-            "state_outputs": "PLACEHOLDER_FUNC"
-        },
         {
             "additional_inputs": "PLACEHOLDER_FUNC",
             "args": [],
@@ -1692,6 +1692,7 @@
             "state_outputs": "PLACEHOLDER_FUNC"
         }
     ],
+    [],
     {
         "additional_inputs": "PLACEHOLDER_FUNC",
         "args": [],
@@ -1815,51 +1816,102 @@
         "state_outputs": "PLACEHOLDER_FUNC"
     },
     [
-        {
-            "additional_inputs": "PLACEHOLDER_FUNC",
-            "args": [],
-            "comment": "Set constant wind speed at each layer",
-            "config_inputs": "PLACEHOLDER_FUNC",
-            "external_state_inputs": "PLACEHOLDER_FUNC",
-            "format_output": false,
-            "func": "PLACEHOLDER_FUNC",
-            "gate": true,
-            "group": null,
-            "parameters_inputs": "PLACEHOLDER_FUNC",
-            "ptype": 0,
-            "state_inputs": "PLACEHOLDER_FUNC",
-            "state_outputs": "PLACEHOLDER_FUNC"
-        },
-        {
-            "additional_inputs": "PLACEHOLDER_FUNC",
-            "args": [],
-            "comment": "Set constant wind speed at each layer",
-            "config_inputs": "PLACEHOLDER_FUNC",
-            "external_state_inputs": "PLACEHOLDER_FUNC",
-            "format_output": false,
-            "func": "PLACEHOLDER_FUNC",
-            "gate": true,
-            "group": null,
-            "parameters_inputs": "PLACEHOLDER_FUNC",
-            "ptype": 0,
-            "state_inputs": "PLACEHOLDER_FUNC",
-            "state_outputs": "PLACEHOLDER_FUNC"
-        },
-        {
-            "additional_inputs": "PLACEHOLDER_FUNC",
-            "args": [],
-            "comment": "Set constant wind speed at each layer",
-            "config_inputs": "PLACEHOLDER_FUNC",
-            "external_state_inputs": "PLACEHOLDER_FUNC",
-            "format_output": false,
-            "func": "PLACEHOLDER_FUNC",
-            "gate": true,
-            "group": null,
-            "parameters_inputs": "PLACEHOLDER_FUNC",
-            "ptype": 0,
-            "state_inputs": "PLACEHOLDER_FUNC",
-            "state_outputs": "PLACEHOLDER_FUNC"
-        }
+        [
+            {
+                "additional_inputs": "PLACEHOLDER_FUNC",
+                "args": [],
+                "comment": "Calculate windspeed per layer",
+                "config_inputs": "PLACEHOLDER_FUNC",
+                "external_state_inputs": "PLACEHOLDER_FUNC",
+                "format_output": false,
+                "func": "PLACEHOLDER_FUNC",
+                "gate": true,
+                "group": null,
+                "parameters_inputs": "PLACEHOLDER_FUNC",
+                "ptype": 0,
+                "state_inputs": "PLACEHOLDER_FUNC",
+                "state_outputs": "PLACEHOLDER_FUNC"
+            },
+            {
+                "additional_inputs": "PLACEHOLDER_FUNC",
+                "args": [],
+                "comment": "calculate inter canopy ustar at each layer",
+                "config_inputs": "PLACEHOLDER_FUNC",
+                "external_state_inputs": "PLACEHOLDER_FUNC",
+                "format_output": false,
+                "func": "PLACEHOLDER_FUNC",
+                "gate": true,
+                "group": null,
+                "parameters_inputs": "PLACEHOLDER_FUNC",
+                "ptype": 0,
+                "state_inputs": "PLACEHOLDER_FUNC",
+                "state_outputs": "PLACEHOLDER_FUNC"
+            }
+        ],
+        [
+            {
+                "additional_inputs": "PLACEHOLDER_FUNC",
+                "args": [],
+                "comment": "Calculate windspeed per layer",
+                "config_inputs": "PLACEHOLDER_FUNC",
+                "external_state_inputs": "PLACEHOLDER_FUNC",
+                "format_output": false,
+                "func": "PLACEHOLDER_FUNC",
+                "gate": true,
+                "group": null,
+                "parameters_inputs": "PLACEHOLDER_FUNC",
+                "ptype": 0,
+                "state_inputs": "PLACEHOLDER_FUNC",
+                "state_outputs": "PLACEHOLDER_FUNC"
+            },
+            {
+                "additional_inputs": "PLACEHOLDER_FUNC",
+                "args": [],
+                "comment": "calculate inter canopy ustar at each layer",
+                "config_inputs": "PLACEHOLDER_FUNC",
+                "external_state_inputs": "PLACEHOLDER_FUNC",
+                "format_output": false,
+                "func": "PLACEHOLDER_FUNC",
+                "gate": true,
+                "group": null,
+                "parameters_inputs": "PLACEHOLDER_FUNC",
+                "ptype": 0,
+                "state_inputs": "PLACEHOLDER_FUNC",
+                "state_outputs": "PLACEHOLDER_FUNC"
+            }
+        ],
+        [
+            {
+                "additional_inputs": "PLACEHOLDER_FUNC",
+                "args": [],
+                "comment": "Calculate windspeed per layer",
+                "config_inputs": "PLACEHOLDER_FUNC",
+                "external_state_inputs": "PLACEHOLDER_FUNC",
+                "format_output": false,
+                "func": "PLACEHOLDER_FUNC",
+                "gate": true,
+                "group": null,
+                "parameters_inputs": "PLACEHOLDER_FUNC",
+                "ptype": 0,
+                "state_inputs": "PLACEHOLDER_FUNC",
+                "state_outputs": "PLACEHOLDER_FUNC"
+            },
+            {
+                "additional_inputs": "PLACEHOLDER_FUNC",
+                "args": [],
+                "comment": "calculate inter canopy ustar at each layer",
+                "config_inputs": "PLACEHOLDER_FUNC",
+                "external_state_inputs": "PLACEHOLDER_FUNC",
+                "format_output": false,
+                "func": "PLACEHOLDER_FUNC",
+                "gate": true,
+                "group": null,
+                "parameters_inputs": "PLACEHOLDER_FUNC",
+                "ptype": 0,
+                "state_inputs": "PLACEHOLDER_FUNC",
+                "state_outputs": "PLACEHOLDER_FUNC"
+            }
+        ]
     ],
     [
         {
@@ -1969,70 +2021,8 @@
         "state_outputs": "PLACEHOLDER_FUNC"
     },
     [
-        [
-            {
-                "additional_inputs": "PLACEHOLDER_FUNC",
-                "args": [],
-                "comment": "V_cmax_25 and J_max_25 supplied as constant",
-                "config_inputs": "PLACEHOLDER_FUNC",
-                "external_state_inputs": "PLACEHOLDER_FUNC",
-                "format_output": false,
-                "func": "PLACEHOLDER_FUNC",
-                "gate": true,
-                "group": null,
-                "parameters_inputs": "PLACEHOLDER_FUNC",
-                "ptype": 0,
-                "state_inputs": "PLACEHOLDER_FUNC",
-                "state_outputs": "PLACEHOLDER_FUNC"
-            },
-            {
-                "additional_inputs": "PLACEHOLDER_FUNC",
-                "args": [],
-                "comment": "Scale v_cmax_25 to layers below canopy",
-                "config_inputs": "PLACEHOLDER_FUNC",
-                "external_state_inputs": "PLACEHOLDER_FUNC",
-                "format_output": false,
-                "func": "PLACEHOLDER_FUNC",
-                "gate": true,
-                "group": null,
-                "parameters_inputs": "PLACEHOLDER_FUNC",
-                "ptype": 0,
-                "state_inputs": "PLACEHOLDER_FUNC",
-                "state_outputs": "PLACEHOLDER_FUNC"
-            }
-        ],
-        [
-            {
-                "additional_inputs": "PLACEHOLDER_FUNC",
-                "args": [],
-                "comment": "V_cmax_25 and J_max_25 supplied as constant",
-                "config_inputs": "PLACEHOLDER_FUNC",
-                "external_state_inputs": "PLACEHOLDER_FUNC",
-                "format_output": false,
-                "func": "PLACEHOLDER_FUNC",
-                "gate": true,
-                "group": null,
-                "parameters_inputs": "PLACEHOLDER_FUNC",
-                "ptype": 0,
-                "state_inputs": "PLACEHOLDER_FUNC",
-                "state_outputs": "PLACEHOLDER_FUNC"
-            },
-            {
-                "additional_inputs": "PLACEHOLDER_FUNC",
-                "args": [],
-                "comment": "Scale v_cmax_25 to layers below canopy",
-                "config_inputs": "PLACEHOLDER_FUNC",
-                "external_state_inputs": "PLACEHOLDER_FUNC",
-                "format_output": false,
-                "func": "PLACEHOLDER_FUNC",
-                "gate": true,
-                "group": null,
-                "parameters_inputs": "PLACEHOLDER_FUNC",
-                "ptype": 0,
-                "state_inputs": "PLACEHOLDER_FUNC",
-                "state_outputs": "PLACEHOLDER_FUNC"
-            }
-        ]
+        [],
+        []
     ],
     [
         [],
@@ -2045,7 +2035,21 @@
     [
         [
             [],
-            [],
+            {
+                "additional_inputs": "PLACEHOLDER_FUNC",
+                "args": [],
+                "comment": "f_temp - disabled",
+                "config_inputs": "PLACEHOLDER_FUNC",
+                "external_state_inputs": "PLACEHOLDER_FUNC",
+                "format_output": false,
+                "func": "PLACEHOLDER_FUNC",
+                "gate": true,
+                "group": null,
+                "parameters_inputs": "PLACEHOLDER_FUNC",
+                "ptype": 0,
+                "state_inputs": "PLACEHOLDER_FUNC",
+                "state_outputs": "PLACEHOLDER_FUNC"
+            },
             {
                 "additional_inputs": "PLACEHOLDER_FUNC",
                 "args": [],
@@ -2109,7 +2113,21 @@
         ],
         [
             [],
-            [],
+            {
+                "additional_inputs": "PLACEHOLDER_FUNC",
+                "args": [],
+                "comment": "f_temp - disabled",
+                "config_inputs": "PLACEHOLDER_FUNC",
+                "external_state_inputs": "PLACEHOLDER_FUNC",
+                "format_output": false,
+                "func": "PLACEHOLDER_FUNC",
+                "gate": true,
+                "group": null,
+                "parameters_inputs": "PLACEHOLDER_FUNC",
+                "ptype": 0,
+                "state_inputs": "PLACEHOLDER_FUNC",
+                "state_outputs": "PLACEHOLDER_FUNC"
+            },
             {
                 "additional_inputs": "PLACEHOLDER_FUNC",
                 "args": [],
@@ -2173,7 +2191,21 @@
         ],
         [
             [],
-            [],
+            {
+                "additional_inputs": "PLACEHOLDER_FUNC",
+                "args": [],
+                "comment": "f_temp - disabled",
+                "config_inputs": "PLACEHOLDER_FUNC",
+                "external_state_inputs": "PLACEHOLDER_FUNC",
+                "format_output": false,
+                "func": "PLACEHOLDER_FUNC",
+                "gate": true,
+                "group": null,
+                "parameters_inputs": "PLACEHOLDER_FUNC",
+                "ptype": 0,
+                "state_inputs": "PLACEHOLDER_FUNC",
+                "state_outputs": "PLACEHOLDER_FUNC"
+            },
             {
                 "additional_inputs": "PLACEHOLDER_FUNC",
                 "args": [],
@@ -2237,7 +2269,21 @@
         ],
         [
             [],
-            [],
+            {
+                "additional_inputs": "PLACEHOLDER_FUNC",
+                "args": [],
+                "comment": "f_temp - disabled",
+                "config_inputs": "PLACEHOLDER_FUNC",
+                "external_state_inputs": "PLACEHOLDER_FUNC",
+                "format_output": false,
+                "func": "PLACEHOLDER_FUNC",
+                "gate": true,
+                "group": null,
+                "parameters_inputs": "PLACEHOLDER_FUNC",
+                "ptype": 0,
+                "state_inputs": "PLACEHOLDER_FUNC",
+                "state_outputs": "PLACEHOLDER_FUNC"
+            },
             {
                 "additional_inputs": "PLACEHOLDER_FUNC",
                 "args": [],
@@ -2301,7 +2347,21 @@
         ],
         [
             [],
-            [],
+            {
+                "additional_inputs": "PLACEHOLDER_FUNC",
+                "args": [],
+                "comment": "f_temp - disabled",
+                "config_inputs": "PLACEHOLDER_FUNC",
+                "external_state_inputs": "PLACEHOLDER_FUNC",
+                "format_output": false,
+                "func": "PLACEHOLDER_FUNC",
+                "gate": true,
+                "group": null,
+                "parameters_inputs": "PLACEHOLDER_FUNC",
+                "ptype": 0,
+                "state_inputs": "PLACEHOLDER_FUNC",
+                "state_outputs": "PLACEHOLDER_FUNC"
+            },
             {
                 "additional_inputs": "PLACEHOLDER_FUNC",
                 "args": [],
@@ -2365,7 +2425,21 @@
         ],
         [
             [],
-            [],
+            {
+                "additional_inputs": "PLACEHOLDER_FUNC",
+                "args": [],
+                "comment": "f_temp - disabled",
+                "config_inputs": "PLACEHOLDER_FUNC",
+                "external_state_inputs": "PLACEHOLDER_FUNC",
+                "format_output": false,
+                "func": "PLACEHOLDER_FUNC",
+                "gate": true,
+                "group": null,
+                "parameters_inputs": "PLACEHOLDER_FUNC",
+                "ptype": 0,
+                "state_inputs": "PLACEHOLDER_FUNC",
+                "state_outputs": "PLACEHOLDER_FUNC"
+            },
             {
                 "additional_inputs": "PLACEHOLDER_FUNC",
                 "args": [],
@@ -2830,6 +2904,7 @@
             "state_outputs": "PLACEHOLDER_FUNC"
         }
     ],
+    [],
     {
         "additional_inputs": "PLACEHOLDER_FUNC",
         "args": [],
@@ -2845,7 +2920,6 @@
         "state_inputs": "PLACEHOLDER_FUNC",
         "state_outputs": "PLACEHOLDER_FUNC"
     },
-    [],
     {
         "additional_inputs": "PLACEHOLDER_FUNC",
         "args": [],
@@ -2876,6 +2950,7 @@
         "state_inputs": "PLACEHOLDER_FUNC",
         "state_outputs": "PLACEHOLDER_FUNC"
     },
+    [],
     [
         {
             "additional_inputs": "PLACEHOLDER_FUNC",
@@ -3200,6 +3275,21 @@
             "state_outputs": "PLACEHOLDER_FUNC"
         }
     ],
+    {
+        "additional_inputs": "PLACEHOLDER_FUNC",
+        "args": [],
+        "comment": "Calculate the total ozone flux to the vegetated surface.",
+        "config_inputs": "PLACEHOLDER_FUNC",
+        "external_state_inputs": "PLACEHOLDER_FUNC",
+        "format_output": false,
+        "func": "PLACEHOLDER_FUNC",
+        "gate": true,
+        "group": null,
+        "parameters_inputs": "PLACEHOLDER_FUNC",
+        "ptype": 0,
+        "state_inputs": "PLACEHOLDER_FUNC",
+        "state_outputs": "PLACEHOLDER_FUNC"
+    },
     {
         "additional_inputs": "PLACEHOLDER_FUNC",
         "args": [],
