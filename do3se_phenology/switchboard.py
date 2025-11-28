@@ -94,18 +94,18 @@ def phenology_from_legacy_day_plf(
     if species_config.leaf_f_phen_method in [
             LeafFPhenMethods.DAY_PLF, LeafFPhenMethods.TT_DAY_PLF, LeafFPhenMethods.TT_GROWING_SEASON]:
 
-        sowing_to_astart = species_config.key_lengths.sowing_to_astart or species_config.day_fphen_plf.f_phen_1
+        sowing_to_astart = species_config.key_lengths.sowing_to_astart
         assert sowing_to_astart, "sowing_to_astart could not be defined!"
         Astart = sowing_day + sowing_to_astart
         emerg_to_astart = Astart - sowing_to_emerg
 
         flag_emerg_to_astart = 0  # NOTE: This method assumes flag emergence time is 0
         plant_emerg_to_flag_emerg = Astart - sowing_to_emerg - flag_emerg_to_astart
-        astart_to_senescence = egs - sowing_to_astart - sowing_day
+        astart_to_senescence = egs - sowing_to_astart - sowing_day - species_config.day_fphen_plf.leaf_f_phen_2
 
         species_config.key_lengths_flag_leaf.plant_emerg_to_leaf_emerg = plant_emerg_to_flag_emerg
-        species_config.key_lengths_flag_leaf.leaf_emerg_to_astart = flag_emerg_to_astart
-        species_config.key_lengths_flag_leaf.astart_to_senescence = astart_to_senescence
+        species_config.key_lengths_flag_leaf.leaf_emerg_to_fully_grown = species_config.day_fphen_plf.leaf_f_phen_1
+        species_config.key_lengths_flag_leaf.fully_grown_to_senescence = astart_to_senescence - species_config.day_fphen_plf.leaf_f_phen_1
         species_config.key_lengths.emerg_to_astart = emerg_to_astart
         species_config.key_dates.Astart = Astart
         species_config.key_dates.Aend = egs
@@ -113,8 +113,9 @@ def phenology_from_legacy_day_plf(
 
         assert species_config.key_lengths.sowing_to_emerge is not None, "key_lengths.sowing_to_emerge could not be defined!"
         assert species_config.key_lengths_flag_leaf.plant_emerg_to_leaf_emerg is not None, "key_lengths_flag_leaf.plant_emerg_to_leaf_emerg could not be defined!"
-        assert species_config.key_lengths_flag_leaf.leaf_emerg_to_astart is not None, "key_lengths_flag_leaf.leaf_emerg_to_astart could not be defined!"
-        assert species_config.key_lengths_flag_leaf.astart_to_senescence is not None, "key_lengths_flag_leaf.astart_to_senescence could not be defined!"
+        assert species_config.key_lengths_flag_leaf.leaf_emerg_to_fully_grown is not None, "key_lengths_flag_leaf.leaf_emerg_to_fully_grown could not be defined!"
+        assert species_config.key_lengths_flag_leaf.fully_grown_to_senescence is not None, "key_lengths_flag_leaf.fully_grown_to_senescence could not be defined!"
+        assert species_config.key_lengths_flag_leaf.fully_grown_to_senescence > 0, "key_lengths_flag_leaf.fully_grown_to_senescence must be greater than 0!"
         assert species_config.key_lengths.emerg_to_astart is not None, "key_lengths.emerg_to_astart could not be defined!"
         assert species_config.key_dates.Astart, "AStart day could not be defined!"
         assert species_config.key_dates.Aend, "AEnd day could not be defined!"

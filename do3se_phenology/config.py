@@ -378,10 +378,10 @@ class PhenologyLeafKeyLengths:
     plant_emerg_to_leaf_emerg: Optional[TimeUnit] = None
     #: Thermal time between plant emergence and leaf fst acc
     leaf_emerg_to_leaf_fst_acc: Optional[TimeUnit] = None
-    #: Thermal time between leaf emergence and leaf maturity
-    leaf_emerg_to_astart: Optional[TimeUnit] = None
-    #: Thermal time between leaf maturity and leaf senescence
-    astart_to_senescence: Optional[TimeUnit] = None
+
+    # Only used in Julian Day mode
+    leaf_emerg_to_fully_grown: Optional[TimeUnit] = None
+    fully_grown_to_senescence: Optional[TimeUnit] = None
 
 
 @dataclass

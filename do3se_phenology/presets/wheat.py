@@ -60,7 +60,8 @@ SpringWheatMultiplicative = SpeciesConfig(
         sowing=105.0
     ),
     key_lengths=PhenologyKeyLengths(
-        sowing_to_emerge=0.0
+        sowing_to_emerge=0.0,
+        sowing_to_astart=40.0
     ),
     LAI_a=0.0,
     LAI_b=4.0,

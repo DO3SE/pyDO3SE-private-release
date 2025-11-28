@@ -914,6 +914,7 @@ def get_plant_phenology_stage(
 
     """
     if phenology_stage < PhenologyStage.EMERGED:
+        # Emergence handled elsewhere
         return phenology_stage
     # NOTE Currently disabled as we don't always have emerge
     # elif dd <= key_lengths.emerg_to_astart:
@@ -921,6 +922,7 @@ def get_plant_phenology_stage(
     # elif dd <= key_lengths.emerg_to_end:
     #     return PhenologyStage.ASTART
     elif dd <= key_lengths.emerg_to_end:
+        # This doesn't really do anything as we have already checked for emergence
         return PhenologyStage.EMERGED
     else:
         return PhenologyStage.HARVEST
@@ -949,17 +951,18 @@ def get_leaf_phenology_stage(
     dd_at_sowing: int,
     sowing_to_plant_emerg: int,
     plant_emerg_to_leaf_emerg: int,
-    leaf_emerg_to_astart: int,
-    Astart_to_senescence: int,
+    leaf_emerg_to_fully_grown: int,
+    fully_grown_to_senescence: int,
+    sowing_to_end: int,
 ) -> LeafPhenologyStage:
     dd_diff = dd - dd_at_sowing
-    if dd_diff <= 0:
+    if dd_diff <= sowing_to_plant_emerg + plant_emerg_to_leaf_emerg:
         return LeafPhenologyStage.NOT_EMERGED
-    elif dd_diff <= sowing_to_plant_emerg + plant_emerg_to_leaf_emerg:
+    elif dd_diff <= sowing_to_plant_emerg + plant_emerg_to_leaf_emerg + leaf_emerg_to_fully_grown:
         return LeafPhenologyStage.GROWING
-    elif dd_diff <= sowing_to_plant_emerg + plant_emerg_to_leaf_emerg + leaf_emerg_to_astart:
+    elif dd_diff <= sowing_to_plant_emerg + plant_emerg_to_leaf_emerg + leaf_emerg_to_fully_grown + fully_grown_to_senescence:
         return LeafPhenologyStage.MATURE
-    elif dd_diff <= sowing_to_plant_emerg + plant_emerg_to_leaf_emerg + leaf_emerg_to_astart + Astart_to_senescence:
+    elif dd_diff <= sowing_to_end:
         return LeafPhenologyStage.SENESCENCE
     else:
         return LeafPhenologyStage.FULLY_SENESED
