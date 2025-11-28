@@ -16,7 +16,7 @@ def test_config_loader(snapshot):
     assert isinstance(config, Config_Shape)
     assert config.Location.lat == 40.43
     assert config.Location.lon == -3.7
-    assert config.Land_Cover.parameters[0].gsto.method == GstoMethods.PHOTOSYNTHESIS.value
+    assert config.Land_Cover.parameters[0].gsto.method == GstoMethods.PHOTOSYNTHESIS
     snapshot.assert_match(process_snapshot(config), 'Config')
 
 

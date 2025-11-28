@@ -33,7 +33,7 @@ def match_heading_to_field(heading: str, fields: List[InputField]):
     e.g. 'P, kPa' matches InputField('P'...),
     """
     if not heading or not heading.replace(" ", ""):
-        warnings.warn(f"Found empty heading in input")
+        warnings.warn(f"Found empty heading in input for {heading}")
         return heading, heading
 
     # Match information in header string
@@ -49,7 +49,7 @@ def match_heading_to_field(heading: str, fields: List[InputField]):
     matching_fields = [
         f
         for f in fields
-        if (f.id.lower() == name.lower() or name.lower() in f.alt_names)
+        if (f.id.lower() == name.lower() or name.lower() in (f.alt_names or []))
     ]
     matching_fields_units = [f for f in matching_fields if f.units == units]
     ignore_field = None

@@ -21,7 +21,6 @@
         "nL": 1,
         "nLC": 1,
         "nP": 1,
-        "ozone_deposition_method": "single layer",
         "parameters": [
             {
                 "Lm": 0.02,
@@ -283,6 +282,7 @@
         "canopy_zo": 0.1,
         "crop_to_day_end": false,
         "crop_to_day_start": false,
+        "custom_heights": null,
         "elev": 20.0,
         "end_day": null,
         "h_O3": null,
@@ -304,6 +304,7 @@
     },
     "Met": {
         "PARsunshade_method": "FARQUHAR1997",
+        "calculate_met_at_ground_layer": false,
         "dd_calc_method": null,
         "inputs": {
             "ASW_constant": null,
@@ -501,10 +502,13 @@
     "notes": "",
     "output": {
         "fields": null,
+        "include_spacers": true,
         "log_multilayer": false
     },
     "resistance": {
+        "Rinc_b": 14,
         "ra_calc_method": "simple",
+        "rb_calc_method": "single_layer",
         "rsur_calc_method": "single_layer"
     },
     "soil_moisture": {

@@ -36,8 +36,8 @@ class Config_Location:
 
     #: Override the start and end dates of the model. Otherwise the first and last dd values
     #: from the external data will be used. These days are inclusive.
-    start_day: float = None
-    end_day: float = None
+    start_day: int = None
+    end_day: int = None
 
     #: Year for DOY offset
     #: DOY (where year == zero_year + 1) == DOY + 365

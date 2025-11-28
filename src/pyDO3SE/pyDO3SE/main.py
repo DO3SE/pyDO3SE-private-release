@@ -64,7 +64,6 @@ Data flow in model
 
 """
 
-from typing import get_type_hints
 import os
 import pandas as pd
 from pathlib import Path
@@ -74,8 +73,9 @@ from functools import partial
 from multiprocessing import Pool
 import warnings
 import ntpath
-from typing import Callable, List, NamedTuple, Tuple, Dict, Optional
+from typing import Callable, List, NamedTuple, Tuple, Dict, Optional, get_type_hints, cast
 from datetime import datetime
+from proflow.Objects.Process import Process
 
 from pyDO3SE.lib import (
     RunFiles,
@@ -130,12 +130,15 @@ def load_run_files(
 ) -> RunFiles:
     logger("Loading run files")
     return RunFiles(
-        config=config_loader(run_paths.config_path, project_paths.base_config_path, "json", logger=logger),
+        config=config_loader(
+            run_paths.config_path, project_paths.base_config_path, "json", logger=logger
+        ),
         state=project_paths.base_state_path
         and model_state_loader(project_paths.base_state_path, None, "json", False)
         or Model_State_Shape(),
         per_input_config_overrides=pd.read_csv(project_paths.per_input_config_overrides)
-        if project_paths.per_input_config_overrides and os.path.exists(project_paths.per_input_config_overrides)
+        if project_paths.per_input_config_overrides
+        and os.path.exists(project_paths.per_input_config_overrides)
         else None,
     )
 
@@ -297,13 +300,13 @@ def main(
                 run_paths.output_directory,
                 final_config=config,
                 initial_state=initial_state,
-                model_processes=model_processes,
+                model_processes=cast(List[Process], model_processes),
                 logger=logger,
                 **asdict(output_options),
             )
-        except Exception as e:
+        except Exception as ee:
             logger("Error exporting failed run output")
-        raise e from e
+            raise ee from e
     time_taken = datetime.now() - start_time
     logger(f"Model run complete in {time_taken}")
 
@@ -318,7 +321,7 @@ def main(
             final_config=config,
             initial_state=initial_state,
             output_filename=output_filename,
-            model_processes=model_processes,
+            model_processes=cast(List[Process], model_processes),
             fields_to_graph=fields_to_graph,
             observed_diurnal_path=project_paths.observed_diurnal_path,
             runid=run_paths.run_id,
@@ -573,7 +576,9 @@ def batch(
     input_files = [f for f in os.listdir(project_paths.input_data_dir) if f.split(".")[-1] == "csv"]
     output_fields_to_save = output_fields and output_fields.split(",") or None
     _compare_fields = (
-        default_output_fields if compare_fields == "_all" else compare_fields and compare_fields.split(",") or []
+        default_output_fields
+        if compare_fields == "_all"
+        else compare_fields and compare_fields.split(",") or []
     )
 
     common_args = {}
@@ -610,13 +615,15 @@ def batch(
 
     start_time = datetime.now()
 
-    _overrides = dict([o.split('=') for o in overrides])
+    _overrides = dict([o.split("=") for o in overrides])
 
     # Run each file distributed
     results_info: List[Tuple[Args, RunOutput]] = []
     if parallel:
         with Pool(processes=8) as pool:
-            results = pool.map(partial(run_from_args, verbose=verbose, kwargs=_overrides), args_to_run)
+            results = pool.map(
+                partial(run_from_args, verbose=verbose, kwargs=_overrides), args_to_run
+            )
             results_info = zip(args_to_run, results)
     else:
         for args in args_to_run:

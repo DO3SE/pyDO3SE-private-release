@@ -58,6 +58,7 @@ class TestLogProcesses:
         external, state, *_ = log_processes(
             nL=1,
             nLC=1,
+            nCH=1,
             nP=1,
             fields=fields,
             log_multilayer=False,
@@ -91,6 +92,7 @@ class TestLogProcesses:
         external, state, multi_layer_outputs, debug_log_processes = log_processes(
             nL=2,
             nLC=1,
+            nCH=2,
             nP=1,
             fields=fields,
             log_multilayer=True,

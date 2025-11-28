@@ -2,7 +2,6 @@
 
 from typing import Any, List
 from pyDO3SE.util.Objects import Field
-import pandas as pd
 
 MONTHS = [
     "jan",
