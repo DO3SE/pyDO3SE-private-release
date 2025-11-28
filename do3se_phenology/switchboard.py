@@ -97,10 +97,10 @@ def phenology_from_legacy_day_plf(
         sowing_to_astart = species_config.key_lengths.sowing_to_astart
         assert sowing_to_astart, "sowing_to_astart could not be defined!"
         Astart = sowing_day + sowing_to_astart
-        emerg_to_astart = Astart - sowing_to_emerg
+        emerg_to_astart = sowing_to_astart - sowing_to_emerg
 
         flag_emerg_to_astart = 0  # NOTE: This method assumes flag emergence time is 0
-        plant_emerg_to_flag_emerg = Astart - sowing_to_emerg - flag_emerg_to_astart
+        plant_emerg_to_flag_emerg = Astart - sowing_day - sowing_to_emerg - flag_emerg_to_astart
         astart_to_senescence = egs - sowing_to_astart - sowing_day - species_config.day_fphen_plf.leaf_f_phen_2
 
         species_config.key_lengths_flag_leaf.plant_emerg_to_leaf_emerg = plant_emerg_to_flag_emerg
