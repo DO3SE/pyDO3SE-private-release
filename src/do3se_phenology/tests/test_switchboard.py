@@ -453,11 +453,11 @@ class TestSwitchBoardDayPLF(SwitchBoardTestBase):
             sowing_to_emerge=0,
             sowing_to_end=197 - 105,  # harvest - sowing
             emerg_to_end=197 - 105 - 0,  # harvest - sowing - sowing_to_emerge
-            emerg_to_astart=145,  # Astart - sowing
+            emerg_to_astart=40,  # Astart - sowing
         ),
         key_lengths_flag_leaf=replace(
             deepcopy(species_config.key_lengths_flag_leaf),
-            plant_emerg_to_leaf_emerg=145,  # Same as sowing +
+            plant_emerg_to_leaf_emerg=40,  # Same as sowing +
             leaf_emerg_to_fully_grown=20,  # f_phen_1
             fully_grown_to_senescence=2.0,  # 197 - 167
         ),
