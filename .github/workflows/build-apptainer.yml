@@ -34,8 +34,6 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync --extra grid
-        # Temporarily install data_helpers from built wheel until published to PyPI
-        uv pip install -U built_dependencies/data_helpers-0.2.1-py3-none-any.whl
     - name: Build Source with UV
       run: |
         uv build

@@ -25,8 +25,6 @@ jobs:
         uv sync --extra test
         uv sync --extra grid
         uv add xarray --group=grid
-        # Temporarily install data_helpers from built wheel until published to PyPI
-        uv pip install -U built_dependencies/data_helpers-0.2.1-py3-none-any.whl
 
     - name: Setup test env
       run: |
