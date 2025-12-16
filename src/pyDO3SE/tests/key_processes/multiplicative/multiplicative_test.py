@@ -168,3 +168,15 @@ class TestRunAndCompare:
         assert max(pody) > 0
         assert min(pody) == 0
         assert pody[-1] > 0
+
+
+    @pytest.mark.parametrize('runid', ['alt'])
+    def test_should_calculate_aot40_correctly(self, runid):
+        hourly_output = self.output[runid]['hourly_output']
+        aot40 = hourly_output['aot40'].values
+        assert aot40[0] is not None
+        assert aot40[-1] is not None
+        assert all(a is not None for a in aot40)
+        assert max(aot40) > 0
+        assert min(aot40) == 0
+        assert aot40[-1] > 0

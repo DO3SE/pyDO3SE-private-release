@@ -4422,6 +4422,12 @@ def log_processes(nL: int, nLC: int, nP: int, nCH: int, fields: List[str], log_m
             I(state.canopy_component_population[component_index]
               [flag_index].POD_Y, as_='pody') if 'pody' in fields else None,
             I(state.canopy_component_population[component_index]
+              [flag_index].OT_40, as_='ot40') if 'ot40' in fields else None,
+            I(state.canopy_component_population[component_index]
+              [flag_index].AOT_40, as_='aot40') if 'aot40' in fields else None,
+            I(state.canopy_component_population[component_index]
+              [flag_index].AOT_0, as_='aot0') if 'aot0' in fields else None,
+            I(state.canopy_component_population[component_index]
               [flag_index].POD_Y_sunlit, as_='pody_sun') if 'pody_sun' in fields else None,
             I(state.canopy_component_population[component_index]
               [flag_index].POD_0, as_='pod0') if 'pod0' in fields else None,
