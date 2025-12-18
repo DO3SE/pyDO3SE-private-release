@@ -14,7 +14,7 @@ from pyDO3SE.Defaults.config_init_processes import config_init_processes
 def setup_initial_model(
     start_day=0,
     end_day=40,
-    config_location='examples/spanish_wheat/spanish_wheat_config_for_short_test.json',
+    config_path='examples/spanish_wheat/spanish_wheat_config_for_short_test.json',
     data_location='examples/spanish_wheat/spanish_wheat_data.csv',
 ):
 

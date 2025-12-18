@@ -1,4 +1,4 @@
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Union
 from data_helpers.dictionary_helpers import ListMergeMethods, merge_dictionaries
 from pathlib import Path
 import json
@@ -29,26 +29,26 @@ def process_json_config(json_config_data: dict) -> Config_Shape:
 
 
 def config_loader(
-    config_location: Path | str,
-    base_config_file: Path | str | None = None,
+    config_path: Path | str,
+    base_config_file_path: Path | str | None = None,
     config_type: str = "json",
     logger: Callable[[str], None] = print,
 ) -> Config_Shape:
     """loads a datafile into a config object"""
-    logger("Loading config:", str(config_location))
-    logger("Loading base config:", str(base_config_file))
-    with open(config_location) as config_file:
+    logger("Loading config:", str(config_path))
+    logger("Loading base config:", str(base_config_file_path))
+    with open(config_path) as config_file:
         read_data = config_file.read()
         if config_type == "json":
             try:
                 config_data = json.loads(read_data)
             except:
-                raise ConfigError(f"Failed to load config from {config_location}")
+                raise ConfigError(f"Failed to load config from {config_path}")
         else:
             raise Exception("Invalid config file type")
-    if base_config_file:
-        with open(base_config_file) as config_file:
-            read_data = config_file.read()
+    if base_config_file_path:
+        with open(base_config_file_path) as base_config_file:
+            read_data = base_config_file.read()
             if config_type == "json":
                 try:
                     base_config_data = json.loads(read_data)
@@ -57,7 +57,7 @@ def config_loader(
             else:
                 raise Exception("Invalid config file type")
     merged_config_data = (
-        base_config_file
+        base_config_file_path
         and merge_dictionaries(base_config_data, config_data, ListMergeMethods.ZIP)
         or config_data
     )

@@ -105,6 +105,7 @@ class TestRunAndCompare:
         """Test that ozone remains the same if not transfered up or down."""
         hourly_output = self.output[runid]['hourly_output']
         final_state, output_logs, final_config, initial_state, external_state = self.output[runid]['out']
+        input_ozone = hourly_output['o3_ppb_zr'].values
         canopy_top_o3 = hourly_output['canopy_top_o3'].values
         micro_o3 = hourly_output['micro_O3'].values
         # assert final_config.Location.h_O3 == initial_state.canopy.canopy_height
@@ -113,6 +114,7 @@ class TestRunAndCompare:
             assert final_config.Location.h_O3 == final_state.canopy.canopy_height
         external_state: External_State_Shape = external_state
         assert all(canopy_top_o3)
+        assert all([isclose(a, b, abs_tol=1e-1) for a, b in zip(canopy_top_o3, input_ozone)])
         assert all([isclose(a, b, abs_tol=1e-1) for a, b in zip(canopy_top_o3, external_state.O3)])
         assert all([isclose(a, b, abs_tol=1e-1) for a, b in zip(canopy_top_o3, micro_o3)])
 

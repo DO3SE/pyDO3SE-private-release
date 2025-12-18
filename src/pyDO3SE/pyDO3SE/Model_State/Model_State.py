@@ -208,6 +208,8 @@ class Canopy_Population_State:
     OT_40: float = None        #: [ppm]
     AOT_0: float = 0.0          #: [ppm h]
     AOT_40: float = 0.0         #: [ppm h]
+    W126: float = 0.0         #: [ppm h]
+    W126_acc: float = 0.0         #: [ppm h]
 
     #: Ozone damage factors
     #:   Hourly ozone impace factor [dimensionless][0-1]

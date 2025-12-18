@@ -9,11 +9,11 @@ from .helpers import (
     O3_ppb_to_nmol,
     calc_fst_leaf,
     stomatal_flux_rate,
+    calc_w126,
 )
 
 
 class TestCalcFst:
-
     def test_calc_fst(self):
         fst = calc_fst(
             Gsto_l=495.529266357,
@@ -36,10 +36,12 @@ class TestCalcFst:
 
 
 class TestCalcFstLeaf:
-
-    @pytest.mark.parametrize(['Gsto_l', 'expected_output'], [
-        ([99.9, 99.9, 99.9], 0.003113),
-    ])
+    @pytest.mark.parametrize(
+        ["Gsto_l", "expected_output"],
+        [
+            ([99.9, 99.9, 99.9], 0.003113),
+        ],
+    )
     def test_calculates_fst(self, Gsto_l, expected_output):
         nL = 3
         Rext = [300 for _ in range(nL)]
@@ -80,9 +82,12 @@ class TestCalcFstLeaf:
         expected_output = 0.0
         assert isclose(out, expected_output, abs_tol=1e-3)
 
-    @pytest.mark.parametrize(['Gsto_l', 'expected_output'], [
-        ([99.9], 0.0065704880),
-    ])
+    @pytest.mark.parametrize(
+        ["Gsto_l", "expected_output"],
+        [
+            ([99.9], 0.0065704880),
+        ],
+    )
     def test_calculates_fst_single_layer(self, Gsto_l, expected_output):
         nL = 1
         Rsto_l = [41000 / Gsto_l[iL] for iL in range(nL)]
@@ -102,9 +107,12 @@ class TestCalcFstLeaf:
 
         assert isclose(out, expected_output, abs_tol=1e-3)
 
-    @pytest.mark.parametrize(['Gsto_l', 'expected_output'], [
-        ([99.9, 99.9, 99.9], 0.0065704880),
-    ])
+    @pytest.mark.parametrize(
+        ["Gsto_l", "expected_output"],
+        [
+            ([99.9, 99.9, 99.9], 0.0065704880),
+        ],
+    )
     def test_increasing_O3_increases_fst(self, Gsto_l, expected_output):
         nL = 3
         Rsto_l = [41000 / Gsto_l[iL] for iL in range(nL)]
@@ -210,3 +218,16 @@ def test_calc_OT():
     assert isclose(out.OT_40, 0.0599, abs_tol=1e-3)
     assert isclose(out.AOT_0, 99.999, abs_tol=1e-3)
     assert isclose(out.AOT_40, 99.959, abs_tol=1e-3)
+
+
+class TestCalcW126:
+    def test_calc_w126_daylight(self):
+        out = calc_w126(50.0, 99.9, True)
+        # TODO: Verify this expected value
+        assert isclose(out.W126, 5.5034259230, abs_tol=1e-3)
+        assert isclose(out.W126_acc, 99.9 + 5.5034259230, abs_tol=1e-3)
+
+    def test_calc_w126_nighttime(self):
+        out = calc_w126(50.0, 99.9, False)
+        assert isclose(out.W126, 0.0, abs_tol=1e-3)
+        assert isclose(out.W126_acc, 99.9 + 0.0, abs_tol=1e-3)

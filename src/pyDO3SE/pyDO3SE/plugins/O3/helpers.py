@@ -36,7 +36,7 @@ def O3_ppb_to_nmol(
         Ozone concentration [umol/m\u00b2/s]
 
     """
-    M_O3 = 48.0      # Molecular weight of O3 (g)
+    M_O3 = 48.0  # Molecular weight of O3 (g)
     R = 8.314510  # Ideal gas constant
     T = deg_to_kel(Ts_C)
 
@@ -71,7 +71,7 @@ def stomatal_flux_rate(
     return flux_rate
 
 
-PODOutput = namedtuple('PODOutput', 'POD_0 POD_Y')
+PODOutput = namedtuple("PODOutput", "POD_0 POD_Y")
 
 
 def calc_POD(
@@ -130,7 +130,7 @@ def calc_OT(
     return OT_0, OT_40
 
 
-OT_out = namedtuple('OT_out', 'OT_0 OT_40 AOT_0 AOT_40')
+OT_out = namedtuple("OT_out", "OT_0 OT_40 AOT_0 AOT_40")
 
 
 def calc_OT_acc(
@@ -140,7 +140,7 @@ def calc_OT_acc(
     micro_O3: float,
     AOT_0_prev: float,
     AOT_40_prev: float,
-) -> NamedTuple:
+) -> OT_out:
     """Calculate the accumulated OT when is daylight and leaf f_phen > 0.
 
     Parameters
@@ -195,15 +195,56 @@ def calc_OT_leaf(
     AOT_0_prev: float,
     AOT_40_prev: float,
     nL: int,
-) -> float:
-    OT_0_per_layer, OT_40_per_layer = list(zip(*[
-        calc_OT(
-            is_daylight,
-            f_phen,
-            leaf_f_phen,
-            micro_O3[i],
-        ) for i in range(nL)
-    ]))
+) -> OT_out:
+    """Calculate the accumulated OT for a specific leaf population.
+
+
+    Parameters
+    ----------
+    is_daylight : bool
+        True if is daylight. Normally set by hour of day (e.g. 8 to 20)
+    f_phen : float
+        f_phen value for this leaf population
+    leaf_f_phen : float
+        leaf_f_phen value for this leaf population
+    micro_O3: List[float]
+        O3 at each layer [ppb]
+    AOt_0_prev: float
+        Accumulated OT_0 at previous hour
+    AOt_40_prev: float
+        Accumulated OT_40 at previous hour
+
+    Returns (As namedtuple)
+    -----------------------
+    OT_0: float
+        total layer O3 / 1000
+    OT_40: float
+        total layer (O3 - 40) / 1000
+    AOt_0: float
+        Accumulated OT_0
+    AOt_40: float
+        Accumulated OT_40
+
+    References
+    ----------
+
+    Emberson et al, 2026, Understanding global ozone distribution, trends and impacts to inform air quality policy to protect vegetation,
+
+
+    """
+    OT_0_per_layer, OT_40_per_layer = list(
+        zip(
+            *[
+                calc_OT(
+                    is_daylight,
+                    f_phen,
+                    leaf_f_phen,
+                    micro_O3[i],
+                )
+                for i in range(nL)
+            ]
+        )
+    )
     OT_0 = sum(OT_0_per_layer)
     OT_40 = sum(OT_40_per_layer)
     AOT_0 = AOT_0_prev + OT_0
@@ -215,6 +256,55 @@ def calc_OT_leaf(
         AOT_0=AOT_0,
         AOT_40=AOT_40,
     )
+
+
+W126_out = namedtuple("W126_out", "W126 W126_acc")
+
+
+def calc_w126(
+    Ci: float,
+    W126_acc_prev: float,
+    is_daylight: bool,
+) -> W126_out:
+    """Calculate W126 index.
+
+    Parameters
+    ----------
+    Ci : float
+        Hourly average O3 mixing ratio [ppb]
+    W126_acc_prev : float
+        Accumulated W126 index from previous hour [ppm]
+    is_daylight : bool
+        True if is daylight, normally set by hour of day (e.g. 8 to 20)
+
+
+    Returns as namedtuple
+    ---------------------
+    W126: float
+        Daily W126 index (W126, ppm)
+    W126_acc: float
+        Accumulated Daily W126 index (W126_acc, ppm)
+
+
+    W126 = SUM(wi*Ci) with weight wi = 1/[1 + M*exp(-A*Ci/1000)], where M = 4403, A = 126, and where
+    Ci is the hourly average O3 mixing ratio in units of ppb.
+
+
+
+
+
+    References
+    ----------
+
+    Emberson et al, 2026, Understanding global ozone distribution, trends and impacts to inform air quality policy to protect vegetation,
+
+    """
+    M = 4403.0
+    A = 126.0
+    wi = 1.0 / (1.0 + M * pow(2.718281828459045, -A * Ci / 1000.0))
+    W126 = wi * Ci if is_daylight else 0.0
+    W126_acc = W126_acc_prev + W126 if is_daylight else W126_acc_prev
+    return W126_out(W126=W126, W126_acc=W126_acc)
 
 
 def calc_FO3_eff(
@@ -319,6 +409,7 @@ def calc_ftot(
     """Calculate the total ozone flux to the vegetated surface."""
     return O3_nmol_m3 * Vd
 
+
 def calc_fst(
     Gsto_l: float,
     Rb_l: float,
@@ -356,7 +447,7 @@ def calc_fst(
 
     """
 
-    if (Gsto_l > 0):
+    if Gsto_l > 0:
         leaf_r = 1.0 / ((1.0 / Rsto_l) + (1.0 / Rext))  # leaf resistance in s/m
         Fst = O3_nmol_m3 * (1 / Rsto_l) * (leaf_r / (Rb_l + leaf_r))
     else:
@@ -411,7 +502,9 @@ def calc_fst_leaf(
             Rsto_l[i],
             Rext[i],
             O3_nmol_m3[i],
-        ) * fLAI[i] for i in range(nL)
+        )
+        * fLAI[i]
+        for i in range(nL)
     ]
     fst = sum(fst_per_layer) / total_fLAI
     return fst

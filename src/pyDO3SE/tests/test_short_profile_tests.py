@@ -57,7 +57,7 @@
 #         os.makedirs(output_dir_run, exist_ok=True)
 #         for input_file in input_files:
 #             final_state, output_logs, config_final, initial_state = main.main(
-#                 config_location=config_dir + '/' + config_file,
+#                 config_path=config_dir + '/' + config_file,
 #                 data_location=input_dir + '/' + input_file,
 #                 runid=input_file.replace('.csv', ''),
 #                 output_directory=output_dir_run,
@@ -93,7 +93,7 @@
 # @pytest.mark.parametrize('input_file', input_files)
 # def test_benchmark_run_short_multi(benchmark, config_file, input_file):
 #     result_time = benchmark(lambda: main.main(
-#         config_location=config_dir + '/' + config_file,
+#         config_path=config_dir + '/' + config_file,
 #         data_location=input_dir + '/' + input_file,
 #         runid=input_file.replace('.csv', ''),
 #         output_fields=[],

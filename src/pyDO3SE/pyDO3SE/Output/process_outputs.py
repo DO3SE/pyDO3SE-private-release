@@ -14,11 +14,11 @@ from data_helpers.cls_parsing import unpack
 from data_helpers.encoders import AdvancedJsonEncoder
 from data_helpers.list_helpers import flatten_list
 from proflow.Objects.Process import Process
-
 from do3se_phenology.plots import plot_phenology_from_config
 from do3se_phenology.units import TimeTypes
-from pyDO3SE.Model_State.model_state_loader import dump_state_to_file
+from do3se_met.plots import plot_f_SW_curve
 
+from pyDO3SE.Model_State.model_state_loader import dump_state_to_file
 from pyDO3SE.optional_dependencies import xarray as xr
 from pyDO3SE.External_State.External_State_Config import FileTypes
 from pyDO3SE.Analysis.util import (
@@ -760,6 +760,18 @@ def export_output(
                         f"{f} not in output fields map. Run cli command `pyDO3SE_cli available-outputs"
                     )
                     continue
+        if options.plot_multiplicative_charts:
+            fig, ax = plot_f_SW_curve(
+                f_SW_method=final_config.Land_Cover.parameters[0].gsto.f_SW_method,
+                ASW_FC=final_config.soil_moisture.ASW_FC,
+                fmin=final_config.Land_Cover.parameters[0].gsto.fmin,
+                ASW_min=final_config.Land_Cover.parameters[0].gsto.ASW_min,
+                ASW_max=final_config.Land_Cover.parameters[0].gsto.ASW_max,
+                SWP_min=final_config.Land_Cover.parameters[0].gsto.SWP_min,
+                SWP_max=final_config.Land_Cover.parameters[0].gsto.SWP_max,
+            )
+            fig.savefig(f"{output_directory}/f_SW_curve.png")
+
 
         if options.plot_annual_charts and fields_to_graph and len(fields_to_graph):
             logger(f"Plotting annual charts. Fields: {fields_to_graph}")

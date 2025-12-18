@@ -304,6 +304,7 @@ def main(
                 logger=logger,
                 **asdict(output_options),
             )
+            raise e
         except Exception as ee:
             logger("Error exporting failed run output")
             raise ee from e
