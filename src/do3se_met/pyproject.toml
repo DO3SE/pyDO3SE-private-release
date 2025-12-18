@@ -1,6 +1,6 @@
 [project]
 name = "do3se_met"
-version = "0.4.0"
+version = "0.4.1"
 description = "DO3SE met module"
 readme = "README.md"
 authors = [{ "email" = "sam.bland@york.ac.uk", "name" = "Sam Bland" }]
