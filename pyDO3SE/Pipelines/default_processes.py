@@ -7,6 +7,11 @@ i.e
 [[iLC for iLC in range(nLC)]
 for iL in range(nL)]
 
+References
+----------
+
+Emberson et al, 2026, Understanding global ozone distribution, trends and impacts to inform air quality policy to protect vegetation,
+
 """
 
 import os
@@ -3482,7 +3487,8 @@ def calc_OT_leaf_process(iLC: int, iP: int, nL: int, nP: int) -> Process:
             I(config.Land_Cover.nL, as_='nL'),
         ],
         external_state_inputs=lambda e_state, row_index: [
-            I(e_state.is_daylight[row_index], as_='is_daylight'),
+            # Note we use hour of day to determine daylight hours according to Emberson et al, 2026
+            I(e_state.hr[row_index]>=8 and e_state.hr[row_index]<20, as_='is_daylight'),
         ],
         state_inputs=lambda state, iLC=iLC, iP=iP: [
             I([state.canopy_layers[iL].micro_met.micro_O3 for iL in range(nL)], as_='micro_O3'),
@@ -3499,6 +3505,25 @@ def calc_OT_leaf_process(iLC: int, iP: int, nL: int, nP: int) -> Process:
         ],
     )
 
+
+def calc_w126_process(iLC: int, iP: int, nL: int) -> Process:
+    """Calculate the W126 accumulation per leaf population."""
+    return Process(
+        func=O3_helpers.calc_w126,
+        comment="Calculate the W126 accumulation",
+        external_state_inputs=lambda e_state, row_index: [
+            # Note we use hour of day to determine daylight hours according to Emberson et al, 2026
+            I(e_state.hr[row_index]>=8 and e_state.hr[row_index]<20, as_='is_daylight'),
+        ],
+        state_inputs=lambda state, iLC=iLC, iP=iP: [
+            I(sum([state.canopy_layers[iL].micro_met.micro_O3 for iL in range(nL)]), as_='Ci'),
+            I(state.canopy_component_population[iLC][iP].W126_acc, as_='W126_acc_prev'),
+        ],
+        state_outputs=lambda result, iLC=iLC, iP=iP: [
+            (result.W126, f'canopy_component_population.{iLC}.{iP}.W126'),
+            (result.W126_acc, f'canopy_component_population.{iLC}.{iP}.W126_acc'),
+        ],
+    )
 
 def calc_ftot_process(top_layer_index: int) -> Process:
     """Calculate the total ozone flux to the vegetated surface."""
@@ -4422,6 +4447,12 @@ def log_processes(nL: int, nLC: int, nP: int, nCH: int, fields: List[str], log_m
             I(state.canopy_component_population[component_index]
               [flag_index].POD_Y, as_='pody') if 'pody' in fields else None,
             I(state.canopy_component_population[component_index]
+              [flag_index].W126, as_='W126') if 'W126' in fields else None,
+            I(state.canopy_component_population[component_index]
+              [flag_index].W126_acc, as_='W126_acc') if 'W126_acc' in fields else None,
+            I(state.canopy_component_population[component_index]
+              [flag_index].OT_0, as_='ot0') if 'ot0' in fields else None,
+            I(state.canopy_component_population[component_index]
               [flag_index].OT_40, as_='ot40') if 'ot40' in fields else None,
             I(state.canopy_component_population[component_index]
               [flag_index].AOT_40, as_='aot40') if 'aot40' in fields else None,
@@ -4820,6 +4851,8 @@ def hourly_processes(config: Config_Shape, hr: int, run_dir: Path = None, dump_s
         [calc_fst_leaf_acc_hour_process(iLC, iP) for iLC in range(nLC) for iP in range(nP)],
         [calc_POD_leaf_process(iLC, iP) for iLC in range(nLC) for iP in range(nP)],
         [calc_OT_leaf_process(iLC, iP, nL, nP) for iLC in range(nLC) for iP in range(nP)],
+
+        [calc_w126_process(iLC, iP, nL) for iLC in range(nLC) for iP in range(nP) if ("W126" in output_fields or "W126_acc" in output_fields)],
         calc_ftot_process(TOP_LAYER_INDEX) if not is_OTC else [],
 
         # SOIL MOISTURE

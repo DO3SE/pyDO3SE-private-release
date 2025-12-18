@@ -180,3 +180,20 @@ class TestRunAndCompare:
         assert max(aot40) > 0
         assert min(aot40) == 0
         assert aot40[-1] > 0
+
+    @pytest.mark.parametrize('runid', ['alt'])
+    def test_should_calculate_w126_correctly(self, runid):
+        hourly_output = self.output[runid]['hourly_output']
+        w126 = hourly_output['W126'].values
+        w126_acc = hourly_output['W126_acc'].values
+        assert w126[0] is not None
+        assert w126[-1] is not None
+        assert all(w is not None for w in w126)
+        assert max(w126) > 0
+        assert min(w126) == 0
+
+        assert w126_acc[0] is not None
+        assert w126_acc[-1] is not None
+        assert all(w is not None for w in w126_acc)
+        assert max(w126_acc) == w126_acc[-1] > 0
+        assert min(w126_acc) == w126_acc[0] == 0

@@ -44,7 +44,7 @@ EXT_DATA_COLS = [
 
 #     # == 1. SETUP CONFIG
 
-#     config = config_loader(config_location=config_location, config_type='json')
+#     config = config_loader(config_path=config_location, config_type='json')
 #     snapshot.assert_match(unpack(config), 'Config')
 #     process_runner = ProcessRunner(config, DEBUG_MODE=True)
 
@@ -65,7 +65,7 @@ def test_init_external_state(snapshot):
 
     # == 1. SETUP CONFIG
 
-    config = config_loader(config_location=config_location, config_type='json')
+    config = config_loader(config_path=config_location, config_type='json')
     process_runner = ProcessRunner(config, DEBUG_MODE=True)
 
     config_amended = process_runner.run_processes(

@@ -53,7 +53,7 @@
 
 #     # == 1. SETUP CONFIG
 
-#     config = config_loader(config_location=config_location, config_type='json')
+#     config = config_loader(config_path=config_location, config_type='json')
 #     snapshot.assert_match(unpack(config), 'Config')
 #     process_runner = ProcessRunner(config, DEBUG_MODE=True)
 

@@ -14,7 +14,7 @@
             {
                 "cosA": 0.5,
                 "gsto": {
-                    "f_SW_method": "disabled",
+                    "f_SW_method": "fPAW",
                     "f_VPD_method": "linear",
                     "fmin": 0.01,
                     "fSWP_exp_a": 0.355,
@@ -26,7 +26,9 @@
                     "Tleaf_method": "ambient",
                     "VPD_crit": 8,
                     "VPD_max": 1.2,
-                    "VPD_min": 3.2
+                    "VPD_min": 3.2,
+                    "ASW_min": 0,
+                    "ASW_max": 50
                 },
                 "height": 1,
                 "Lm": 0.02,
@@ -138,7 +140,7 @@
         "thermal_time_method": "HOURLY"
     },
     "soil_moisture": {
-        "asw_fc": null,
+        "ASW_FC": 1.0,
         "initial_swc": null,
         "pwp": -4,
         "root": 0.75,
@@ -149,7 +151,7 @@
             "swp_ae": null
         },
         "soil_texture": "loam",
-        "source": "disabled"
+        "source": "P-M"
     },
     "VERSION": 12
 }

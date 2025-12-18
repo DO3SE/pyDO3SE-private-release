@@ -52,7 +52,7 @@
 #     output = main(
 #         start_day=DEMO_START_DAY,
 #         end_day=DEMO_END_DAY,
-#         config_location='examples/spanish_wheat/configs/spanish_wheat_config.json',
+#         config_path='examples/spanish_wheat/configs/spanish_wheat_config.json',
 #         data_location='examples/spanish_wheat/inputs/spanish_wheat_data.csv',
 #         output_directory="demo_output",
 #     )

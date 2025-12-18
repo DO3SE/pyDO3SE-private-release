@@ -23,6 +23,7 @@ class OutputOptions:
 
     save_hourly_output_data: bool = True
     save_external_processed_data: bool = True
+    plot_multiplicative_charts: bool = True
     plot_annual_charts: bool = True
     plot_diurnal_charts: bool = True
     plot_phenology_charts: bool = True
@@ -39,6 +40,7 @@ def output_results_only_options():
     return OutputOptions(
         save_hourly_output_data=True,
         save_external_processed_data=False,
+        plot_multiplicative_charts=False,
         plot_annual_charts=False,
         plot_diurnal_charts=False,
         plot_phenology_charts=False,
@@ -56,6 +58,7 @@ def output_options_none():
     return OutputOptions(
         save_hourly_output_data=False,
         save_external_processed_data=False,
+        plot_multiplicative_charts=False,
         plot_annual_charts=False,
         plot_diurnal_charts=False,
         plot_phenology_charts=False,
