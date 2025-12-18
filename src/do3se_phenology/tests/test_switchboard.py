@@ -451,6 +451,7 @@ class TestSwitchBoardDayPLF(SwitchBoardTestBase):
         key_lengths=replace(
             deepcopy(species_config.key_lengths),
             sowing_to_emerge=0,
+            astart_to_end=52,
             sowing_to_end=197 - 105,  # harvest - sowing
             emerg_to_end=197 - 105 - 0,  # harvest - sowing - sowing_to_emerge
             emerg_to_astart=40,  # Astart - sowing
@@ -486,6 +487,19 @@ class TestSwitchBoardDayPLF(SwitchBoardTestBase):
 
         assert species_config.key_lengths.emerg_to_astart is not None
         assert species_config.key_lengths.emerg_to_end is not None
+
+
+class TestSwitchBoardDayPLFAstartFromEnd(TestSwitchBoardDayPLF):
+    """Test that when setting astart from end date phenology is calculated correctly."""
+
+    species_config = replace(
+        deepcopy(SpringWheatMultiplicative),
+        key_lengths=replace(
+            deepcopy(SpringWheatMultiplicative.key_lengths),
+            sowing_to_astart=None,
+            astart_to_end=52,
+        ),
+    )
 
 
 class TestSwitchBoardDayPLFPlantOnly(TestSwitchBoardDayPLF):

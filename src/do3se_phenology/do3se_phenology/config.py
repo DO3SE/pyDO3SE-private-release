@@ -344,6 +344,7 @@ class PhenologyKeyLengths:
     sowing_to_f_phen_b: Optional[TimeUnit] = None
     sowing_to_f_phen_c: Optional[TimeUnit] = None
     sowing_to_astart: Optional[TimeUnit] = None
+    astart_to_end: Optional[TimeUnit] = None
     sowing_to_end: Optional[TimeUnit] = None
     emerg_to_astart: Optional[TimeUnit] = None
     emerg_to_end: Optional[TimeUnit] = None
