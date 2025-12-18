@@ -1,4 +1,4 @@
-pyDO3SE version: 4.44.3
+pyDO3SE version: 4.44.5
 thermal_time version: 0.0.18
-do3se_phenology version: 0.17.1
-do3se_met version: 0.4.0
+do3se_phenology version: 0.17.2
+do3se_met version: 0.4.1
