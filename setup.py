@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="do3se_phenology",
-    version="0.17.1",
+    version="0.17.2",
     author="SEI-York",
     author_email="sam.bland@york.ac.uk",
     description="DO3SE model python API",

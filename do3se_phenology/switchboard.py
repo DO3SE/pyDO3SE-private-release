@@ -41,7 +41,9 @@ from do3se_phenology.latitude_function import (
     lat_function_forest_europe,
 )
 
-from do3se_phenology.units import *
+from do3se_phenology.units import (
+    TimeTypes,
+)
 from do3se_phenology.phyllochron_dvi import get_dvi_PLF
 from do3se_phenology.td_percent_definition import (
     calculate_growing_season_from_leaf_f_phen_data,
@@ -95,6 +97,15 @@ def phenology_from_legacy_day_plf(
             LeafFPhenMethods.DAY_PLF, LeafFPhenMethods.TT_DAY_PLF, LeafFPhenMethods.TT_GROWING_SEASON]:
 
         sowing_to_astart = species_config.key_lengths.sowing_to_astart
+        astart_to_end = species_config.key_lengths.astart_to_end
+        if sowing_to_astart is None and astart_to_end is not None:
+            # Calculate from astart to end
+            sowing_to_astart = season_length - astart_to_end
+            species_config.key_lengths.sowing_to_astart = sowing_to_astart
+        elif astart_to_end is None and sowing_to_astart is not None:
+            # Calculate from sowing to astart
+            astart_to_end = season_length - sowing_to_astart
+            species_config.key_lengths.astart_to_end = astart_to_end
         assert sowing_to_astart, "sowing_to_astart could not be defined!"
         Astart = sowing_day + sowing_to_astart
         emerg_to_astart = sowing_to_astart - sowing_to_emerg
@@ -342,7 +353,7 @@ def get_sowing_day_from_config(
         {str(e)}
         If using flag only runs set phenology_config.sowing_day_method to "SKIP".
         """) from e
-    assert sowing_day is not None, f"Sowing day could not be defined!"
+    assert sowing_day is not None, "Sowing day could not be defined!"
     return sowing_day
 
 
