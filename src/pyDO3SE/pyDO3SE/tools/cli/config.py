@@ -201,6 +201,9 @@ def plot_phenology(
 
 
 @click.option(
+    "--grid-coord", type=click.Path(exists=True), default="0,0", help="Grid coordinate to use"
+)
+@click.option(
     "--grid-overrides-file", type=click.Path(exists=True), default=None, help="Input data csv file"
 )
 @click.option(
@@ -235,6 +238,7 @@ def plot_grid_phenology(
     grid_overrides_field_map_path: Path,
     base_config_file: Optional[Path] = None,
     day_count: int = 365,
+    grid_coord: str = "0,0",
 ):
     """Plot the phenology from config file."""
     from pyDO3SE.Grid_Model.setup_grid_model import process_grid_config as process_grid_config_fn
@@ -244,7 +248,7 @@ def plot_grid_phenology(
         grid_overrides_file=grid_overrides_file,
         grid_overrides_field_map_path=grid_overrides_field_map_path,
         base_config_file=base_config_file,
-        grid_coord=(0, 0),
+        grid_coord=tuple(map(int, grid_coord.split(","))),
     )
     os.makedirs(output_directory, exist_ok=True)
 
@@ -332,6 +336,9 @@ def process_config(
 
 
 @click.option(
+    "--grid-coord", type=click.Path(exists=True), default="0,0", help="Grid coordinate to use"
+)
+@click.option(
     "--grid-overrides-file", type=click.Path(exists=True), default=None, help="Input data csv file"
 )
 @click.option(
@@ -365,7 +372,7 @@ def process_grid_config(
     grid_overrides_file: Path,
     grid_overrides_field_map_path: Path,
     base_config_file: Optional[Path] = None,
-    grid_coord: tuple[int, int] = (0, 0),
+    grid_coord: str = "0,0",
 ):
     """Process a config with grid overrides by combining the config and base config.
 
@@ -382,7 +389,7 @@ def process_grid_config(
         grid_overrides_file,
         grid_overrides_field_map_path,
         base_config_file,
-        grid_coord,
+        tuple(map(int, grid_coord.split(","))),
     )
     os.makedirs(output_directory, exist_ok=True)
     dump_config_to_file_json(processed_config, Path(f"{output_directory}/processed_config.json"))
