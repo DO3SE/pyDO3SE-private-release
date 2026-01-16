@@ -201,7 +201,7 @@ def plot_phenology(
 
 
 @click.option(
-    "--grid-coord", type=click.Path(exists=True), default="0,0", help="Grid coordinate to use"
+    "--grid-coord", type=click.STRING, default="0,0", help="Grid coordinate to use"
 )
 @click.option(
     "--grid-overrides-file", type=click.Path(exists=True), default=None, help="Input data csv file"
@@ -336,7 +336,7 @@ def process_config(
 
 
 @click.option(
-    "--grid-coord", type=click.Path(exists=True), default="0,0", help="Grid coordinate to use"
+    "--grid-coord", type=click.STRING, default="0,0", help="Grid coordinate to use"
 )
 @click.option(
     "--grid-overrides-file", type=click.Path(exists=True), default=None, help="Input data csv file"
