@@ -277,13 +277,15 @@ def extract_cell_data_from_netcdf(
         data_base = {
             "dd": data["dd"].values,
             "hr": data["hr"].values,
-            "time": [data[time_key][t].values.astype(str)[0:19] for t in range(T)],
+            # [0:19] to get rid of timezone info
+            "time": [str(data[time_key][t].values)[0:19] for t in range(T)],
         }
     else:
         data_base = {
             "dd": [data["dd"].item(t) for t in range(T)],
             "hr": [data["hr"].item(t) for t in range(T)],
-            "time": [data[time_key][t].values.astype(str)[0:19] for t in range(T)],
+            # [0:19] to get rid of timezone info
+            "time": [str(data[time_key][t].values)[0:19] for t in range(T)],
         }
         if T > 1:
             # TODO: Make getting multiple time indexes more efficient
