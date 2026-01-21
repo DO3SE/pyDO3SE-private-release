@@ -52,9 +52,10 @@ def annual_graph(
     log_level: int = 1,
     fig: Optional[Figure] = None,
     axes: Optional[Axes] = None,
+    plot_kwargs: dict = {},
     *args,
     **kwargs,
-) -> Figure:
+) -> tuple[Figure, Axes]:
     """Create a graph of a single series between two dates.
 
     Parameters
@@ -79,6 +80,8 @@ def annual_graph(
         Matplotlib figure to use, by default None
     axes : Axes, optional
         Matplotlib axes to use, by default None
+    plot_kwargs: dict, optional
+        kwargs to pass to axes.plot()
     Returns
     -------
     Figure
@@ -109,7 +112,7 @@ def annual_graph(
     fig.suptitle(field.short)
     axes = axes or fig.add_subplot(1, 1, 1)
     plot_data = data if average_step == 1 else calc_moving_average(data, average_step)
-    axes.plot(plot_data)
+    axes.plot(plot_data, **plot_kwargs)
     axes.set_xticks(labelx)
     axes.set_xticklabels(labels)
     axes.set_xlabel("Days")
@@ -123,7 +126,7 @@ def annual_graph(
         )
         logger(f"Output saved to {filename}")
 
-    return fig
+    return fig, axes
 
 
 def monthly_diurnal_graph(
