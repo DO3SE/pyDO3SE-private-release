@@ -8,8 +8,9 @@ from pyDO3SE.Analysis.charts import annual_graph, monthly_diurnal_graph
 def test_create_an_annual_graph():
     # We can only test that this runs successfully.
     # If there are any actual differences these should appear in git diff
-    fig = annual_graph([1, 2, 3, 8, 9, 7], output_fields_map["gsto"])
-    assert fig
+    fig, axes = annual_graph([1, 2, 3, 8, 9, 7], output_fields_map["gsto"])
+    assert fig is not None
+    assert axes is not None
 
 
 @pytest.mark.parametrize("month", [0, 6, 11])
