@@ -215,6 +215,7 @@ def LAI_day_PLF(
 
     gs_values_in_size_order = all([a <= b for a, b in zip(GS_offset[0: 4], GS_offset[1: 5])])
     if not gs_values_in_size_order:
+        print("gs_values: ", GS_values)
         raise ValueError(f"LAI_day_PLF: points not in order, {GS_offset}")
 
     dd_adj = dd - SGS if SGS - dd <= 0 else dd - SGS + 365

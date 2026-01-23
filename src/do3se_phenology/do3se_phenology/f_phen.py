@@ -12,30 +12,8 @@ from math import isclose
 from typing import List, NamedTuple
 from collections import namedtuple
 
-from .utils import PLF_value, offset, get_PLF_value
+from .utils import offset, get_PLF_value, wrap_day_of_year
 from .units import PiecewiseFunction, TimeUnit
-
-
-def wrap_day_of_year(dd: int) -> int:
-    """Wrap day of year to be between 0 and 364.
-
-    Parameters
-    ----------
-    dd : int
-        Day of year
-
-    Returns
-    -------
-    int
-        Wrapped day of year between 0 and 364
-
-    """
-    if dd < 0:
-        return dd + 365 * (abs(dd) // 365 + 1)
-    elif dd >= 365:
-        return dd - 365 * (dd // 365)
-    else:
-        return dd
 
 
 # Used in switchboard
@@ -133,13 +111,30 @@ def get_fphen_PLF_fn(
     SGS: int,
     EGS: int,
     f_phen_min: float = 0.0,
+    offset_value: int = 0,
 ):
-    gs_values = [SGS, SGS, (SGS + f_phen_1), (EGS - f_phen_4), EGS, EGS]
+    """Get the f_phen PLF function.
+
+    Parameters
+    ----------
+    f_phen_1: int,
+    f_phen_4: int,
+    f_phen_a: float,
+    f_phen_c: float,
+    f_phen_e: float,
+    SGS: int,
+    EGS: int,
+    f_phen_min: float = 0.0,
+    offset: int = 0
+        Often set to SGS to avoid issues with cross year data
+    """
+    gs_values = [SGS - 1, SGS, (SGS + f_phen_1), (EGS - f_phen_4), EGS, EGS + 1]
     fphen_values = [f_phen_min, f_phen_a, f_phen_c, f_phen_c, f_phen_e, f_phen_min]
-    gs_offset = offset(gs_values, 0.0, 365.0)
+    gs_offset = offset(gs_values, offset_value, 365.0)
 
     gs_values_in_size_order = all([a <= b for a, b in zip(gs_offset[0:5], gs_offset[1:6])])
     if not gs_values_in_size_order:
+        print("gs_values: ", gs_values, gs_offset)
         raise ValueError("f_phen_simple_PLF: points not in order")
 
     return gs_offset, fphen_values
@@ -154,6 +149,7 @@ def get_leaf_fphen_PLF_fn(
     leaf_f_phen_c: float,
     Astart: int,
     Aend: int,
+    wrap_year: bool = False,
 ) -> PiecewiseFunction[TimeUnit, float]:
     """Get the piecewise function for leaf fphen.
 
@@ -165,13 +161,15 @@ def get_leaf_fphen_PLF_fn(
 
     # x values
     gs_values: list[TimeUnit] = [
-        Astart,
+        Astart - 1,
         Astart,
         (Astart + leaf_f_phen_1),
         (Aend - leaf_f_phen_2),
         Aend,
-        Aend,
+        Aend + 1,
     ]
+    if wrap_year:
+        gs_values = [wrap_day_of_year(dd) for dd in gs_values]
     # y values
     fphen_values = [
         0.0,
@@ -318,7 +316,7 @@ def tt_leaf_f_phen_PLF_value(
         leaf_f_phen_i=t_leaf_f_phen_i,
         Astart=t_astart,
     )
-    return PLF_value(PLF_fn, td - td_at_sgs) # type: ignore
+    return get_PLF_value(PLF_fn[0], PLF_fn[1], td - td_at_sgs)  # type: ignore
 
 
 # Used in pyDO3SE!! #
@@ -386,11 +384,8 @@ def f_phen_simple_PLF_value(
         [description]
 
     """
-    dd_adj = wrap_day_of_year(dd)
-    if dd_adj < SGS:
-        return f_phen_min
-    if dd_adj > EGS:
-        return f_phen_min
+    dd_offset = dd - SGS + 1
+    dd_adj = wrap_day_of_year(dd_offset)
 
     gs_offset, fphen_values = get_fphen_PLF_fn(
         f_phen_1=f_phen_1,
@@ -401,6 +396,7 @@ def f_phen_simple_PLF_value(
         SGS=SGS,
         EGS=EGS,
         f_phen_min=f_phen_min,
+        offset_value=SGS - 1,
     )
     # Lookup value in PLF
     f_phen = get_PLF_value(gs_offset, fphen_values, float(dd_adj))
@@ -509,13 +505,13 @@ def f_phen_complex_PLF_value(
     )
 
     gs_values = [
-        SGS,
+        SGS - 1,
         SGS,
         SGS + f_phen_1,
         *complex_middle_gs_values,
         EGS - f_phen_4,
         EGS,
-        EGS,
+        EGS + 1,
     ]
     fphen_values = [
         0.0,
@@ -527,22 +523,19 @@ def f_phen_complex_PLF_value(
         0.0,
     ]
 
-    # Re-index everything to SGS = 0, wrapping dates before SGS to the end of the year
-    gs_offset = offset(gs_values, float(SGS), 365.0)
+    # Re-index everything to SGS = 0
+    gs_offset = offset(gs_values, float(SGS), 0)
     gs_values_are_in_size_order: bool = all(
         [a <= b for a, b in zip(gs_offset[0:9], gs_offset[1:10])]
     )
 
     if not gs_values_are_in_size_order:
-        print(gs_values)
-        raise ValueError("f_phen_simple_PLF: points not in order")
+        print("gs_values: ", gs_values)
+        raise ValueError("f_phen_complex_PLF: points not in order")
 
     dd_adj = dd - SGS if SGS - dd <= 0 else dd - SGS + 365
 
-    # Lookup value in PLF
-    func = [gs_offset, fphen_values]
-
-    f_phen = PLF_value(func, float(dd_adj))
+    f_phen = get_PLF_value(gs_offset, fphen_values, float(dd_adj))
     return f_phen
 
 
@@ -616,7 +609,8 @@ def leaf_f_phen_PLF_value(
         Aend=Aend,
     )
     dd_adj = wrap_day_of_year(dd)
-    return PLF_value(PLF_fn, dd_adj) # type: ignore
+
+    return get_PLF_value(PLF_fn[0], PLF_fn[1], dd_adj)  # type: ignore
 
 
 # ONLY USED IN TESTS #
@@ -682,7 +676,7 @@ def f_phen_simple_PLF_range(
     EGS: int,
     f_phen_min: float = 0.0,
 ) -> List[float]:
-    dd_adj = [wrap_day_of_year(dd) for dd in dd_list]
+    dd_adj = [wrap_day_of_year(dd - SGS) for dd in dd_list]
 
     gs_offset, fphen_values = get_fphen_PLF_fn(
         f_phen_1=f_phen_1,
@@ -693,6 +687,7 @@ def f_phen_simple_PLF_range(
         SGS=SGS,
         EGS=EGS,
         f_phen_min=f_phen_min,
+        offset_value=SGS - 1,
     )
 
     return [get_PLF_value(gs_offset, fphen_values, float(dd)) for dd in dd_adj]

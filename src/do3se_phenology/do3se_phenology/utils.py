@@ -2,9 +2,11 @@ from math import isclose
 from typing import List
 import numpy as np
 from thermal_time.calcs import calc_thermal_time_range
-from .units import PiecewiseFunction, TimeUnit
+from deprecated import deprecated
+from .units import TimeUnit
 
 
+@deprecated(reason="Use get_PLF_value instead")
 def PLF_value(points: List[List[float]], x: float) -> float:
     """Calculate the value of a piecewise linear function at a particular x value.
 
@@ -61,13 +63,13 @@ def get_PLF_value(
     return float(np.interp(x, x_values, y_values))
 
 
-def offset(arr, zero, wrap) -> list:
+def offset(arr, zero, wrap=0, clip=False) -> list:
     """offset an array to be relative to a particular *zero* value.  If *wrap*
     is supplied, new values less than 0 are offset by the *wrap* value.
     Note: formally known as reindex
     """
     out_a = [i - zero for i in arr]
-    out_b = [(i + wrap) if i < 0.0 else i for i in out_a] if wrap else out_a
+    out_b = [0 if (clip and i < 0) else (i + wrap) if i < 0.0 else i for i in out_a]
     return out_b
 
 
@@ -141,3 +143,25 @@ def get_td_from_day(target_dd, dd_data, td_range, INVALID_VAL=999) -> int:
         d = INVALID_VAL
         i = INVALID_VAL
     return i, d
+
+
+def wrap_day_of_year(dd: int) -> int:
+    """Wrap day of year to be between 0 and 364.
+
+    Parameters
+    ----------
+    dd : int
+        Day of year
+
+    Returns
+    -------
+    int
+        Wrapped day of year between 0 and 364
+
+    """
+    if dd < 0:
+        return dd + 365 * (abs(dd) // 365 + 1)
+    elif dd >= 365:
+        return dd - 365 * (dd // 365)
+    else:
+        return dd

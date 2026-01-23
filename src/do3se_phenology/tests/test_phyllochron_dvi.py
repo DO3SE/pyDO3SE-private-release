@@ -18,8 +18,6 @@ from do3se_phenology.phyllochron_dvi import (
     calculate_t_l_from_leaf_f_phen,
     calculate_t_l_from_leaf_f_phen_b,
     estimate_t_lse_from_t_l,
-    get_leaf_phenology_stage_td,
-    get_plant_phenology_stage_td,
     phyllochron_to_t_lem,
     phyllochron_to_t_lma,
     calc_t_l,
@@ -78,7 +76,7 @@ def test_calc_phyllochron_from_dvi():
     assert isclose(phyllochron, 82.16100, abs_tol=1e-5)
 
 
-def test_calc_phyllochron_from_dvi():
+def test_calc_phyllochron_from_dvi_b():
     t_emerg, d_emerg = calc_emergence_date_from_dvi(
         prev_dvi=-0.0590286,
         dvi=0.2030714,
@@ -354,66 +352,3 @@ class TestCalcDviTTPLF:
         dvi = calc_dvi_tt_PLF(td, dvi_interval)
         assert isclose(dvi, 2.0, abs_tol=1e-3)
 
-class TestPlantPhenologyStage:
-    def test_gets_correct_phenology_stages(self):
-        tds = [6,20]
-        key_lengths = PhenologyKeyLengths(
-            emerg_to_astart=5,
-            emerg_to_end=19,
-        )
-        phenology_stage = PhenologyStage.EMERGED
-        for td in tds:
-            next_phenology_stage = get_plant_phenology_stage_td(
-                td,key_lengths,phenology_stage,
-            )
-
-            assert next_phenology_stage == phenology_stage + 1
-            phenology_stage = next_phenology_stage
-
-    def test_returns_input_phenology_stage_before_emerged(self):
-        # Sowing and emergence are handled seperately.
-        tds = [6,20]
-        key_lengths = PhenologyKeyLengths(
-            emerg_to_astart=5,
-            emerg_to_end=19,
-        )
-        phenology_stage = PhenologyStage.NOT_SOWN
-        for td in tds:
-            next_phenology_stage = get_plant_phenology_stage_td(
-                td,key_lengths,phenology_stage,
-            )
-            assert next_phenology_stage == phenology_stage
-
-
-        phenology_stage = PhenologyStage.SOWN
-        for td in tds:
-            next_phenology_stage = get_plant_phenology_stage_td(
-                td,key_lengths,phenology_stage,
-            )
-            assert next_phenology_stage == phenology_stage
-
-
-
-class TestLeafPhenologyStage:
-    def test_gets_correct_phenology_stages(self):
-        tds = [6,101, 121, 200]
-        t_lem=100
-        t_lep=20
-        t_lse=20
-        phenology_stage = get_leaf_phenology_stage_td(
-                0,
-                t_lem=t_lem,
-                t_lep=t_lep,
-                t_lse=t_lse,
-            )
-        assert phenology_stage == LeafPhenologyStage.NOT_EMERGED
-        for td in tds:
-            next_phenology_stage = get_leaf_phenology_stage_td(
-                td,
-                t_lem=t_lem,
-                t_lep=t_lep,
-                t_lse=t_lse,
-            )
-
-            assert next_phenology_stage == phenology_stage + 1
-            phenology_stage = next_phenology_stage

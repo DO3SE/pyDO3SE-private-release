@@ -65,7 +65,7 @@ from do3se_phenology.config import (
 )
 
 from do3se_phenology.presets import SpeciesPresetsParams
-from do3se_phenology.utils import get_day_from_td, get_td_from_day
+from do3se_phenology.utils import get_day_from_td, get_td_from_day, wrap_day_of_year
 
 from .error_handling import ConfigError
 from .units import ThermalTime, JulianDay
@@ -75,6 +75,12 @@ def phenology_from_legacy_day_plf(
     model_config: ModelConfig,
     species_config: SpeciesConfig,
 ) -> Tuple[ModelConfig, SpeciesConfig]:
+    """ Generate all phenology parameters from legacy day PLF method.
+
+    Note that this should wrap all dd values to within year values (1-365).
+
+
+    """
     sowing_day = get_sowing_day_from_config(
         species_config,
         model_config,
@@ -86,6 +92,7 @@ def phenology_from_legacy_day_plf(
         sowing_day,
     )
     assert season_length, "season_length could not be defined!"
+    assert season_length > 0, f"Season length is less than 0. Value: {season_length}"
     species_config.key_lengths.sowing_to_end = season_length
 
     assert model_config.time_type == TimeTypes.JULIAN_DAY, "Must set phenology_options.time_type to TimeTypes.JULIAN_DAY to use PhenologyMethods.LEGACY_DAY_PLF"
@@ -114,13 +121,17 @@ def phenology_from_legacy_day_plf(
         plant_emerg_to_flag_emerg = Astart - sowing_day - sowing_to_emerg - flag_emerg_to_astart
         astart_to_senescence = egs - sowing_to_astart - sowing_day - species_config.day_fphen_plf.leaf_f_phen_2
 
+        # Set key lengths in config
         species_config.key_lengths_flag_leaf.plant_emerg_to_leaf_emerg = plant_emerg_to_flag_emerg
         species_config.key_lengths_flag_leaf.leaf_emerg_to_fully_grown = species_config.day_fphen_plf.leaf_f_phen_1
         species_config.key_lengths_flag_leaf.fully_grown_to_senescence = astart_to_senescence - species_config.day_fphen_plf.leaf_f_phen_1
         species_config.key_lengths.emerg_to_astart = emerg_to_astart
-        species_config.key_dates.Astart = Astart
-        species_config.key_dates.Aend = egs
-        species_config.key_lengths.sowing_to_emerge = sowing_to_emerg
+
+        # Set key dates in config
+        # Note we wrap around 365 days
+        species_config.key_dates.Astart = wrap_day_of_year(Astart)
+        species_config.key_dates.Aend = wrap_day_of_year(egs)
+        species_config.key_lengths.sowing_to_emerge = wrap_day_of_year(sowing_to_emerg)
 
         assert species_config.key_lengths.sowing_to_emerge is not None, "key_lengths.sowing_to_emerge could not be defined!"
         assert species_config.key_lengths_flag_leaf.plant_emerg_to_leaf_emerg is not None, "key_lengths_flag_leaf.plant_emerg_to_leaf_emerg could not be defined!"
@@ -142,13 +153,15 @@ def phenology_from_legacy_day_plf(
             leaf_f_phen_c=species_config.day_fphen_plf.leaf_f_phen_c,
             Astart=species_config.key_dates.Astart,
             Aend=species_config.key_dates.Aend,
+            wrap_year=True,
         )
         species_config.leaf_fphen_intervals = leaf_fphen_intervals
 
     emerg_to_end = season_length - sowing_to_emerg
 
-    species_config.key_dates.sowing = sowing_day
-    species_config.key_dates.harvest = egs
+    # Note we wrap around 365 days
+    species_config.key_dates.sowing = wrap_day_of_year(sowing_day)
+    species_config.key_dates.harvest = wrap_day_of_year(egs)
 
     species_config.key_lengths.emerg_to_end = emerg_to_end
 
@@ -402,7 +415,10 @@ def get_season_length_from_config(
             season_length = species_config.key_lengths.sowing_to_emerge + \
                 species_config.key_lengths.emerg_to_end
         elif species_config.key_dates.harvest:
-            season_length = species_config.key_dates.harvest - sowing_day
+            if model_config.allow_cross_year_plf_phenology:
+                season_length = (species_config.key_dates.harvest - sowing_day) % 365
+            else:
+                season_length = species_config.key_dates.harvest - sowing_day
     else:
         if species_config.key_lengths_td.sowing_to_end:
             season_length = species_config.key_lengths_td.sowing_to_end
@@ -425,7 +441,11 @@ def get_season_length_from_config(
                         f'Sowing day or harvest date are outside range of input data. Sowing day: {sowing_day}, Harvest day: {EGS}')
                 season_length = t_egs - t_sgs
             else:
-                season_length = species_config.key_dates.harvest - sowing_day
+                if model_config.allow_cross_year_plf_phenology:
+                    season_length = (species_config.key_dates.harvest - sowing_day) % 365
+                    print(season_length)
+                else:
+                    season_length = species_config.key_dates.harvest - sowing_day
     if season_length is None:
         raise ConfigError("Could not establish season length from current configuration.")
     return season_length
