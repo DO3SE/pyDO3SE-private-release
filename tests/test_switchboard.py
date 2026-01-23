@@ -462,7 +462,7 @@ class TestSwitchBoardDayPLF(SwitchBoardTestBase):
             leaf_emerg_to_fully_grown=20,  # f_phen_1
             fully_grown_to_senescence=2.0,  # 197 - 167
         ),
-        leaf_fphen_intervals=([145.0, 145.0, 165.0, 167.0, 197.0, 197.0], [0.0, 0.0, 1.0, 1.0, 0.0, 0.0]),
+        leaf_fphen_intervals=([144.0, 145.0, 165.0, 167.0, 197.0, 198.0], [0.0, 0.0, 1.0, 1.0, 0.0, 0.0]),
     )
 
     def test_sets_sgs_and_egs(self):
@@ -475,6 +475,73 @@ class TestSwitchBoardDayPLF(SwitchBoardTestBase):
         # Table 5.1
         assert species_config.key_dates.sowing == 105
         assert species_config.key_dates.harvest == 197
+
+    def test_sets_day_fphen_plf(self):
+        model_config, species_config = self._run()
+        assert species_config.day_fphen_plf == self.expected_species_config.day_fphen_plf
+        assert species_config.key_dates.Astart is not None
+        assert species_config.key_dates.Aend is not None
+        assert species_config.key_lengths_flag_leaf.plant_emerg_to_leaf_emerg is not None
+        assert species_config.key_lengths_flag_leaf.leaf_emerg_to_fully_grown is not None
+        assert species_config.key_lengths_flag_leaf.fully_grown_to_senescence is not None
+
+        assert species_config.key_lengths.emerg_to_astart is not None
+        assert species_config.key_lengths.emerg_to_end is not None
+
+
+
+
+class TestSwitchBoardDayPLFMultiYear(SwitchBoardTestBase):
+    """Test phenology from fphen legacy Julian Day values when season crosses day 365.
+
+    Sowing date is set 120 day before default sowing date
+    """
+
+    model_config = ModelConfig(
+        phenology_method=PhenologyMethods.LEGACY_DAY_PLF,
+        plant_emerge_method=PlantEmergeMethod.SGS,
+        sowing_day_method=SowingDateMethods.INPUT,
+        time_type=TimeTypes.JULIAN_DAY,
+        allow_cross_year_plf_phenology=True,
+    )
+    species_config = replace(
+        deepcopy(SpringWheatMultiplicative),
+        key_dates=replace(
+            deepcopy(SpringWheatMultiplicative.key_dates),
+            sowing=350,
+            harvest=77
+        )
+    )
+    expected_model_config = replace(
+        deepcopy(model_config),
+        phenology_method=PhenologyMethods.LEGACY_DAY_PLF,
+        plant_emerge_method=PlantEmergeMethod.SGS,
+        time_type=TimeTypes.JULIAN_DAY,
+    )
+    expected_species_config = replace(
+        deepcopy(species_config),
+        key_dates=replace(
+            deepcopy(species_config.key_dates),
+            Astart=350 + 40 - 365,  # sowing + sowing_to_astart
+            Aend=species_config.key_dates.harvest,  # Same as harvest
+        ),
+        key_lengths=replace(
+            deepcopy(species_config.key_lengths),
+            sowing_to_emerge=0,
+            astart_to_end=52,
+            sowing_to_end=197 - 105,  # harvest - sowing
+            emerg_to_end=197 - 105 - 0,  # harvest - sowing - sowing_to_emerge
+            emerg_to_astart=40,  # Astart - sowing
+        ),
+        key_lengths_flag_leaf=replace(
+            deepcopy(species_config.key_lengths_flag_leaf),
+            plant_emerg_to_leaf_emerg=40,  # Same as sowing +
+            leaf_emerg_to_fully_grown=20,  # f_phen_1
+            fully_grown_to_senescence=2.0,  # 197 - 167
+        ),
+        leaf_fphen_intervals=([24.0, 25.0, 45.0, 47.0, 77.0, 78.0], [0.0, 0.0, 1.0, 1.0, 0.0, 0.0]),
+    )
+
 
     def test_sets_day_fphen_plf(self):
         model_config, species_config = self._run()

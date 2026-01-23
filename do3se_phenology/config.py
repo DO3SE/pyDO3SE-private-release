@@ -643,6 +643,37 @@ class ModelConfig:
     Parameters
     ----------
 
+    flag_leaf_only: bool
+        If True only calculate flag leaf phenology
+    phenology_method: PhenologyMethods
+        Method to use for phenology calculation
+    dvi_method: DVIMethods
+        Method to use for DVI calculation
+    LAI_method: LAIMethods
+        Method to use for LAI calculation
+    time_type: TimeTypes
+        Time type to use for phenology calculations. E.g. Thermal time or Julian Day
+    sgs_time_type: TimeTypes
+        Time type to use for SGS calculations. E.g. Thermal time or Julian Day
+    sgs_key_day: KeyDays
+        Key day to use for SGS calculations
+    zero_day: ZeroDayOptions
+        Option for setting thermal time zero day
+    plant_emerge_method: PlantEmergeMethod
+        Method to use for calculating plant emergence
+    flag_leaf_emerge_method: PlantEmergeMethod
+        Method to use for calculating flag leaf emergence
+    use_vernalisation: bool
+        Whether to use vernalisation in thermal time calculations
+    use_photoperiod_factor: bool
+        Whether to use photoperiod factor in thermal time calculations
+    sowing_day_method: SowingDateMethods
+        Method to use for calculating sowing day
+    latitude: Optional[float]
+        Latitude value for sowing day calculations
+    allow_cross_year_plf_phenology: bool
+        Whether to allow phenology day PLF to cross year boundary.
+        This is required for cross-year multiplicative setup.
 
     """
     flag_leaf_only: bool = False
@@ -659,6 +690,7 @@ class ModelConfig:
     use_photoperiod_factor: bool = False
     sowing_day_method: SowingDateMethods = SowingDateMethods.INPUT
     latitude: Optional[float] = None  #: Only required for sowing_day_methods.LATITUDE
+    allow_cross_year_plf_phenology: bool = False
 
 
 @dataclass

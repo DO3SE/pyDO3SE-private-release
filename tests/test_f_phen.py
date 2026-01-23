@@ -165,6 +165,7 @@ def test_tt_leaf_f_phen_PLF_range():
         (200 + 1, 0.0),  # just after EGS
         (364, 0.0),  # Should wrap around to 0 - 365
         (400, 0.6),  # Should wrap around to 0 - 365
+        (365, 0.0),  # Should wrap around to 0 - 365
         (365 + 20 + 30, 1.0),  # Should wrap around to 0 - 365
     ],
 )
