@@ -1,0 +1,158 @@
+{
+    "COMMENT": "Bangor Wheat Demo",
+    "Land_Cover": {
+        "flai": [
+            [
+                1
+            ]
+        ],
+        "height_method": "constant",
+        "LAI_method": "estimate total",
+        "nL": 1,
+        "nP": 1,
+        "parameters": [
+            {
+                "cosA": 0.5,
+                "gsto": {
+                    "f_SW_method": "fPAW",
+                    "f_VPD_method": "linear",
+                    "fmin": 0.01,
+                    "fSWP_exp_a": 0.355,
+                    "fSWP_exp_b": -0.706,
+                    "fSWP_exp_curve": "temperate",
+                    "method": "multiplicative",
+                    "SWP_max": -0.05,
+                    "SWP_min": -1.25,
+                    "Tleaf_method": "ambient",
+                    "VPD_crit": 8,
+                    "VPD_max": 1.2,
+                    "VPD_min": 3.2,
+                    "ASW_min": 0,
+                    "ASW_max": 50
+                },
+                "height": 1,
+                "Lm": 0.02,
+                "multip_gsto": {
+                    "f_light_method": "enabled",
+                    "f_lightfac": 0.0105,
+                    "f_O3_method": "wheat",
+                    "f_phen_1": 0,
+                    "f_phen_2": null,
+                    "f_phen_3": null,
+                    "f_phen_4": 45,
+                    "f_phen_a": 0.1,
+                    "f_phen_b": null,
+                    "f_phen_c": 1,
+                    "f_phen_d": null,
+                    "f_phen_e": 0.1,
+                    "f_phen_lima": null,
+                    "f_phen_limb": null,
+                    "f_phen_method": "disabled",
+                    "f_temp_method": "default",
+                    "gmax": 500,
+                    "gmorph": 1,
+                    "leaf_f_phen_1": 15,
+                    "leaf_f_phen_2": 40,
+                    "leaf_f_phen_a": 0.8,
+                    "leaf_f_phen_b": 1,
+                    "leaf_f_phen_c": 0.2,
+                    "leaf_f_phen_method": "disabled",
+                    "T_max": 40,
+                    "T_min": 12,
+                    "T_opt": 26
+                },
+                "name": "Bangor Wheat",
+                "phenology": {
+                    "day_fphen_plf": {
+                        "f_phen_1": 20,
+                        "f_phen_2": 0,
+                        "f_phen_3": 0,
+                        "f_phen_4": 30,
+                        "f_phen_a": 0.1,
+                        "f_phen_b": 1.0,
+                        "f_phen_c": 1.0,
+                        "f_phen_d": 0.1,
+                        "f_phen_e": 0.1,
+                        "f_phen_lima": 0,
+                        "f_phen_limb": 0,
+                        "leaf_f_phen_1": 20,
+                        "leaf_f_phen_2": 30,
+                        "leaf_f_phen_a": 0.0,
+                        "leaf_f_phen_b": 1.0,
+                        "leaf_f_phen_c": 0.0
+                    },
+                    "key_dates": {
+                        "harvest": 88.0,
+                        "sowing":310.0
+                    },
+                    "key_lengths": {
+                        "sowing_to_emerge": 0.0,
+                        "sowing_to_astart": 60.0
+                    },
+                    "LAI_a": 0.0,
+                    "LAI_b": 4.0,
+                    "LAI_c": 4.0,
+                    "LAI_d": 0.0,
+                    "LAI_1": 40.0,
+                    "LAI_2": 30.0,
+                    "f_phen_method": "simple day PLF",
+                    "leaf_f_phen_method": "day PLF",
+                    "SAI_method": "LAI"
+                },
+                "pn_gsto": {
+                    "senescence_method": "anet"
+                },
+                "Y": 6
+            }
+        ],
+        "phenology_options": {
+            "phenology_method": "day plf",
+            "plant_emerge_method": "fphen",
+            "flag_leaf_emerge_method": "leaf_f_phen",
+            "time_type": "julian_day",
+            "zero_day": "sowing",
+            "allow_cross_year_plf_phenology": true
+        },
+        "SAI_method": "estimate total"
+    },
+    "Location": {
+        "albedo": 0.2,
+        "elev": 320,
+        "lat": 50.5,
+        "lon": 4.47,
+        "OTC": true,
+        "Rsoil": 200,
+        "z_O3": 1,
+        "z_u": 1
+    },
+    "Met": {
+        "inputs": {
+            "co2_constant": 391,
+            "co2_method": "constant",
+            "R_method": "input",
+            "PAR_method": "calculated",
+            "PPFD_method": "calculated",
+            "RH_method": "input",
+            "VPD_method": "calculated",
+            "P_method": "constant",
+            "P_constant": 101
+        },
+        "td_base_temperature": 0,
+        "thermal_time_method": "HOURLY"
+    },
+    "soil_moisture": {
+        "ASW_FC": 1.0,
+        "initial_swc": null,
+        "pwp": -4,
+        "root": 0.75,
+        "soil": {
+            "b": null,
+            "fc": null,
+            "ksat": null,
+            "swp_ae": null
+        },
+        "soil_texture": "loam",
+        "source": "P-M"
+    },
+    "VERSION": 12
+}

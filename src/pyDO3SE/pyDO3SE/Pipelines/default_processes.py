@@ -74,6 +74,7 @@ from do3se_met.soil_moisture import penman_monteith as SMD_PM_helpers
 from do3se_met.enums import GAS
 from do3se_met import model_constants as met_model_constants
 from do3se_phenology import phyllochron_dvi
+from do3se_phenology import phenology_stages
 from do3se_phenology import canopy_structure
 from do3se_phenology import f_phen as f_phen_helpers
 from do3se_phenology import vernalisation as vernalisation_helpers
@@ -205,7 +206,7 @@ def calc_if_plant_is_sown_process(
         """Phenology stage must be SOWN for plant to emerge."""
         return phenology_stage if phenology_stage >= PhenologyStage.SOWN \
             else PhenologyStage.SOWN if (
-                dd > sowing_day if sowing_day is not None else
+                dd >= sowing_day if sowing_day is not None else
                 td > t_sowing if t_sowing is not None
                 else raise_error(ValueError("Must set sowing day"))) else phenology_stage
 
@@ -481,7 +482,7 @@ def calc_emerged_leaf_count_process(nP: int, iLC: int, time_type: LeafPhenologyS
 def get_phenology_stage_process_td(nP: int, iLC: int) -> List[Process]:
     return [
         [Process(
-            func=phyllochron_dvi.get_leaf_phenology_stage_td,
+            func=phenology_stages.get_leaf_phenology_stage_td,
             comment="Get leaf phenology stage for population {iP}",
             config_inputs=lambda config, iLC=iLC: [
                 I(config.Land_Cover.parameters[iLC].phenology.key_lengths_leaf_td.tl_em, as_="t_lem"),
@@ -496,7 +497,7 @@ def get_phenology_stage_process_td(nP: int, iLC: int) -> List[Process]:
             ],
         ) for iP in range(nP - 1)],
         Process(
-            func=phyllochron_dvi.get_leaf_phenology_stage_td,
+            func=phenology_stages.get_leaf_phenology_stage_td,
             comment="Get leaf phenology stage for flag leaf(td)",
             config_inputs=lambda config, iLC=iLC: [
                 I(config.Land_Cover.parameters[iLC].phenology.key_lengths_flag_leaf_td.tl_em, as_="t_lem"),
@@ -511,7 +512,7 @@ def get_phenology_stage_process_td(nP: int, iLC: int) -> List[Process]:
             ],
         ),
         Process(
-            func=phyllochron_dvi.get_plant_phenology_stage_td,
+            func=phenology_stages.get_plant_phenology_stage_td,
             comment="Get phenology stage for plant",
             config_inputs=lambda config, iLC=iLC: [
                 I(config.Land_Cover.parameters[iLC].phenology.key_lengths_td, as_="key_lengths"),
@@ -532,7 +533,7 @@ def get_phenology_stage_process(nP: int, iLC: int, leaf_f_phen_method: LeafFPhen
     assert nP == 1, "get_phenology_stage_process NOT IMPLEMENTED for nP > 1"
     return [
         Process(
-            func=phyllochron_dvi.get_leaf_phenology_stage,
+            func=phenology_stages.get_leaf_phenology_stage,
             comment="Get leaf phenology stage for flag leaf(dd)",
             gate=leaf_f_phen_method not in [LeafFPhenMethods.DISABLED, LeafFPhenMethods.F_PHEN],
             config_inputs=lambda config, iLC=iLC: [
@@ -556,10 +557,12 @@ def get_phenology_stage_process(nP: int, iLC: int, leaf_f_phen_method: LeafFPhen
             ],
         ),
         Process(
-            func=phyllochron_dvi.get_plant_phenology_stage,
+            func=phenology_stages.get_plant_phenology_stage,
             comment="Get phenology stage for plant",
             config_inputs=lambda config, iLC=iLC: [
-                I(config.Land_Cover.parameters[iLC].phenology.key_lengths, as_="key_lengths"),
+                I(config.Land_Cover.parameters[iLC].phenology.key_dates.sowing, as_="key_dates_sowing"),
+                I(config.Land_Cover.parameters[iLC].phenology.key_dates.emergence, as_="key_dates_emergence"),
+                I(config.Land_Cover.parameters[iLC].phenology.key_dates.harvest, as_="key_dates_harvest"),
             ],
             state_inputs=lambda state: [
                 I(state.temporal.dd, as_='dd'),

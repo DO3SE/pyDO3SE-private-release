@@ -42,14 +42,15 @@ project_dir = Path("tests/key_processes/multiplicative")
 
 setups = [
     # runid, config_file, input_file, overrides
-    # ["default_sparse_simple", "default", "three_days", dict()],
+    ["default_sparse_simple", "default", "three_days", dict()],
     ["bihourly_sparse_simple", "bihourly", "bihourly", dict()],
     ["alt", "alt", "single_season", dict()],
+    ["multi_year", "multi_year", "multi_season", dict()],
 ]
 
 
 @pytest.fixture(scope="class")
-def legacy_fphen_test_run(request):
+def multiplicative_test_run(request):
     request.cls.output = {}
 
     for runid, config_file, input_file, overrides in setups:
@@ -67,6 +68,15 @@ def legacy_fphen_test_run(request):
         request.cls.output[runid]["hourly_output"] = pd.DataFrame(output_logs)
 
 
+def test_multi_year_run():
+    out = run_with_config(
+        runid="multi_year",
+        project_dir=project_dir,
+        config_file="multi_year",
+        input_file="multi_season",
+    )
+
+
 def test_run_alt():
     out = run_with_config(
         runid="alt",
@@ -77,7 +87,7 @@ def test_run_alt():
     final_state, output_logs, final_config, initial_state, external_state = out
 
 
-@pytest.mark.usefixtures("legacy_fphen_test_run")
+@pytest.mark.usefixtures("multiplicative_test_run")
 class TestRunAndCompare:
     def test_preruns_run_without_error(self):
         pass
@@ -95,9 +105,10 @@ class TestRunAndCompare:
         assert min(dd) < 365
         assert final_state.temporal.dd < 365
 
-    @pytest.mark.parametrize("runid", ["bihourly_sparse_simple", "alt"])
+    @pytest.mark.parametrize("runid", ["bihourly_sparse_simple", "alt", "multi_year"])
     def test_should_calculate_fphen_correctly(self, runid):
         hourly_output = self.output[runid]["hourly_output"]
+
         f_phen = hourly_output["f_phen"].values
         assert f_phen[0] is not None
         assert f_phen[-1] is not None
@@ -105,7 +116,22 @@ class TestRunAndCompare:
         assert max(f_phen) == 1
         assert min(f_phen) == 0
 
-    @pytest.mark.parametrize("runid", ["alt"])
+
+
+    @pytest.mark.parametrize("runid", ["alt", "multi_year"])
+    def test_should_calculate_fphen_correctly_at_sgs(self, runid):
+        hourly_output = self.output[runid]["hourly_output"]
+        final_state, output_logs, final_config, initial_state, external_state = self.output[runid][
+            "out"
+        ]
+
+        f_phen = hourly_output["f_phen"].values
+        SGS = final_config.Land_Cover.parameters[0].phenology.key_dates.sowing
+        row_at_sgs = hourly_output[hourly_output["dd"] >= SGS].index[0]
+        assert f_phen[row_at_sgs-1] == 0
+        assert f_phen[row_at_sgs] > 0
+
+    @pytest.mark.parametrize("runid", ["alt", "multi_year"])
     def test_should_calculate_leaf_f_phen_correctly(self, runid):
         hourly_output = self.output[runid]["hourly_output"]
         leaf_f_phen = hourly_output["leaf_f_phen"].values
@@ -116,7 +142,7 @@ class TestRunAndCompare:
         assert min(leaf_f_phen) == 0
         assert leaf_f_phen[-1] == 0
 
-    @pytest.mark.parametrize("runid", ["alt"])
+    @pytest.mark.parametrize("runid", ["alt", "multi_year"])
     def test_phenology_should_go_through_each_stage(self, runid):
         hourly_output = self.output[runid]["hourly_output"]
         phenology_stage = hourly_output["phenology_stage"].values
@@ -125,7 +151,6 @@ class TestRunAndCompare:
         assert set(phenology_stage) == set(
             [
                 PhenologyStage.NOT_SOWN,
-                # We skip the SOWN stage when using f-phen
                 # PhenologyStage.SOWN,
                 PhenologyStage.EMERGED,
                 # ASTART not implemented in plant phenology stage
@@ -134,7 +159,7 @@ class TestRunAndCompare:
             ]
         )
 
-    @pytest.mark.parametrize("runid", ["alt"])
+    @pytest.mark.parametrize("runid", ["alt", "multi_year"])
     def test_leaf_phenology_should_go_through_each_stage(self, runid):
         hourly_output = self.output[runid]["hourly_output"]
         phenology_stage = hourly_output["leaf_phenology_stage"].values
@@ -142,13 +167,13 @@ class TestRunAndCompare:
             [
                 LeafPhenologyStage.NOT_EMERGED,
                 LeafPhenologyStage.GROWING,
-                LeafPhenologyStage.MATURE, # Not getting this
+                LeafPhenologyStage.MATURE,  # Not getting this
                 LeafPhenologyStage.SENESCENCE,
-                LeafPhenologyStage.FULLY_SENESED, # Not getting this
+                LeafPhenologyStage.FULLY_SENESED,  # Not getting this
             ]
         )
 
-    @pytest.mark.parametrize("runid", ["alt"])
+    @pytest.mark.parametrize("runid", ["alt", "multi_year"])
     def test_fst_should_increase_above_zero(self, runid):
         hourly_output = self.output[runid]["hourly_output"]
         fst = hourly_output["fst_canopy"].values
@@ -158,10 +183,10 @@ class TestRunAndCompare:
         assert max(fst) > 0
         assert min(fst) == 0
 
-    @pytest.mark.parametrize('runid', ['alt'])
+    @pytest.mark.parametrize("runid", ["alt", "multi_year"])
     def test_should_calculate_pody_correctly(self, runid):
-        hourly_output = self.output[runid]['hourly_output']
-        pody = hourly_output['pody'].values
+        hourly_output = self.output[runid]["hourly_output"]
+        pody = hourly_output["pody"].values
         assert pody[0] is not None
         assert pody[-1] is not None
         assert all(p is not None for p in pody)
@@ -169,11 +194,10 @@ class TestRunAndCompare:
         assert min(pody) == 0
         assert pody[-1] > 0
 
-
-    @pytest.mark.parametrize('runid', ['alt'])
+    @pytest.mark.parametrize("runid", ["alt", "multi_year"])
     def test_should_calculate_aot40_correctly(self, runid):
-        hourly_output = self.output[runid]['hourly_output']
-        aot40 = hourly_output['aot40'].values
+        hourly_output = self.output[runid]["hourly_output"]
+        aot40 = hourly_output["aot40"].values
         assert aot40[0] is not None
         assert aot40[-1] is not None
         assert all(a is not None for a in aot40)
@@ -181,11 +205,11 @@ class TestRunAndCompare:
         assert min(aot40) == 0
         assert aot40[-1] > 0
 
-    @pytest.mark.parametrize('runid', ['alt'])
+    @pytest.mark.parametrize("runid", ["alt", "multi_year"])
     def test_should_calculate_w126_correctly(self, runid):
-        hourly_output = self.output[runid]['hourly_output']
-        w126 = hourly_output['W126'].values
-        w126_acc = hourly_output['W126_acc'].values
+        hourly_output = self.output[runid]["hourly_output"]
+        w126 = hourly_output["W126"].values
+        w126_acc = hourly_output["W126_acc"].values
         assert w126[0] is not None
         assert w126[-1] is not None
         assert all(w is not None for w in w126)
