@@ -510,10 +510,10 @@ def get_date_bounds_from_ext_data(
     row_count = len(external_state.dd)
 
     if external_state.time is not None and external_state.time[0]:
-        start_date = external_state.time[0]
-        end_date = external_state.time[-1]
+        start_date = pd.to_datetime(str(external_state.time[0]))
+        end_date = pd.to_datetime(str(external_state.time[-1]))
         time_data = pd.date_range(
-            start_date, periods=len(external_state.time), freq="1H"
+            start_date, periods=len(external_state.time), freq="1h"
         )
         # time_data = external_state.time
         time_string = f"{time_data[0].year}-{str(time_data[0].month).zfill(2)}-{str(time_data[0].day).zfill(2)}_{str(time_data[0].hour).zfill(2)}"
