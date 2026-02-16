@@ -38,11 +38,12 @@ def plot_f_phen_dd_box_data(
     box_y_start=0,
     **kwargs,
 ):
+    EGS_adj = EGS if EGS > SGS else EGS + 365
     COLOR = "blue"
     ax.axvline(SGS, linestyle="dotted", color=COLOR)
 
     y = count(box_y_start, 2)
-    text_offset = (EGS - SGS) / 100
+    text_offset = (EGS_adj - SGS) / 100
     draw_range(
         ax,
         SGS,
@@ -54,7 +55,7 @@ def plot_f_phen_dd_box_data(
     )
     draw_range(
         ax,
-        EGS - f_phen_4,
+        EGS_adj - f_phen_4,
         length=f_phen_4,
         label="f_phen_4",
         COLOR=COLOR,
@@ -195,10 +196,11 @@ def plot_leaf_f_phen_dd_box_plot(
     box_y_start=0.2,
     **kwargs,
 ):
+    egs_adg = egs if egs > sgs else egs + 365
     COLOR = "red"
     ax.axvline(sgs, linestyle="dotted", color=COLOR)
     y = count(box_y_start, 2)
-    text_offset = (egs - sgs) / 100
+    text_offset = (egs_adg - sgs) / 100
     draw_range(
         ax,
         astart,
@@ -211,7 +213,7 @@ def plot_leaf_f_phen_dd_box_plot(
     )
     draw_range(
         ax,
-        egs - leaf_f_phen_2,
+        egs_adg - leaf_f_phen_2,
         length=leaf_f_phen_2,
         label="leaf_f_phen_2",
         COLOR=COLOR,
@@ -315,25 +317,28 @@ def plot_f_phen_dd_vlines(
     plot_labels=True,
     **kwargs,
 ):
+
+    egs_adj = egs if egs > sgs else egs + 365
+
     if plot_labels:
         ax.annotate("SGS", (sgs, TEXT_HEIGHT), rotation=TEXT_ANGLE, color=COLOR)
-        ax.annotate("EGS", (egs, TEXT_HEIGHT), rotation=TEXT_ANGLE, color=COLOR)
+        ax.annotate("EGS", (egs_adj, TEXT_HEIGHT), rotation=TEXT_ANGLE, color=COLOR)
         ax.annotate("Astart", (astart, TEXT_HEIGHT), rotation=TEXT_ANGLE, color=COLOR) if astart else None
     ax.axvline(sgs, linestyle="dotted", color=COLOR)
-    ax.axvline(egs, linestyle="dotted", color=COLOR)
+    ax.axvline(egs_adj, linestyle="dotted", color=COLOR)
     ax.axvline(astart, linestyle="dotted", color=COLOR) if astart else None
 
 
 def plot_f_phen_dd_data(
     x_data,
     f_phen_data,
-    t_sgs,
+    sgs,
     ax: matplotlib.axes.Axes,
     **kwargs,
 ):
     COLOR = "blue"
     ax.plot(x_data, f_phen_data, label="f_phen_data", color=COLOR, **kwargs)
-    ax.axvline(t_sgs, linestyle="dotted", color=COLOR)
+    ax.axvline(sgs, linestyle="dotted", color=COLOR)
     return ax
 
 
@@ -593,7 +598,7 @@ class PlotLeafFPhenDataFromConfig(_PhenologyPlotClass):
             "Leaf f_phen intervals not defined in species config"
         )
         leaf_f_phen_data_dd = np.interp(
-            self.dd_data,
+            self.dd_data - self.speciesConfig.key_dates.Astart +1,
             leaf_f_phen_intervals[0],
             leaf_f_phen_intervals[1],
         )
@@ -754,7 +759,7 @@ def plot_f_phen_dd_data_from_config(
     plot_f_phen_dd_data(
         dd_data,
         f_phen_values,
-        t_sgs=species_config.key_dates.sowing,
+        sgs=species_config.key_dates.sowing,
         ax=ax,
     )
     plot_f_phen_dd_vlines(
@@ -945,7 +950,7 @@ def plot_phenology_from_config(
     model_config: ModelConfig,
     nP: int,
     output_location: Optional[Path] = None,
-    external_data={},
+    external_data=None,
     day_count=365,
     plot_f_phen: bool = True,
     plot_lengths: bool = True,
@@ -990,7 +995,7 @@ def plot_phenology_from_config(
     assert nrows > 0, (
         "At least one plot type must be selected. Set plot_dd or plot_td to True."
     )
-
+    external_data = {} if external_data is None else external_data
     # Get plot indexes
     f_phen_ax_i = 0 if plot_f_phen else -1
     lengths_ax_i = 0 + plot_f_phen if plot_lengths else -1
@@ -1028,7 +1033,6 @@ def plot_phenology_from_config(
         logger=logger,
     )
 
-    # TODO: Manage dvi data if
     dvi = (
         get_dvi_range_from_species_config(processed_species_config, td_data)
         if model_config.dvi_method != DVIMethods.DISABLED
@@ -1036,7 +1040,6 @@ def plot_phenology_from_config(
     )
 
     # ===== PLOTS ===== #
-    fig: matplotlib.figure.Figure
     fig, _axss = plt.subplots(
         ncols=ncols, nrows=nrows, figsize=(10 * 2, nrows * 5), dpi=120
     )
@@ -1157,7 +1160,8 @@ def plot_phenology_from_config(
 
         # Setup axes
         for ax in axs_dd:
-            ax.set_xlim((sgs - 5, egs + 5))
+            end_lim = egs + 5 if egs > sgs else egs + 365 + 5
+            ax.set_xlim((sgs - 5, end_lim))
             ax.legend()
 
     if plot_dd and plot_td:

@@ -11,6 +11,9 @@ from do3se_phenology.f_phen import (
     leaf_f_phen_PLF_value,
     calc_leaf_f_phen_effect_on_V_cmax_25,
     tt_leaf_f_phen_PLF_range,
+    f_phen_simple_PLF_range,
+    get_fphen_PLF_fn,
+    get_leaf_fphen_PLF_fn,
 )
 
 
@@ -156,6 +159,7 @@ def test_tt_leaf_f_phen_PLF_range():
     "dd,expected",
     [
         (0, 0.0),  # at dd = 0
+        (19, 0.0),  # Just before SGS
         (20, 0.2),  # at dd = SGS
         (20 + 1, 0.226),  # just after SGS
         (20 + 30, 1.0),  # at dd = SGS + f_phen_1
@@ -225,6 +229,49 @@ def test_f_phen_complex_PLF():
     assert isclose(calc_fphen_demo_p(dd=211), 0.0)
 
 
+def test_f_phen_range():
+    """Test that f_phen_simple_PLF_range produces outputs that match f_phen_simple"""
+    dd_values = [i for i in range(500)]
+    f_phen_1 = 30
+    f_phen_4 = 80
+    f_phen_a = 0.2
+    f_phen_c = 1.0
+    f_phen_e = 0.4
+    SGS = 20
+    EGS = 200
+    f_phen_min = 0.0
+    out = f_phen_simple_PLF_range(
+        dd_values,
+        f_phen_1,
+        f_phen_4,
+        f_phen_a,
+        f_phen_c,
+        f_phen_e,
+        SGS,
+        EGS,
+        f_phen_min,
+    )
+    values_to_check = [
+        (0, 0.0),  # at dd = 0
+        (19, 0.0),  # Just before SGS
+        (20, 0.2),  # at dd = SGS
+        (20 + 1, 0.226),  # just after SGS
+        (20 + 30, 1.0),  # at dd = SGS + f_phen_1
+        (20 + 30 + 1, 1.0),  # just after SGS + f_phen_1
+        (200 - 80, 1.0),  # at dd = SGS + f_phen_1 + f_phen_4
+        (200 - 80 + 1, 0.9925),  # at dd = SGS + f_phen_1 + f_phen_4
+        (200 + 1, 0.0),  # just after EGS
+        (364, 0.0),  # Should wrap around to 0 - 365
+        (400, 0.6),  # Should wrap around to 0 - 365
+        (365, 0.0),  # Should wrap around to 0 - 365
+        (365 + 20 + 30, 1.0),  # Should wrap around to 0 - 365
+    ]
+    for dd_target, expected in values_to_check:
+        f_phen_out = next(f_phen for dd, f_phen in zip(dd_values, out) if dd == dd_target)
+        assert isclose(f_phen_out,  expected, abs_tol=1e-3), f"f_phen_out({f_phen_out}) != expected({expected}) for dd({dd_target})"
+
+
+
 @pytest.mark.parametrize(
     "dd,expected",
     [
@@ -247,7 +294,6 @@ def test_f_phen_complex_PLF():
         (365 + 100 - 1, 0.13),  # Before AEnd
         (365 + 100, 0.1),  # at AEnd
         (365 + 100 + 1, 0.0),  # after AEnd
-
     ],
 )
 def test_leaf_f_phen_PLF(
@@ -263,6 +309,48 @@ def test_leaf_f_phen_PLF(
         leaf_f_phen_c=0.1,
         Astart=50,
         Aend=100,
+        dd=dd,
+    )
+    assert isclose(out, expected, abs_tol=1e-3)
+
+
+@pytest.mark.parametrize(
+    "dd,expected",
+    [
+        (340 - 10, 0.0),  # before Astart set to f_min
+        (340 - 1, 0.0),  # before Astart
+        (340, 0.5),  # at Astart
+        (340 + 1, 0.533),  # after Astart
+        (340 + 15, 1.0),  # Astart + leaf_f_phen_1
+        (35 - 30, 1.0),  # AEnd - leaf_f_phen_2
+        (35 - 1, 0.13),  # Before AEnd
+        (35, 0.1),  # at AEnd
+        (35 + 1, 0.0),  # after AEnd
+        # Check wrap around
+        (365 + 340-10, 0.0),  # before SGS set to f_min
+        (365 + 340 - 1, 0.0),  # before Astart
+        (365 + 340, 0.5),  # at Astart
+        (365 + 340 + 1, 0.533),  # after Astart
+        (365 + 340 + 15, 1.0),  # Astart + leaf_f_phen_1
+        (365 + 35 - 30, 1.0),  # AEnd - leaf_f_phen_2
+        (365 + 35 - 1, 0.13),  # Before AEnd
+        (365 + 35, 0.1),  # at AEnd
+        (365 + 35 + 1, 0.0),  # after AEnd
+    ],
+)
+def test_leaf_f_phen_PLF_inversed_aend(
+    dd,
+    expected,
+):
+    """Tests the leaf_f_phen_PLF function returns the correct value."""
+    out = leaf_f_phen_PLF_value(
+        leaf_f_phen_1=15,
+        leaf_f_phen_2=30,
+        leaf_f_phen_a=0.5,
+        leaf_f_phen_b=1.0,
+        leaf_f_phen_c=0.1,
+        Astart=340,
+        Aend=35,
         dd=dd,
     )
     assert isclose(out, expected, abs_tol=1e-3)
@@ -350,3 +438,67 @@ def test_calc_leaf_f_phen_effect_on_V_cmax_25():
     )
     assert isclose(out.V_cmax_25, 221.4, abs_tol=1e-3)
     assert isclose(out.J_max_25, 492.0, abs_tol=1e-3)
+
+
+
+@pytest.mark.parametrize(
+    "SGS, EGS, expected",
+    [
+        (1,365, [0,1,16,320,365, 366]),
+        # Note that if the season length is the same we should always get the same PLF function
+        (50,200, [0,1,16,106,151, 152]),
+        (100,250, [0,1,16,106,151, 152]),
+        (300,85, [0,1,16,106,151, 152]),
+    ],
+)
+def test_get_fphen_PLF_fn(SGS: int, EGS: int, expected: list[int]):
+    f_phen_1 = 15
+    f_phen_4 = 45
+    f_phen_a = 0.1
+    f_phen_c = 1.0
+    f_phen_e = 0.1
+    gs_offset, fphen_values = get_fphen_PLF_fn(
+        f_phen_1=f_phen_1,
+        f_phen_4=f_phen_4,
+        f_phen_a=f_phen_a,
+        f_phen_c=f_phen_c,
+        f_phen_e=f_phen_e,
+        SGS=SGS,
+        EGS=EGS,
+        f_phen_min=0.0,
+        offset_value=SGS-1,
+    )
+
+    assert gs_offset == expected
+    assert fphen_values == [0.0, 0.1, 1.0, 1.0, 0.1, 0.0]
+
+
+@pytest.mark.parametrize(
+    "Astart, Aend, expected",
+    [
+        (50,200,  [0, 1, 16, 121, 151, 152]),
+        # Note that if the season length is the same we should always get the same PLF function
+        (100,160,  [0, 1, 16, 31.0, 61.0, 62.0]),
+        (130,190,  [0, 1, 16, 31.0, 61.0, 62.0]),
+        (340,35,  [0, 1, 16, 31.0, 61.0, 62.0]),
+    ],
+)
+def test_get_leaf_fphen_PLF_fn(Astart: int,Aend: int, expected: list[int]):
+    leaf_f_phen_1=15
+    leaf_f_phen_2=30
+    leaf_f_phen_a=0.5
+    leaf_f_phen_b=1.0
+    leaf_f_phen_c=0.1
+    gs_offset, leaf_f_phen_values= get_leaf_fphen_PLF_fn(
+        leaf_f_phen_1=leaf_f_phen_1,
+        leaf_f_phen_2=leaf_f_phen_2,
+        leaf_f_phen_a=leaf_f_phen_a,
+        leaf_f_phen_b=leaf_f_phen_b,
+        leaf_f_phen_c=leaf_f_phen_c,
+        Astart=Astart,
+        Aend=Aend,
+        offset_value=Astart - 1,
+    )
+
+    assert gs_offset == expected
+    assert leaf_f_phen_values == [0.0, 0.5, 1.0, 1.0, 0.1, 0.0]

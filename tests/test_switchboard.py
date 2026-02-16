@@ -462,7 +462,7 @@ class TestSwitchBoardDayPLF(SwitchBoardTestBase):
             leaf_emerg_to_fully_grown=20,  # f_phen_1
             fully_grown_to_senescence=2.0,  # 197 - 167
         ),
-        leaf_fphen_intervals=([144.0, 145.0, 165.0, 167.0, 197.0, 198.0], [0.0, 0.0, 1.0, 1.0, 0.0, 0.0]),
+        leaf_fphen_intervals=([0.0, 1.0, 21.0, 23.0, 53.0, 54.0], [0.0, 0.0, 1.0, 1.0, 0.0, 0.0]),
     )
 
     def test_sets_sgs_and_egs(self):
@@ -539,7 +539,7 @@ class TestSwitchBoardDayPLFMultiYear(SwitchBoardTestBase):
             leaf_emerg_to_fully_grown=20,  # f_phen_1
             fully_grown_to_senescence=2.0,  # 197 - 167
         ),
-        leaf_fphen_intervals=([24.0, 25.0, 45.0, 47.0, 77.0, 78.0], [0.0, 0.0, 1.0, 1.0, 0.0, 0.0]),
+        leaf_fphen_intervals=([0.0, 1.0, 21.0, 23.0, 53.0, 54.0], [0.0, 0.0, 1.0, 1.0, 0.0, 0.0]),
     )
 
 
