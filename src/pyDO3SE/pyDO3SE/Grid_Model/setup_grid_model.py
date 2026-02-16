@@ -106,7 +106,7 @@ def pull_config_vars_from_netcdf(
         raise InputDataError("Check shape of e_state_override netcdf vars") from e
     except KeyError as e:
         raise InputDataError(
-            f"Check all keys in e_state_overrides_field_map are in overrides dataset, \nkeys: {e_state_overrides_field_map.keys()}, \n{list(ds.keys())}"
+            f"Check all keys in e_state_overrides_field_map are in overrides dataset, \nkeys: {e_state_overrides_field_map.keys()}, \nvalues: {e_state_overrides_field_map.values()} \n{list(ds.keys())}"
         ) from e
     except Exception as e:
         print(coord)
