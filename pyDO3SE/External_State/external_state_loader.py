@@ -439,7 +439,7 @@ def load_external_state_netcdf(
         )
         for k, func in preprocess_map.items():
             data_out[k] = [eval(func)(d) for d in data_out[k]]
-
+        data_out["row_index"] = np.arange(T) if "row_index" not in data_out else data_out["row_index"]
         external_state_object = External_State_Shape(**data_out)
         yield external_state_object
 
