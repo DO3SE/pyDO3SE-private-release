@@ -137,7 +137,7 @@ def phenology_from_legacy_day_plf(
         assert species_config.key_lengths_flag_leaf.plant_emerg_to_leaf_emerg is not None, "key_lengths_flag_leaf.plant_emerg_to_leaf_emerg could not be defined!"
         assert species_config.key_lengths_flag_leaf.leaf_emerg_to_fully_grown is not None, "key_lengths_flag_leaf.leaf_emerg_to_fully_grown could not be defined!"
         assert species_config.key_lengths_flag_leaf.fully_grown_to_senescence is not None, "key_lengths_flag_leaf.fully_grown_to_senescence could not be defined!"
-        assert species_config.key_lengths_flag_leaf.fully_grown_to_senescence > 0, "key_lengths_flag_leaf.fully_grown_to_senescence must be greater than 0!"
+        assert species_config.key_lengths_flag_leaf.fully_grown_to_senescence > 0, f"key_lengths_flag_leaf.fully_grown_to_senescence must be greater than 0 but got {species_config.key_lengths_flag_leaf.fully_grown_to_senescence}"
         assert species_config.key_lengths.emerg_to_astart is not None, "key_lengths.emerg_to_astart could not be defined!"
         assert species_config.key_dates.Astart, "AStart day could not be defined!"
         assert species_config.key_dates.Aend, "AEnd day could not be defined!"
@@ -153,7 +153,7 @@ def phenology_from_legacy_day_plf(
             leaf_f_phen_c=species_config.day_fphen_plf.leaf_f_phen_c,
             Astart=species_config.key_dates.Astart,
             Aend=species_config.key_dates.Aend,
-            wrap_year=True,
+            offset_value=species_config.key_dates.Astart - 1,
         )
         species_config.leaf_fphen_intervals = leaf_fphen_intervals
 

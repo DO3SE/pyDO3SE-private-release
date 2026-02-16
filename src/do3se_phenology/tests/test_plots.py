@@ -66,3 +66,34 @@ class TestPlotPhenologyFromConfig:
             plot_growing=False,
 
         )
+
+
+    def test_plot_julian_day_multi_year_plots(self):
+        model_config = ModelConfig(
+            phenology_method=PhenologyMethods.LEGACY_DAY_PLF,
+            time_type=TimeTypes.JULIAN_DAY,
+            plant_emerge_method=PlantEmergeMethod.FPHEN,
+            dvi_method=DVIMethods.DISABLED,
+            allow_cross_year_plf_phenology=True
+        )
+        nP = 1
+        species_config = replace(
+            deepcopy(SpringWheatMultiplicative),
+            key_dates=replace(
+                SpringWheatMultiplicative.key_dates,
+                harvest=20,
+                sowing=200,
+            )
+        )
+
+        fig, axss = plot_phenology_from_config(
+            species_config,
+            model_config,
+            nP=nP,
+            output_location=Path("tests/outputs/phenology_spring_wheat_multi_year_dd.png"),
+            plot_td=False,
+            plot_dd=True,
+            plot_carbon=False,
+            plot_growing=False,
+            day_count=365*2
+        )
