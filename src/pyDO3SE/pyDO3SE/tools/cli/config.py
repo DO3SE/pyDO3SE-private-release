@@ -279,6 +279,66 @@ def plot_grid_phenology(
     )
 
 
+
+@click.option(
+    "--grid-coord", type=click.STRING, default="0,0", help="Grid coordinate to use"
+)
+@click.option(
+    "--grid-overrides-file", type=click.Path(exists=True), default=None, help="Input data csv file"
+)
+@click.option(
+    "--grid-overrides-field-map-path",
+    type=click.Path(exists=True),
+    default=None,
+    help="Input data csv file",
+)
+@click.option(
+    "--base-config-file",
+    default=None,
+    help="The base config file path",
+    type=click.Path(exists=True),
+)
+@click.argument(
+    "output-directory",
+)
+@click.argument(
+    "config-file",
+    type=click.Path(exists=True),
+)
+@click.command()
+def plot_grid_f_sw_curve(
+    config_file: Path,
+    output_directory: Path,
+    grid_overrides_file: Path,
+    grid_overrides_field_map_path: Path,
+    base_config_file: Optional[Path] = None,
+    grid_coord: str = "0,0",
+):
+    """Plot the f_sw curve from config file for single grid coord."""
+    from pyDO3SE.Grid_Model.setup_grid_model import process_grid_config as process_grid_config_fn
+    from do3se_met.plots import plot_f_SW_curve
+
+    processed_grid_config = process_grid_config_fn(
+        config_file,
+        grid_overrides_file=grid_overrides_file,
+        grid_overrides_field_map_path=grid_overrides_field_map_path,
+        base_config_file=base_config_file,
+        grid_coord=tuple(map(int, grid_coord.split(","))),
+    )
+    os.makedirs(output_directory, exist_ok=True)
+
+    fig, ax = plot_f_SW_curve(
+        f_SW_method=processed_grid_config.Land_Cover.parameters[0].gsto.f_SW_method,
+        ASW_FC=processed_grid_config.soil_moisture.ASW_FC,
+        fmin=processed_grid_config.Land_Cover.parameters[0].gsto.fmin,
+        ASW_min=processed_grid_config.Land_Cover.parameters[0].gsto.ASW_min,
+        ASW_max=processed_grid_config.Land_Cover.parameters[0].gsto.ASW_max,
+        SWP_min=processed_grid_config.Land_Cover.parameters[0].gsto.SWP_min,
+        SWP_max=processed_grid_config.Land_Cover.parameters[0].gsto.SWP_max,
+    )
+    fig.savefig(f"{output_directory}/f_SW_curve.png")
+
+
 @click.option(
     "--input-data-file", type=click.Path(exists=True), default=None, help="Input data csv file"
 )
