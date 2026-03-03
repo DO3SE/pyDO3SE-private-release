@@ -56,6 +56,9 @@ def plot_f_SW_curve(
         axes.set_xlabel("Available soil water (m3 m-3)")
         axes.set_ylabel("f_SW")
         axes.set_title("Linear SWP method")
+    elif f_SW_method == FSW_Methods.DISABLED:
+        axes.text(0.5, 0.5, "f_SW method disabled", ha="center", va="center")
+        axes.set_axis_off()
     else:
         raise NotImplementedError(f"f_SW method {f_SW_method} not implemented")
 
