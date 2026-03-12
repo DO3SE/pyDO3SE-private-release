@@ -4,7 +4,7 @@ from typing import List, Optional
 import numpy as np
 
 from do3se_phenology.carbon_allocation import calc_partition_coefficients
-from do3se_phenology.f_phen import f_phen_simple_PLF_range, f_phen_simple_PLF_value
+from do3se_phenology.f_phen import f_phen_simple_PLF_range
 from do3se_phenology.switchboard import process_phenology_config
 from do3se_phenology.canopy_structure import get_growing_populations_range_from_config
 from do3se_phenology.phyllochron_dvi import get_dvi_range_from_species_config
@@ -467,8 +467,9 @@ def plot_growing_fractions_from_config(
     b_root=-20.0,
     b_leaf=-15.0,
     b_stem=-18.5,
-    ax: matplotlib.axes.Axes = plt.axes(),
+    ax: matplotlib.axes.Axes=None,
 ):
+    ax = ax if ax is not None else plt.axes()
     ax.set_title("Growing populations")
     growing_populations_all, emerged_leaf_populations_count = (
         get_growing_populations_range_from_config(species_config, nP, td)
@@ -524,8 +525,9 @@ def plot_carbon_fractions_from_species_config(
     b_root=-20.0,
     b_leaf=-15.0,
     b_stem=-18.5,
-    ax: matplotlib.axes.Axes = plt.axes(),
+    ax: matplotlib.axes.Axes = None,
 ):
+    ax = ax if ax is not None else plt.axes()
     p_root, p_leaf, p_stem, p_harv = list(
         zip(
             *[
@@ -862,8 +864,9 @@ def plot_growing_populations_from_config(
     td: List[float],
     row_height=0.15,
     base_offset=1,
-    ax: matplotlib.axes.Axes = plt.axes(),
+    ax: matplotlib.axes.Axes = None,
 ):
+    ax = ax if ax is not None else plt.axes()
     growing_populations_all, emerged_leaf_populations_count = (
         get_growing_populations_range_from_config(species_config, nP, td)
     )
