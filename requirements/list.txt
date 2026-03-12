@@ -24,11 +24,12 @@ coverage                                 7.6.9
 cycler                                   0.12.1                                  
 dask                                     2024.12.0                               
 data-helpers                             0.2.0                                   
+data-helpers-v2                          0.2.1                                   
 debugpy                                  1.8.9                                   
 decorator                                5.1.1                                   
 defusedxml                               0.7.1                                   
 deprecated                               1.2.15                                  
-dill                                     0.3.9                                   
+dill                                     0.4.1                                   
 distlib                                  0.3.9                                   
 do3se-met                                0.4.0                                   
 do3se-phenology                          4.40.6                                  
@@ -93,7 +94,7 @@ pillow                                   11.0.0
 platformdirs                             4.3.6                                   
 pluggy                                   1.5.0                                   
 pre-commit                               4.0.1                                   
-proflow                                  0.6.6                                   
+proflow                                  0.6.5                                   
 prometheus-client                        0.21.1                                  
 prompt-toolkit                           3.0.48                                  
 psutil                                   6.1.0                                   

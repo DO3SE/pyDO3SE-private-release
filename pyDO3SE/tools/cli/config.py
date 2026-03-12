@@ -146,6 +146,9 @@ def output_process_list(
 
 
 @click.option(
+    "--day-count", type=click.INT, default=365, help="Number of days to plot"
+)
+@click.option(
     "--input-data-file", type=click.Path(exists=True), default=None, help="Input data csv file"
 )
 @click.option(
@@ -200,6 +203,9 @@ def plot_phenology(
     )
 
 
+@click.option(
+    "--day-count", type=click.INT, default=365, help="Number of days to plot"
+)
 @click.option(
     "--grid-coord", type=click.STRING, default="0,0", help="Grid coordinate to use"
 )
