@@ -4,7 +4,7 @@ from typing import List, Optional
 import numpy as np
 
 from do3se_phenology.carbon_allocation import calc_partition_coefficients
-from do3se_phenology.f_phen import f_phen_simple_PLF_range
+from do3se_phenology.f_phen import f_phen_simple_PLF_range, leaf_f_phen_PLF_range
 from do3se_phenology.switchboard import process_phenology_config
 from do3se_phenology.canopy_structure import get_growing_populations_range_from_config
 from do3se_phenology.phyllochron_dvi import get_dvi_range_from_species_config
@@ -197,13 +197,14 @@ def plot_leaf_f_phen_dd_box_plot(
     **kwargs,
 ):
     egs_adg = egs if egs > sgs else egs + 365
+    astart_adj = astart if astart > sgs else astart + 365
     COLOR = "red"
     ax.axvline(sgs, linestyle="dotted", color=COLOR)
     y = count(box_y_start, 2)
     text_offset = (egs_adg - sgs) / 100
     draw_range(
         ax,
-        astart,
+        astart_adj,
         length=leaf_f_phen_1,
         label="leaf_f_phen_1",
         COLOR=COLOR,
@@ -319,14 +320,15 @@ def plot_f_phen_dd_vlines(
 ):
 
     egs_adj = egs if egs > sgs else egs + 365
+    astart_adj =  (astart if astart > sgs else astart + 365) if astart is not None else None
 
     if plot_labels:
         ax.annotate("SGS", (sgs, TEXT_HEIGHT), rotation=TEXT_ANGLE, color=COLOR)
         ax.annotate("EGS", (egs_adj, TEXT_HEIGHT), rotation=TEXT_ANGLE, color=COLOR)
-        ax.annotate("Astart", (astart, TEXT_HEIGHT), rotation=TEXT_ANGLE, color=COLOR) if astart else None
+        ax.annotate("Astart", (astart_adj, TEXT_HEIGHT), rotation=TEXT_ANGLE, color=COLOR) if astart_adj else None
     ax.axvline(sgs, linestyle="dotted", color=COLOR)
     ax.axvline(egs_adj, linestyle="dotted", color=COLOR)
-    ax.axvline(astart, linestyle="dotted", color=COLOR) if astart else None
+    ax.axvline(astart_adj, linestyle="dotted", color=COLOR) if astart_adj else None
 
 
 def plot_f_phen_dd_data(
@@ -594,20 +596,21 @@ class PlotLeafFPhenDataFromConfig(_PhenologyPlotClass):
         )
 
     def plot_dd(self, ax: matplotlib.axes.Axes):
-        # TODO: Get lead_f_phen data from dd intervals instead
-        leaf_f_phen_intervals = self.speciesConfig.leaf_fphen_intervals
-        assert leaf_f_phen_intervals is not None, (
-            "Leaf f_phen intervals not defined in species config"
-        )
-        leaf_f_phen_data_dd = np.interp(
-            self.dd_data - self.speciesConfig.key_dates.Astart +1,
-            leaf_f_phen_intervals[0],
-            leaf_f_phen_intervals[1],
+        leaf_f_phen_values = leaf_f_phen_PLF_range(
+            self.dd_data,
+            leaf_f_phen_1=self.speciesConfig.day_fphen_plf.leaf_f_phen_1,
+            leaf_f_phen_2=self.speciesConfig.day_fphen_plf.leaf_f_phen_2,
+            leaf_f_phen_a=self.speciesConfig.day_fphen_plf.leaf_f_phen_a,
+            leaf_f_phen_b=self.speciesConfig.day_fphen_plf.leaf_f_phen_b,
+            leaf_f_phen_c=self.speciesConfig.day_fphen_plf.leaf_f_phen_c,
+            Astart=self.speciesConfig.key_dates.Astart,
+            Aend=self.speciesConfig.key_dates.Aend,
+            SGS=self.speciesConfig.key_dates.sowing,
         )
 
         plot_leaf_f_phen_data(
             self.dd_data,
-            leaf_f_phen_data_dd,
+            leaf_f_phen_values,
             self.speciesConfig.key_dates.sowing,
             ax=ax,
         )

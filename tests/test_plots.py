@@ -95,5 +95,5 @@ class TestPlotPhenologyFromConfig:
             plot_dd=True,
             plot_carbon=False,
             plot_growing=False,
-            day_count=365*4 # TODO: Check why changing this number does not change output
+            day_count=365*2 # Should be 2 seasons
         )
