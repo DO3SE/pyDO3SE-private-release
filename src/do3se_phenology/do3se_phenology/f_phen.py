@@ -674,6 +674,32 @@ def tt_f_phen_simple_PLF_range(
     ]
 
 
+def leaf_f_phen_PLF_range(
+    dd_list: List[int],
+    leaf_f_phen_1: int,
+    leaf_f_phen_2: int,
+    leaf_f_phen_a: float,
+    leaf_f_phen_b: float,
+    leaf_f_phen_c: float,
+    Astart: int,
+    Aend: int,
+    SGS: int,
+):
+    dd_adj = [wrap_day_of_year(dd - SGS + 1) for dd in dd_list]
+
+    gs_offset, leaf_fphen_values = get_leaf_fphen_PLF_fn(
+        leaf_f_phen_1=leaf_f_phen_1,
+        leaf_f_phen_2=leaf_f_phen_2,
+        leaf_f_phen_a=leaf_f_phen_a,
+        leaf_f_phen_b=leaf_f_phen_b,
+        leaf_f_phen_c=leaf_f_phen_c,
+        Astart=Astart,
+        Aend=Aend,
+        offset_value=SGS - 1,
+    )
+    return [get_PLF_value(gs_offset, leaf_fphen_values, float(dd)) for dd in dd_adj]
+
+
 def f_phen_simple_PLF_range(
     dd_list: List[int],
     f_phen_1: int,
