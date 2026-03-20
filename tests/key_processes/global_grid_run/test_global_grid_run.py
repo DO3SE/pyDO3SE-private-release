@@ -2,6 +2,7 @@
 
 This tests that we can run with gridded hourly offset.
 """
+
 import math
 import numpy as np
 import warnings
@@ -10,7 +11,7 @@ from pathlib import Path
 from datetime import datetime
 import pytest
 from data_helpers.list_helpers import flatten_list
-from pyDO3SE.Output.utils import get_multi_dimension_output_fields
+from pyDO3SE.Output.utils import get_multi_dimension_output_fields, get_output_field_data
 from pyDO3SE.Config.config_loader import config_loader_pickled
 from pyDO3SE.Model_State.model_state_loader import dump_state_to_file, model_state_loader_quick
 
@@ -41,14 +42,14 @@ def _default_run(self: TestSetup, **kwargs):
                 regex_multi_file_filter=self.regex_multi_file_filter,
                 logger=self.logger_main,
                 netcdf_loader_kwargs=self.netcdf_loader_kwargs,
-                debug=True
+                debug=True,
             )
             end_time = datetime.now()
             duration = end_time - start_time
 
-            with open(f'{self.run_paths.config_run_dir}/notes.log', 'w') as f:
+            with open(f"{self.run_paths.config_run_dir}/notes.log", "w") as f:
                 log_notes = generate_run_notes(
-                    runnotes='',
+                    runnotes="",
                     time_taken=str(duration),
                     # time_taken_setup=setup_duration,
                     # config_version=config_version,
@@ -60,8 +61,12 @@ def _default_run(self: TestSetup, **kwargs):
         # Save a human readable copy of the final state
         for x, y in self.grid_coords:
             file_name = f"{x}_{y}"
-            dump_state_to_file(model_state_loader_quick(
-                Path(f"{self.run_paths.live_state_dir}/{file_name}.state")), Path(f"{self.run_paths.final_state_dir}/{file_name}.json"))
+            dump_state_to_file(
+                model_state_loader_quick(
+                    Path(f"{self.run_paths.live_state_dir}/{file_name}.state")
+                ),
+                Path(f"{self.run_paths.final_state_dir}/{file_name}.json"),
+            )
 
     except Exception as e:
         errors.append((f"Project dir: {self.project_paths.project_dir} failed", e))
@@ -72,9 +77,6 @@ def _default_run(self: TestSetup, **kwargs):
         print(errors)
         raise errors[0][1]
     print("Complete")
-
-
-
 
 
 @pytest.fixture(scope="class")
@@ -94,14 +96,34 @@ class TestGlobalGridRun(TestSetup):
     class Base(TestSetup):
         config_path = None
         config_id = "bangor_wheat"
-        output_fields = ['dd', 'hr', 'gsto_canopy', 'td_dd',
-                         'canopy_lai', 'pody', 'fst', 'canopy_height', 'micro_u', 'par', 'ts_c']
-        input_fields = ['SWDOWN', 'HFX_FORCE', 'td_2m',
-                        'rh', 'o3', 'wspeed', 'pres', 'RAINNC', 'SNOWH']
-        multi_file_netcdf = "SETME" # type: ignore
+        output_fields = [
+            "dd",
+            "hr",
+            "gsto_canopy",
+            "td_dd",
+            "canopy_lai",
+            "pody",
+            "fst",
+            "canopy_height",
+            "micro_u",
+            "par",
+            "ts_c",
+        ]
+        input_fields = [
+            "SWDOWN",
+            "HFX_FORCE",
+            "td_2m",
+            "rh",
+            "o3",
+            "wspeed",
+            "pres",
+            "RAINNC",
+            "SNOWH",
+        ]
+        multi_file_netcdf = "SETME"  # type: ignore
         runid = "SETME"
         project_dir = "SETME"
-        regex_multi_file_filter = None # type: ignore
+        regex_multi_file_filter = None  # type: ignore
         netcdf_loader_kwargs = {}
         complete = False
         expected_total_days = 8
@@ -122,7 +144,7 @@ class TestGlobalGridRun(TestSetup):
             output_files = sorted(os.listdir(self.run_paths.output_data_dir))
             output_data_file = f"{self.run_paths.output_data_dir}/{output_files[-1]}"
             ds = xr.open_dataset(output_data_file)
-            assert set(ds.coords) == {'time', 'lat', 'lon'}
+            assert set(ds.coords) == {"time", "lat", "lon"}
 
         # No longer valid if we include multi layer fields
         # def test_should_have_only_outputed_required_fields(self):
@@ -139,13 +161,20 @@ class TestGlobalGridRun(TestSetup):
             output_data_file = f"{self.run_paths.output_data_dir}/{output_files[-1]}"
             ds = xr.open_dataset(output_data_file)
 
-            multi_dimensional_fields =flatten_list([[f, *get_multi_dimension_output_fields(f)] for f in self.output_fields])
+            multi_dimensional_fields = flatten_list(
+                [
+                    [get_output_field_data([f]), *get_multi_dimension_output_fields(f)]
+                    for f in self.output_fields
+                ]
+            )
             assert len(multi_dimensional_fields) > len(self.output_fields)
-            for f in multi_dimensional_fields:
-                assert ds[f] is not None
+            for field_data in multi_dimensional_fields:
+                assert ds[field_data.id] is not None
                 for x, y in self.grid_coords:
-                    assert all((not np.isnan(v) and v is not None) for v in ds[f].sel(y=y, x=x, drop=True).values)
-
+                    assert all(
+                        (not np.isnan(v) and v is not None)
+                        for v in ds[field_data.id].sel(y=y, x=x, drop=True).values
+                    )
 
         def test_output_should_be_correct_shape(self):
             output_files = sorted(os.listdir(self.run_paths.output_data_dir))
@@ -160,8 +189,9 @@ class TestGlobalGridRun(TestSetup):
             output_files = sorted(os.listdir(self.run_paths.output_data_dir))
             input_files = sorted(os.listdir(f"{self.project_dir}/inputs"))
 
-            ds_out_files = [xr.open_dataset(
-                f"{self.run_paths.output_data_dir}/{f}") for f in output_files]
+            ds_out_files = [
+                xr.open_dataset(f"{self.run_paths.output_data_dir}/{f}") for f in output_files
+            ]
             ds_in_files = [xr.open_dataset(f"{self.project_dir}/inputs/{f}") for f in input_files]
             ds_in = xr.concat(ds_in_files, dim="Time")
             ds_out = xr.concat(ds_out_files, dim="time")  # Note: Output is time not Time
@@ -201,7 +231,7 @@ class TestGlobalGridRun(TestSetup):
         def test_should_have_set_external_config_override(self):
             output_config_files_dir = f"{self.run_paths.processed_configs_dir}"
             config_files = os.listdir(output_config_files_dir)
-            config_file = config_loader_pickled(f'{output_config_files_dir}/{config_files[0]}')
+            config_file = config_loader_pickled(f"{output_config_files_dir}/{config_files[0]}")
             assert config_file.Land_Cover.parameters[0].phenology.key_dates.sowing is not None
             assert not math.isnan(config_file.Land_Cover.parameters[0].phenology.key_dates.sowing)
 
@@ -209,17 +239,21 @@ class TestGlobalGridRun(TestSetup):
             output_files = sorted(os.listdir(self.run_paths.output_data_dir))
             input_files = sorted(os.listdir(f"{self.project_dir}/inputs"))
 
-            ds_out_files = [xr.open_dataset(
-                f"{self.run_paths.output_data_dir}/{f}") for f in output_files]
+            ds_out_files = [
+                xr.open_dataset(f"{self.run_paths.output_data_dir}/{f}") for f in output_files
+            ]
             ds_in_files = [xr.open_dataset(f"{self.project_dir}/inputs/{f}") for f in input_files]
             ds_in = xr.concat(ds_in_files, dim="Time")
             ds_out = xr.concat(ds_out_files, dim="time")
-            assert len(ds_out.time.values) == len(
-                ds_in.XTIME.values), f"Output time {len(ds_out.time.values)} != input time {len(ds_in.XTIME.values)}"
-            assert ds_out.time.values.min() == ds_in.XTIME.values.min(
-            ), f"Output time min {ds_out.time.values.min()} != input time min {ds_in.XTIME.values.min()}"
-            assert ds_out.time.values.max() == ds_in.XTIME.values.max(
-            ), f"Output time max {ds_out.time.values.max()} != input time max {ds_in.XTIME.values.max()}"
+            assert len(ds_out.time.values) == len(ds_in.XTIME.values), (
+                f"Output time {len(ds_out.time.values)} != input time {len(ds_in.XTIME.values)}"
+            )
+            assert ds_out.time.values.min() == ds_in.XTIME.values.min(), (
+                f"Output time min {ds_out.time.values.min()} != input time min {ds_in.XTIME.values.min()}"
+            )
+            assert ds_out.time.values.max() == ds_in.XTIME.values.max(), (
+                f"Output time max {ds_out.time.values.max()} != input time max {ds_in.XTIME.values.max()}"
+            )
             assert (ds_out.time.values == ds_in.XTIME.values).all()
 
         def test_should_handle_multiple_years(self):
@@ -244,15 +278,18 @@ class TestGlobalGridRun(TestSetup):
             output_files = sorted(os.listdir(self.run_paths.output_data_dir))
             input_files = sorted(os.listdir(f"{self.project_dir}/inputs"))
 
-            ds_out_files = [xr.open_dataset(
-                f"{self.run_paths.output_data_dir}/{f}") for f in output_files]
+            ds_out_files = [
+                xr.open_dataset(f"{self.run_paths.output_data_dir}/{f}") for f in output_files
+            ]
             ds_in_files = [xr.open_dataset(f"{self.project_dir}/inputs/{f}") for f in input_files]
             ds_in = xr.concat(ds_in_files, dim="Time")
             ds_out = xr.concat(ds_out_files, dim="time")
 
             for x, y in self.grid_coords:
-                assert (ds_out.ts_c.sel(y=y, x=x, drop=True).values ==
-                        ds_in.td_2m.sel(y=y, x=x, drop=True).values).all()
+                assert (
+                    ds_out.ts_c.sel(y=y, x=x, drop=True).values
+                    == ds_in.td_2m.sel(y=y, x=x, drop=True).values
+                ).all()
 
     # @pytest.mark.skip(reason="Takes too long")
     # @pytest.mark.usefixtures("before_all")
@@ -282,10 +319,11 @@ class TestGlobalGridRun(TestSetup):
         def test_should_have_merged_all_files(self):
             """Should have merged all inputs into 1 before running the model."""
             output_files = os.listdir(
-                f"{self.project_dir}/runs/{self.runid}/{self.config_id}/outputs_grid")
-            assert len(
-                output_files) == 1, f"Model should have only produced 1 nc file but got {len(output_files)} files"
-
+                f"{self.project_dir}/runs/{self.runid}/{self.config_id}/outputs_grid"
+            )
+            assert len(output_files) == 1, (
+                f"Model should have only produced 1 nc file but got {len(output_files)} files"
+            )
 
         def test_should_have_offset_hr_in_some_grid_cells(self):
             output_files = sorted(os.listdir(self.run_paths.output_data_dir))
@@ -293,17 +331,9 @@ class TestGlobalGridRun(TestSetup):
             assert ds.hr.shape == (3, 2, 24)
             # Check at time = 0
             np.testing.assert_array_equal(
-                ds.hr[:,:,0].values,
-                [[0,0],[np.nan,np.nan],[12.0,np.nan]]
+                ds.hr[:, :, 0].values, [[0, 0], [np.nan, np.nan], [12.0, np.nan]]
             )
             # Check at time = 23
             np.testing.assert_array_equal(
-                ds.hr[:,:,23].values,
-                [[23,23],[np.nan,np.nan],[(12.0 + 23)%24,np.nan]]
+                ds.hr[:, :, 23].values, [[23, 23], [np.nan, np.nan], [(12.0 + 23) % 24, np.nan]]
             )
-
-
-
-
-
-

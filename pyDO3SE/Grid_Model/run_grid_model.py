@@ -55,8 +55,8 @@ from pyDO3SE.run_model import run_model, run_model_daily
 from pyDO3SE.Output.process_outputs import (
     dump_output_to_file_netcdf_grid,
 )
-from pyDO3SE.Output.Output_Shape import OutputData
-from pyDO3SE.Output.utils import get_multi_dimension_output_fields
+from pyDO3SE.Output.Output_Shape import OutputData, Field
+from pyDO3SE.Output.utils import get_multi_dimension_output_fields, get_output_field_data
 
 from pyDO3SE.Config import Config_Shape
 from pyDO3SE.Model_State import Model_State_Shape
@@ -739,7 +739,7 @@ def main_partial(
 def output_data_from_outputs_full_grid(
     outputs_full_grid: List[Tuple[Coords, ModelGridCellOutput, Model_State_Shape, OutputFields]],
     output_shape: Tuple[int, int],
-    output_fields: List[str],
+    output_fields: List[Field],
     lat_data: np.ndarray,
     lon_data: np.ndarray,
     time_data: np.ndarray,
@@ -747,12 +747,12 @@ def output_data_from_outputs_full_grid(
     grid_x_size, grid_y_size, row_count = output_shape
 
     full_output_data = {
-        k: np.full((grid_x_size, grid_y_size, row_count), None, dtype=np.float64) for k in output_fields
+        k.id: np.full((grid_x_size, grid_y_size, row_count), None, dtype=np.float64) for k in output_fields
     }
     try:
         for [xi, yi], outputs_cell, final_state, _output_fields in outputs_full_grid:
             for i, k in enumerate(output_fields):
-                full_output_data[k][xi, yi] = outputs_cell[i]
+                full_output_data[k.id][xi, yi] = outputs_cell[i]
         return OutputData(
             output_shape=output_shape,
             full_output_data=full_output_data,
@@ -763,7 +763,7 @@ def output_data_from_outputs_full_grid(
         )
     except ValueError as e:
         if "could not convert string to float" in str(e):
-            raise ValueError(f"Invalid value for key: {k}")
+            raise ValueError(f"Invalid value for key: {k.id}")
         raise e
     return
 
@@ -775,11 +775,18 @@ def save_model_iteration_output(
     output_directory: Path,
     time_string: str,
     output_shape: Tuple[int, int, int],
-    output_fields: str,
+    output_fields: list[Field],
     lat_data: np.ndarray,
     lon_data: np.ndarray,
     time_data: np.ndarray,
 ):
+    """Save all the outputs from an iteration of the model.
+
+    This includes:
+    - final state
+    - gridded netcdf data
+
+    """
     if output_state_dir:
         for coord, output_data, final_state, _output_fields in outputs_full_grid:
             # Save state at each iteration
@@ -888,9 +895,9 @@ def main_grid_seq_per_config(
         assert len(config.output.fields) > 0, "Must supply output fields in config or cli args!"
     save_multi_layer_fields = config.output.log_multilayer
     output_fields_full = (
-        output_fields
+        get_output_field_data(output_fields)
         if not save_multi_layer_fields
-        else flatten_list([[f, *get_multi_dimension_output_fields(f)] for f in output_fields])
+        else flatten_list([[get_output_field_data([f]), *get_multi_dimension_output_fields(f)] for f in output_fields])
     )
 
     zero_year = cell_configs[0].Location.zero_year
@@ -973,7 +980,7 @@ def main_grid_seq_per_config(
                     prev_hour_states_loaded=prev_hour_states_loaded,
                     grid_coords=np.array(grid_coords),
                     external_states=external_states,
-                    output_fields=output_fields_full,
+                    output_fields=[o.id for o in output_fields_full],
                     parallel=parallel,
                     use_daily_loop=use_daily_loop,
                     init_first_hour=i == 0 and config.Location.run_first_hour_on_init,
