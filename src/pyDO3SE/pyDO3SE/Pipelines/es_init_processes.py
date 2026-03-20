@@ -591,7 +591,10 @@ def init_dd_hr(
 
 
 def init_params() -> List[Process]:
-    """Set data to input or constant data."""
+    """Set data to input or constant data.
+
+    This also crops the data to the row_index value
+    """
     keys = [k for k in list(External_State_Shape.__annotations__.keys())]
     return [
         Process(
@@ -655,6 +658,9 @@ def validate_input() -> List[Process]:
     ]
 
 
+def remove_gate_not_processes(processes: list[Process]) -> list[Process]:
+    return [p for p in processes if p.gate]
+
 def external_state_init_processes(
     start_day: Optional[int] = None, end_day: Optional[int] = None, pad: Optional[bool] = False,
     config_met: Config_Met = None,
@@ -662,7 +668,7 @@ def external_state_init_processes(
     """Get flattened list of all processes to be ran over a annual cycle."""
     assert config_met, "Met data not found in config"
 
-    return flatten_list([
+    return remove_gate_not_processes(flatten_list([
         set_row_index_input(config_met.inputs.row_index_method),
         init_dd_hr(start_day, end_day, pad, config_met.inputs.dd_method, config_met.dd_calc_method),
         init_params(),
@@ -671,4 +677,4 @@ def external_state_init_processes(
         calc_thermal_time_processes(config_met),
         calc_met_params_list(),
         validate_input(),
-    ])
+    ]))

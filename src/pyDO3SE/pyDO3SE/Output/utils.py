@@ -1,10 +1,12 @@
+from data_helpers.list_helpers import flatten_list
 from pyDO3SE.settings import settings
-from pyDO3SE.Output.Output_Shape import output_fields
+from pyDO3SE.Output.Output_Shape import output_fields, Field
 
-def get_multi_dimension_output_fields(fieldId: str):
+
+def get_multi_dimension_output_fields(fieldId: str) -> list[Field]:
     field_data = next((o for o in output_fields if o.id == fieldId), None)
     if field_data is None:
-         raise ValueError(f"Field ID '{fieldId}' not found in output fields.")
+        raise ValueError(f"Field ID '{fieldId}' not found in output fields.")
     field_additional_multi_dimension_field_ids = []
     if field_data.per_iL:
         field_additional_multi_dimension_field_ids += [
@@ -22,4 +24,19 @@ def get_multi_dimension_output_fields(fieldId: str):
         field_additional_multi_dimension_field_ids += [
             f"{fieldId}_iCH_{iCH}" for iCH in range(settings().MAX_NUM_OF_CUSTOM_LAYERS)
         ]
-    return field_additional_multi_dimension_field_ids
+    full_fields_data = [
+        Field(
+            **{k: v for k, v in field_data._asdict().items() if k not in ["id", "short", "long"]},
+            id=k,
+            short=k,
+            long=f"{k} from {field_data.long}",
+        )
+        for k in field_additional_multi_dimension_field_ids
+    ]
+    return flatten_list(full_fields_data)
+
+
+def get_output_field_data(output_field_ids: list[str]) -> list[Field]:
+    return [
+        next((o for o in output_fields if o.id == fieldId), None) for fieldId in output_field_ids
+    ]

@@ -28,6 +28,7 @@ from pyDO3SE.Analysis.util import (
 )
 from pyDO3SE.Analysis.charts import annual_graph, monthly_diurnal_graph
 from pyDO3SE.Output.Output_Shape import output_fields_map, output_fields
+from pyDO3SE.Output.utils import get_output_field_data
 from pyDO3SE.External_State import External_State_Shape
 from pyDO3SE.Model_State import Model_State_Shape
 from pyDO3SE.Config.Config_Shape import Config_Shape
@@ -129,7 +130,8 @@ def dump_output_to_netcdf_grid(
     lat_data: np.ndarray,
     lon_data: np.ndarray,
     time_data: np.ndarray,
-    output_fields: List[str],
+    output_fields: List[Field],
+    output_file_comments: str = "",
 ) -> xr.Dataset:
     """Dump output to netcdf file.
 
@@ -152,6 +154,8 @@ def dump_output_to_netcdf_grid(
         matrix of time data with shape(t)
     output_fields : List[str]
         Fields to save
+    output_file_comments: str
+        Comments to be added to the comment attribute of the netCDF file
 
     Returns
     -------
@@ -159,20 +163,40 @@ def dump_output_to_netcdf_grid(
         xr.Dataset
 
     """
-    variables = output_fields or list(full_output_data.keys())
+    variables = output_fields or get_output_field_data(list(full_output_data.keys()))
 
     try:
-        data_vars = {k: (["x", "y", "time"], full_output_data[k]) for k in variables}
-        return xr.Dataset(
-            data_vars=data_vars,
-            coords=dict(
-                lon=(["x", "y"], lon_data),
-                lat=(["x", "y"], lat_data),
-                time=time_data,
-                # reference_time=reference_time,
-            ),
-            attrs=dict(description="DO3SE outputs"),
+        dataarrays = []
+        for var_data in variables:
+            dataarrays.append(
+                xr.DataArray(
+                    data=full_output_data[var_data.id],
+                    dims=["x", "y", "time"],
+                    coords=dict(
+                        lon=(["x", "y"], lon_data),
+                        lat=(["x", "y"], lat_data),
+                        time=time_data,
+                    ),
+                    attrs=dict(
+                        description="DO3SE outputs",
+                        units=var_data.unit,
+                        standard_name=var_data.short,
+                        long_name=var_data.long,
+                    ),
+                    name=var_data.id,
+                )
+            )
+        ds = xr.merge(dataarrays)
+        ds = ds.assign_attrs(
+            dict(
+                title="DO3SE Model Gridded Outputs",
+                description="Gridded outputs from running the DO3SE model",
+                institution="University of York",
+                source=f"DO3SE v{model_version}",
+                comment=output_file_comments,
+            )
         )
+        return ds
     except KeyError as e:
         print(e)
         raise OutputError(
@@ -190,7 +214,7 @@ def dump_output_to_file_netcdf_grid(
     lat_data: np.ndarray,
     lon_data: np.ndarray,
     time_data: np.ndarray,
-    output_fields: List[str],
+    output_fields: List[Field],
     target_path: Path,
 ) -> OutputsFile:
     """Dump the output data to a NETCDF file.
@@ -346,6 +370,7 @@ def create_diurnal_plots(
             start_day: {start_day}
             end_day: {end_day}
             """) from e
+
 
 def plot_diurnal_charts(
     runid: str | int,
@@ -559,7 +584,7 @@ def export_failed_run_output(
             model_processes_out = (
                 model_processes
                 if type(model_processes) is type([])
-                else model_processes.values() # type: ignore
+                else model_processes.values()  # type: ignore
                 if type(model_processes) is type({})
                 else None
             )
@@ -578,7 +603,7 @@ def export_failed_run_output(
             model_processes_out = (
                 model_processes
                 if type(model_processes) is type([])
-                else model_processes.values() # type: ignore
+                else model_processes.values()  # type: ignore
                 if type(model_processes) is type({})
                 else None
             )
@@ -712,7 +737,7 @@ def export_output(
             model_processes_out = (
                 model_processes
                 if type(model_processes) is type([])
-                else model_processes.values() # type: ignore
+                else model_processes.values()  # type: ignore
                 if type(model_processes) is type({})
                 else None
             )
@@ -730,7 +755,7 @@ def export_output(
             model_processes_out = (
                 model_processes
                 if type(model_processes) is type([])
-                else model_processes.values() # type: ignore
+                else model_processes.values()  # type: ignore
                 if type(model_processes) is type({})
                 else None
             )
@@ -771,7 +796,6 @@ def export_output(
                 SWP_max=final_config.Land_Cover.parameters[0].gsto.SWP_max,
             )
             fig.savefig(f"{output_directory}/f_SW_curve.png")
-
 
         if options.plot_annual_charts and fields_to_graph and len(fields_to_graph):
             logger(f"Plotting annual charts. Fields: {fields_to_graph}")
