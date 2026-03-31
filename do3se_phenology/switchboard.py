@@ -140,8 +140,8 @@ def phenology_from_legacy_day_plf(
         assert species_config.key_lengths_flag_leaf.fully_grown_to_senescence is not None, "key_lengths_flag_leaf.fully_grown_to_senescence could not be defined!"
         assert species_config.key_lengths_flag_leaf.fully_grown_to_senescence >= 0, f"key_lengths_flag_leaf.fully_grown_to_senescence must be greater than 0 but got {species_config.key_lengths_flag_leaf.fully_grown_to_senescence}"
         assert species_config.key_lengths.emerg_to_astart is not None, "key_lengths.emerg_to_astart could not be defined!"
-        assert species_config.key_dates.Astart, "AStart day could not be defined!"
-        assert species_config.key_dates.Aend, "AEnd day could not be defined!"
+        assert species_config.key_dates.Astart is not None, "AStart day could not be defined!"
+        assert species_config.key_dates.Aend is not None, "AEnd day could not be defined!"
     else:
         species_config.key_lengths_flag_leaf.plant_emerg_to_leaf_emerg = 0
 
