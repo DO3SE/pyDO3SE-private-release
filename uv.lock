@@ -429,6 +429,18 @@ wheels = [
 ]
 
 [[package]]
+name = "data-helpers"
+version = "0.2.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/68/c2/050880353736e5227710bb13afd9dd2ea71b683084501a63ff00ffccd377/data_helpers-0.2.7.tar.gz", hash = "sha256:9dc2443b128454423b54dc6e64e514af215738a6a9a99a894328a18f20112245", size = 77962 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f6/94/5f192c4fcbe64965720f733511a460f32216d2e36674ef8c185be5ecf07e/data_helpers-0.2.7-py3-none-any.whl", hash = "sha256:54f2ac00be84f592cf9e6c1c6045dee6e1e0a1f097a1e547fce5a874493d4c19", size = 21901 },
+]
+
+[[package]]
 name = "data-helpers-v2"
 version = "0.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -507,7 +519,7 @@ wheels = [
 
 [[package]]
 name = "do3se-met"
-version = "0.4.0"
+version = "0.4.1"
 source = { editable = "src/do3se_met" }
 dependencies = [
     { name = "click" },
@@ -1696,11 +1708,11 @@ wheels = [
 
 [[package]]
 name = "pydo3se"
-version = "4.43.3"
+version = "4.44.23"
 source = { editable = "src/pyDO3SE" }
 dependencies = [
     { name = "click" },
-    { name = "data-helpers-v2" },
+    { name = "data-helpers" },
     { name = "deprecated" },
     { name = "dill" },
     { name = "matplotlib" },
@@ -1755,7 +1767,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=7.1.2" },
-    { name = "data-helpers-v2", specifier = ">=0.1.29" },
+    { name = "data-helpers", specifier = ">=0.2.7" },
     { name = "deprecated", specifier = ">=1.2.12" },
     { name = "dill", specifier = ">=0.3.8" },
     { name = "matplotlib", specifier = ">=3.2.1" },
@@ -1809,11 +1821,11 @@ test = [
 
 [[package]]
 name = "pydo3se-open"
-version = "4.43.3"
+version = "4.44.22"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
-    { name = "data-helpers-v2" },
+    { name = "data-helpers" },
     { name = "deprecated" },
     { name = "dill" },
     { name = "matplotlib" },
@@ -1849,7 +1861,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=7.1.2" },
-    { name = "data-helpers-v2", specifier = ">=0.1.29" },
+    { name = "data-helpers", specifier = ">=0.2.7" },
     { name = "deprecated", specifier = ">=1.2.12" },
     { name = "dill", specifier = ">=0.3.8" },
     { name = "matplotlib", specifier = ">=3.2.1" },
