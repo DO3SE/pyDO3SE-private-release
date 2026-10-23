@@ -9,7 +9,6 @@ on:
 
 jobs:
   build-source:
-    # TODO: Finish implementing build and upload of source distribution
     runs-on: ubuntu-latest
 
     permissions:
@@ -19,21 +18,12 @@ jobs:
     name: Build Source Distribution
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Install uv
-      uses: astral-sh/setup-uv@v5
+      uses: actions/checkout@v6
+    - name: Setup Python Env
+      uses: ./.github/actions/setup-python-env
       with:
-        version: "0.5.13"
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-
-    - name: Install dependencies
-      run: |
-        uv sync --extra grid
+        uv-extra-groups:
+          grid
     - name: Build Source with UV
       run: |
         uv build
@@ -56,7 +46,7 @@ jobs:
     name: Build Apptainer Image
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download built source distribution artifact
         uses: actions/download-artifact@v5
@@ -96,7 +86,7 @@ jobs:
     name: Create Release
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download built source distribution artifact
         uses: actions/download-artifact@v5
