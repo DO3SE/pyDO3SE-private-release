@@ -25,4 +25,5 @@ runs:
     - name: Install dependencies
       shell: bash
       run: |
-        uv sync --locked ${{ case(inputs.uv-extra-groups == '', '', format('--group {0}', inputs.uv-extra-groups)) }}
+        uv sync --locked ${{ case(inputs.uv-extra-groups == '', '', '--group') }} ${{ case(inputs.uv-extra-groups == '', '',  join(inputs.uv-extra-groups, '--group'))  }}
+
