@@ -7,33 +7,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
+      - name: Checkout code
+        uses: actions/checkout@v6
 
+      - name: Setup Python Env
+        uses: ./.github/actions/setup-python-env
+        with:
+          uv-extra-groups: ci
 
-    - name: Setup Python Env
-      uses: ./.github/actions/setup-python-env
-      with:
-        uv-extra-groups:
-          grid
-          test
+      - name: Setup test env
+        run: |
+          mkdir -p tests/key_processes
+          touch tests/__init__.py
+          cp -R src/pyDO3SE/tests/key_processes tests
+          cp src/pyDO3SE/tests/utils.py tests/utils.py
+          mkdir -p examples
+          cp -R src/pyDO3SE/examples .
 
-    - name: Install dependencies
-      run: |
-        uv sync --extra test
-        uv sync --extra grid
-        uv add xarray --group=grid
-
-    - name: Setup test env
-      run: |
-        mkdir -p tests/key_processes
-        touch tests/__init__.py
-        cp -R src/pyDO3SE/tests/key_processes tests
-        cp src/pyDO3SE/tests/utils.py tests/utils.py
-        mkdir -p examples
-        cp -R src/pyDO3SE/examples .
-
-    - name: Run tests
-      run: |
-        source .venv/bin/activate
-        python -m pytest tests
+      - name: Run tests
+        run: |
+          source .venv/bin/activate
+          python -m pytest tests
