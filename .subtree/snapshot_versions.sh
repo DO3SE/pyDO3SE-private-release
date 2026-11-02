@@ -73,7 +73,7 @@ echo "do3se_phenology version: $DO3SE_PHENOLOGY_VERSION" >> SUB_VERSIONS.txt
 echo "do3se_met version: $DO3SE_MET_VERSION" >> SUB_VERSIONS.txt
 
 
-
+uv lock
 # Commit the changes
 cp src/pyDO3SE/VERSION.txt VERSION.txt
 git add VERSION.txt
