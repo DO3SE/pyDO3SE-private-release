@@ -3,7 +3,7 @@
 Processes here should only depend on the external data and config.
 """
 from proflow.objects.process import Process
-from proflow.objects.Interface import I
+from proflow.objects.interface import I
 from proflow.switch import switch
 from proflow.helpers import set_value
 

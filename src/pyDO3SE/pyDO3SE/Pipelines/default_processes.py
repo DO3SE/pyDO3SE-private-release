@@ -22,7 +22,7 @@ from data_helpers.list_helpers import flatten_list
 
 from proflow.process_runner import advance_time_step_process
 from proflow.objects.process import Process, ProcessType
-from proflow.objects.Interface import I
+from proflow.objects.interface import I
 from proflow.switch import switch
 from proflow.helpers import NOT_IMPLEMENTED_PROCESS, set_value, skip
 from proflow.logger import log_values, merge_logs

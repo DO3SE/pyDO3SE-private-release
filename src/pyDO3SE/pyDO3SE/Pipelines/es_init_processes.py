@@ -15,7 +15,7 @@ from math import isnan
 from data_helpers.list_helpers import flatten_list
 from proflow.helpers import assert_defined, skip, set_value
 from proflow.objects.process import Process
-from proflow.objects.Interface import I
+from proflow.objects.interface import I
 from proflow.switch import switch
 
 from thermal_time import calcs as td_functions
