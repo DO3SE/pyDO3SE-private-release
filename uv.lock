@@ -2029,7 +2029,7 @@ wheels = [
 
 [[package]]
 name = "pydo3se"
-version = "4.45.0"
+version = "4.46.0"
 source = { editable = "src/pyDO3SE" }
 dependencies = [
     { name = "click" },
@@ -2142,7 +2142,7 @@ test = [
 
 [[package]]
 name = "pydo3se-open"
-version = "4.45.0"
+version = "4.46.0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
