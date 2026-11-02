@@ -2,9 +2,9 @@
 
 Processes here should only depend on the external data and config.
 """
-from proflow.Objects.Process import Process
-from proflow.Objects.Interface import I
-from proflow.Switch import switch
+from proflow.objects.process import Process
+from proflow.objects.Interface import I
+from proflow.switch import switch
 from proflow.helpers import set_value
 
 from do3se_met import irradiance as met_irrad_helpers

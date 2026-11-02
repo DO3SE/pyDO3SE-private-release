@@ -8,9 +8,9 @@ from pathlib import Path
 from typing import List
 from data_helpers.list_helpers import flatten_list
 
-from proflow.ProcessRunnerCls import advance_time_step_process
-from proflow.Objects.Process import Process, ProcessType
-from proflow.Objects.Interface import I
+from proflow.process_runner import advance_time_step_process
+from proflow.objects.process import Process, ProcessType
+from proflow.objects.Interface import I
 from proflow.logger import log_values
 
 from do3se_phenology.config import (

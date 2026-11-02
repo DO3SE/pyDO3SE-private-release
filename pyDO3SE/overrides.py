@@ -2,7 +2,7 @@
 """
 from pathlib import Path
 from typing import List, NamedTuple, Callable
-from proflow.Objects.Process import Process
+from proflow.objects.process import Process
 from pyDO3SE.Config import Config_Shape
 from pyDO3SE.External_State import External_State_Shape
 from pyDO3SE.Model_State import Model_State_Shape

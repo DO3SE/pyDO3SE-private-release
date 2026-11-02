@@ -75,7 +75,7 @@ import warnings
 import ntpath
 from typing import Callable, List, NamedTuple, Tuple, Dict, Optional, get_type_hints, cast
 from datetime import datetime
-from proflow.Objects.Process import Process
+from proflow.objects.process import Process
 
 from pyDO3SE.lib import (
     RunFiles,

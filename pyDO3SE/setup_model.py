@@ -14,8 +14,8 @@ from datetime import datetime
 from enum import Enum
 from data_helpers.cls_parsing import rsetattr
 from data_helpers.list_helpers import flatten_list
-from proflow.ProcessRunnerCls import ProcessRunner
-from proflow.Objects.Process import Process
+from proflow.process_runner import ProcessRunner
+from proflow.objects.process import Process
 
 from pyDO3SE.External_State.setup_dd import get_day_crop_override
 from pyDO3SE.util.logger import Logger

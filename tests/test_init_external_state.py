@@ -6,7 +6,7 @@ import json
 from data_helpers.snapshot_helpers import prep_data_for_snapshot
 from data_helpers.encoders import AdvancedJsonEncoder
 from data_helpers.cls_parsing import unpack
-from proflow.ProcessRunnerCls import ProcessRunner
+from proflow.process_runner import ProcessRunner
 
 
 from pyDO3SE.External_State.external_state_loader import FileTypes, load_external_state

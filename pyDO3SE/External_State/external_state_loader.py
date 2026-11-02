@@ -10,8 +10,8 @@ from functools import partial
 from collections import OrderedDict
 from pathlib import Path
 import pandas as pd
-from proflow.Objects.Process import Process
-from proflow.ProcessRunnerCls import ProcessRunner
+from proflow.objects.process import Process
+from proflow.process_runner import ProcessRunner
 
 from pyDO3SE.optional_dependencies import xarray as xr
 from pyDO3SE.util.error_handling import InputDataError

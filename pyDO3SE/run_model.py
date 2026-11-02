@@ -6,8 +6,8 @@ The inputs should come from setup_model.
 
 from typing import Any, Callable, List, Tuple, Dict, Optional
 from copy import deepcopy
-from proflow.ProcessRunnerCls import ProcessRunner
-from proflow.Objects.Process import Process
+from proflow.process_runner import ProcessRunner
+from proflow.objects.process import Process
 
 from pyDO3SE.Config import Config_Shape
 from pyDO3SE.External_State import External_State_Shape
