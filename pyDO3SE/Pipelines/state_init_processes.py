@@ -6,7 +6,7 @@ initialized state
 from dataclasses import replace
 from typing import List
 from proflow.objects.process import Process
-from proflow.objects.Interface import I
+from proflow.objects.interface import I
 from proflow.helpers import set_value
 from data_helpers.list_helpers import flatten_list
 from do3se_phenology.config import ZeroDayOptions
