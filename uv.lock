@@ -2161,10 +2161,8 @@ dependencies = [
 ci = [
     { name = "bump2version" },
     { name = "dask" },
-    { name = "data-helpers" },
     { name = "netcdf4" },
     { name = "pre-commit" },
-    { name = "proflow" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-mock" },
@@ -2196,7 +2194,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=7.1.2" },
-    { name = "data-helpers", specifier = ">=0.2.7" },
+    { name = "data-helpers", specifier = ">=0.2.12" },
     { name = "deprecated", specifier = ">=1.2.12" },
     { name = "dill", specifier = ">=0.3.8" },
     { name = "matplotlib", specifier = ">=3.2.1" },
@@ -2211,10 +2209,8 @@ requires-dist = [
 ci = [
     { name = "bump2version", specifier = ">=1.0.1" },
     { name = "dask" },
-    { name = "data-helpers", specifier = ">=0.2.12" },
     { name = "netcdf4" },
     { name = "pre-commit", specifier = ">=2.7.1" },
-    { name = "proflow", specifier = ">=0.7.3" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "pytest-cov", specifier = ">=5.0.0" },
     { name = "pytest-mock", specifier = ">=3.14.0" },
