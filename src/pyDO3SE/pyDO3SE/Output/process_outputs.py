@@ -13,7 +13,7 @@ from dataclasses import asdict
 from data_helpers.cls_parsing import unpack
 from data_helpers.encoders import AdvancedJsonEncoder
 from data_helpers.list_helpers import flatten_list
-from proflow.Objects.Process import Process
+from proflow.objects.process import Process
 from do3se_phenology.plots import plot_phenology_from_config
 from do3se_phenology.units import TimeTypes
 from do3se_met.plots import plot_f_SW_curve

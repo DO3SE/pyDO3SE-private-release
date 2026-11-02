@@ -20,10 +20,10 @@ from typing import Callable, List, Optional
 from copy import deepcopy
 from data_helpers.list_helpers import flatten_list
 
-from proflow.ProcessRunnerCls import advance_time_step_process
-from proflow.Objects.Process import Process, ProcessType
-from proflow.Objects.Interface import I
-from proflow.Switch import switch
+from proflow.process_runner import advance_time_step_process
+from proflow.objects.process import Process, ProcessType
+from proflow.objects.Interface import I
+from proflow.switch import switch
 from proflow.helpers import NOT_IMPLEMENTED_PROCESS, set_value, skip
 from proflow.logger import log_values, merge_logs
 
@@ -3612,7 +3612,6 @@ def penman_monteith_hourly_process(gsto_method: GstoMethods) -> Process:
             ]
         ),
         Process(
-            # NOTE: Not valid for multilayer or pn_gsto method
             func=SMD_PM_helpers.calc_PET_gsto_An,
             comment="P-M - Calculate PEt RSTO",
             group="soil-moisture",

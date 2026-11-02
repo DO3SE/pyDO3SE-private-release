@@ -14,9 +14,9 @@ import numpy as np
 from math import isnan
 from data_helpers.list_helpers import flatten_list
 from proflow.helpers import assert_defined, skip, set_value
-from proflow.Objects.Process import Process
-from proflow.Objects.Interface import I
-from proflow.Switch import switch
+from proflow.objects.process import Process
+from proflow.objects.Interface import I
+from proflow.switch import switch
 
 from thermal_time import calcs as td_functions
 from do3se_met import helpers as met_helpers
@@ -493,7 +493,6 @@ def init_dd_hr(
 ) -> List[Process]:
     """Set data to input or constant data."""
     return [
-        # TODO: Offset hour data if required
         Process(
             func=setup_hr,
             comment="Offset the hour value for different timezones",

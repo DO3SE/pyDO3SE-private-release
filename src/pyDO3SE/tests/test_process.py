@@ -9,7 +9,7 @@
 # from data_helpers.snapshot_helpers import prep_data_for_snapshot
 # from data_helpers.encoders import AdvancedJsonEncoder
 # from data_helpers.cls_parsing import unpack
-# from proflow.ProcessRunnerCls import ProcessRunner
+# from proflow.process_runner import ProcessRunner
 
 
 # from pyDO3SE.Model_State.Model_State import Model_State_Shape

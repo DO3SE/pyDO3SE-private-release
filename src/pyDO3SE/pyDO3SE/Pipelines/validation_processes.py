@@ -4,8 +4,8 @@ from pyDO3SE.Config.config_validation import validate_config_fields
 from data_helpers.list_helpers import flatten_list
 from pyDO3SE.Config.Config_Shape import Config_Shape
 from typing import List
-from proflow.Objects.Process import Process
-from proflow.Objects.Interface import I
+from proflow.objects.process import Process
+from proflow.objects.Interface import I
 
 
 def assert_greater_than(amount, strict=True):

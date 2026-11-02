@@ -13,9 +13,9 @@ from typing import List
 from functools import wraps
 
 from data_helpers.list_helpers import flatten_list
-from proflow.Objects.Process import Process
+from proflow.objects.process import Process
 from proflow.helpers import NOT_IMPLEMENTED_PROCESS, set_value, skip
-from proflow.Objects.Interface import I
+from proflow.objects.interface import I
 
 from do3se_phenology.switchboard import process_phenology_config
 from do3se_phenology.config import ZeroDayOptions
