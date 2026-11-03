@@ -48,12 +48,12 @@ for x in range(DX):
 # %%
 demo_data.dd.iloc[-1] - 365
 # %%
-time_data  = pd.date_range("2017-01-01", periods=365*24, freq="1H")
+time_data  = pd.date_range("2017-01-01", periods=365*24, freq="1h")
 time_data[24*158]
 
 # %%
 # TODO: Set as range(DT)
-time_data  = pd.date_range("2017-11-16", periods=DT, freq="1H")
+time_data  = pd.date_range("2017-11-16", periods=DT, freq="1h")
 time_data[0],time_data[-1]
 # XTIME = time_data
 # f"{data_out_loc}/demo_wrf_{XTIME[0].year}-{str(XTIME[0].month).zfill(2)}-{str(XTIME[0].day).zfill(2)}-{str(XTIME[0].time()).replace(':', '-')}"

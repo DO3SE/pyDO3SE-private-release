@@ -26,7 +26,7 @@ demo_data_SNOWH = np.zeros((DT, DX, DY))
 
 # %%
 # TODO: Set as range(DT)
-time_data  = pd.date_range("2017-12-27", periods=DT, freq="1H")
+time_data  = pd.date_range("2017-12-27", periods=DT, freq="1h")
 XTIME = time_data
 f"{data_out_loc}/demo_wrf_{XTIME[0].year}-{str(XTIME[0].month).zfill(2)}-{str(XTIME[0].day).zfill(2)}-{str(XTIME[0].time()).replace(':', '-')}"
 

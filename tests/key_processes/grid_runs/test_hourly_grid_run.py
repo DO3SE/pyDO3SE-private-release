@@ -453,7 +453,7 @@ class TestIntegrated:
         input_files = os.listdir(f"{project_directory}/inputs")
         ds_in = xr.open_dataset(f"{project_directory}/inputs/{input_files[0]}")
         t = ds_in.XTIME.values.astype(str)[0:19]
-        time_data = pd.date_range(str(t[0]), periods=1, freq="1H")
+        time_data = pd.date_range(str(t[0]), periods=1, freq="1h")
         time_string = f"{time_data[0].year}-{str(time_data[0].month).zfill(2)}-{str(time_data[0].day).zfill(2)}_{str(time_data[0].hour).zfill(2)}"
         target_file_name = f"output_data_{time_string}.nc"
         input_time_length = ds_in.XTIME.size
