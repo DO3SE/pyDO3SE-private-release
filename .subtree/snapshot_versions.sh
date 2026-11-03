@@ -76,6 +76,7 @@ echo "do3se_met version: $DO3SE_MET_VERSION" >> SUB_VERSIONS.txt
 uv lock
 # Commit the changes
 cp src/pyDO3SE/VERSION.txt VERSION.txt
+git add uv.lock
 git add VERSION.txt
 git add SUB_VERSIONS.txt
 git add .bumpversion.cfg
