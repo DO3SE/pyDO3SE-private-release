@@ -1,10 +1,10 @@
 [project]
 name = "thermal_time"
-version = "0.0.18"
+version = "0.0.19"
 description = "DO3SE thermal time model"
 readme = "README.md"
 authors = [{ "email" = "sam.bland@york.ac.uk", "name" = "Sam Bland" }]
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = ["numpy>=1.18.3", "pandas>=1.0.3", "deprecated>=1.2.12"]
 
 
