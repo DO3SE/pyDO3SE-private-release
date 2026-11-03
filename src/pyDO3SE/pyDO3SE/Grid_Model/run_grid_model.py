@@ -425,7 +425,7 @@ def setup_external_state_iter(
     try:
         lat_data = e_state_overrides_dataset.lat_data.values
         lon_data = e_state_overrides_dataset.lon_data.values
-        time_data = pd.date_range(start_date, periods=row_count, freq="1H")
+        time_data = pd.date_range(start_date, periods=row_count, freq="1h")
         input_shape = [len(e_state_overrides_dataset.x), len(e_state_overrides_dataset.y)]
 
     except AttributeError as e:
@@ -586,7 +586,7 @@ def main_partial(
     # if output_directory:
     #     # TODO: Check time of output
     #     # time_data = pd.date_range(external_states.start_date,
-    #     #                           periods=external_states.row_count, freq="1H")
+    #     #                           periods=external_states.row_count, freq="1h")
     #     target_file_name = f'output_data_{external_states.time_string}.nc'
     #     dump_output_to_file_netcdf_grid(
     #         output_data=output_data,
@@ -806,7 +806,7 @@ def save_model_iteration_output(
         )
         # TODO: Check time of output
         # time_data = pd.date_range(external_states.start_date,
-        #                           periods=external_states.row_count, freq="1H")
+        #                           periods=external_states.row_count, freq="1h")
         target_file_name = f"output_data_{time_string}.nc"
         dump_output_to_file_netcdf_grid(
             full_output_data=output_data.full_output_data,

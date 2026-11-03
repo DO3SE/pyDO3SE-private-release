@@ -25,7 +25,7 @@ demo_data_SNOWH = np.zeros((DT, DX, DY))
 
 
 # %%
-XTIME = pd.date_range("2017-12-27", periods=DT, freq="1H")
+XTIME = pd.date_range("2017-12-27", periods=DT, freq="1h")
 reference_time = pd.Timestamp("2017-01-01")
 lon = np.full((DX,DY), np.arange(DY))
 lat = np.full((DY,DX), np.arange(DX)).transpose()

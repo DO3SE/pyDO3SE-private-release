@@ -591,18 +591,6 @@ wheels = [
 ]
 
 [[package]]
-name = "data-helpers-v2"
-version = "0.2.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/dd/c1/53c4b6e6f70fa827bb45cc0c4807124080187e2857160e9f20b8bcbdfb1f/data_helpers_v2-0.2.1.tar.gz", hash = "sha256:ae61acb8a297eea6af1b73120b148d75bd016e905d2d8dc2ce45f640d53d1f6a", size = 77867, upload-time = "2025-11-27T14:56:38.696Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/01/4b/bfd79e871f49bf390aca939f7106792d1f387a06a3a9ebb7e18ccd0b6d3e/data_helpers_v2-0.2.1-py3-none-any.whl", hash = "sha256:8429da62562da1e0bed891add78fa106a84448d2033be09114a15a55de93d6c1", size = 21848, upload-time = "2025-11-27T14:56:37.243Z" },
-]
-
-[[package]]
 name = "debugpy"
 version = "1.8.22"
 source = { registry = "https://pypi.org/simple" }
@@ -1839,16 +1827,16 @@ wheels = [
 
 [[package]]
 name = "proflow"
-version = "0.7.3"
+version = "0.7.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "data-helpers-v2" },
+    { name = "data-helpers" },
     { name = "dill" },
     { name = "numpy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/22/c4/bfc58bcfd496f47dbe792419fc81e1ff4af7456dbcb3a6e39c6b027cf934/proflow-0.7.3.tar.gz", hash = "sha256:654b5c52277c772bcfd444d1d61938e694f1b57d2de6cbeda67787cb0c6e0256", size = 533551, upload-time = "2026-11-02T22:07:10.492Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a9/b7/25c31bec9b57d8e08030b719956eb83f19dc63ff847157133f26a6c0d218/proflow-0.7.4.tar.gz", hash = "sha256:9bd88676a91c751614e4501cd47ba82ab780ce1f4fbf67cb1aeebaddf79bb2bc", size = 533842, upload-time = "2026-11-03T09:22:26.222Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/74/d2/d14f846798820bdebd68024d575bedaf99c2993775948ae1d22f1ab9624d/proflow-0.7.3-py3-none-any.whl", hash = "sha256:9224fc4240a96185f977863f7060c2ca46baf7202382f6e557e7c324dea32d5d", size = 71882, upload-time = "2026-11-02T22:07:08.306Z" },
+    { url = "https://files.pythonhosted.org/packages/12/f4/5fe1d9f8fe13772bb6c4d0d3212f210bcdec95e148ce5d690f8d92e4cc01/proflow-0.7.4-py3-none-any.whl", hash = "sha256:6657b6bf2b62d03c450cfc7d8f69540b3ef60f5f8d3fbdcd281602fe46548aa4", size = 71846, upload-time = "2026-11-03T09:22:24.982Z" },
 ]
 
 [[package]]
@@ -1932,7 +1920,7 @@ wheels = [
 
 [[package]]
 name = "pydo3se"
-version = "4.44.23"
+version = "4.46.0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -1998,7 +1986,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.18.3" },
     { name = "pandas", specifier = ">=1.0.3" },
     { name = "pre-commit" },
-    { name = "proflow", specifier = ">=0.7.0" },
+    { name = "proflow", specifier = ">=0.7.4" },
     { name = "scipy", specifier = ">=1.5.2" },
     { name = "wheel", specifier = ">=0.36.2" },
 ]
@@ -2151,14 +2139,14 @@ wheels = [
 
 [[package]]
 name = "python-discovery"
-version = "1.9.1"
+version = "1.9.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "filelock" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e9/a2/c98905e39dfe464612b8032014fbe7b8b6e939217cd705d0152b981aeba6/python_discovery-1.9.1.tar.gz", hash = "sha256:83e3c0024b93e256809dc9cd053537a37df6d3badc3b68aa03006a224336b21f", size = 126369, upload-time = "2026-11-02T15:58:19.766Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ea/87/77b17c6d289a551d682826e228e3efa3199305a080541d991cb7b268a527/python_discovery-1.9.2.tar.gz", hash = "sha256:de397b9c4b09a5fb8bb4c51db3c0da71fb81d2283718d74fd1efaabffc32afbc", size = 140950, upload-time = "2026-11-03T05:04:25.117Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/68/48/098829df5400ca16bea46ba81d1e185069a0efcbd12721c6789ebabb29de/python_discovery-1.9.1-py3-none-any.whl", hash = "sha256:a78322b3b70c5d61dddc2f37ca1beffa9a5ce01cedf3526444e01bfc94f50b35", size = 40027, upload-time = "2026-11-02T15:58:18.222Z" },
+    { url = "https://files.pythonhosted.org/packages/39/5b/d61e08d34eeb74eb88431243e3849551f0161de08659d55312955afd2a36/python_discovery-1.9.2-py3-none-any.whl", hash = "sha256:65857e689ba72aeb5517e68b7025430ed60372b78d037245e0bed3d41ae7ba65", size = 44201, upload-time = "2026-11-03T05:04:23.777Z" },
 ]
 
 [[package]]

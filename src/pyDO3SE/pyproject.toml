@@ -1,6 +1,6 @@
 [project]
 name = "pyDO3SE"
-version = "4.46.0"
+version = "4.46.1"
 description = "DO3SE model python API"
 authors = [{ "email" = "sam.bland@york.ac.uk", "name" = "Sam Bland" }]
 readme = "README.md"
@@ -14,7 +14,7 @@ dependencies = [
   "click>=7.1.2",
   "deprecated>=1.2.12",
   "wheel>=0.36.2",
-  "proflow>=0.7.0",
+  "proflow>=0.7.4",
   "data-helpers>=0.2.7",
   "dill>=0.3.8",
   # Additional private dependencies
