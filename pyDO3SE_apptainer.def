@@ -1,5 +1,5 @@
 BootStrap: docker
-From: python:3.12-slim-bookworm
+From: python:3.14.10-slim-bookworm
 
 %post
     python -m pip install ./dist/pydo3se_open-4.46.1-py3-none-any.whl

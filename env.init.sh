@@ -1,4 +1,4 @@
-uv venv --python=3.12
+uv venv --python=3.14
 source .venv/bin/activate
 uv pip install -r requirements/common.txt
 uv pip install -r requirements/tests.txt
